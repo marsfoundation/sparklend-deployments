@@ -2,5 +2,11 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
+remappings = [
+    '@aave/core-v3/=lib/aave-v3-core/'
+]
+fs_permissions = [
+    { access = "read", path = "./script/input/"}
+]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
