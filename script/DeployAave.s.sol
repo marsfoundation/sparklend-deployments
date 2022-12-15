@@ -92,10 +92,10 @@ contract DeployAave is Script {
     function parseReserves() internal view returns (ReserveConfig[] memory) {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
         bytes[] memory a = config.readBytesArray(".reserves");
-        ReserveConfig[] memory reserves = new ReserveConfig[](a.length);
+        ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
         for (uint256 i = 0; i < a.length; i++) {
             string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
-            reserves[i] = ReserveConfig({
+            _reserves[i] = ReserveConfig({
                 name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
                 token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
                 borrowEnabled: config.readUint(string(string.concat(bytes(base), bytes(".borrow")))),
@@ -111,7 +111,7 @@ contract DeployAave is Script {
                 eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory"))))
             });
         }
-        return reserves;
+        return _reserves;
     }
 
     function setupEModeCategories() internal {
