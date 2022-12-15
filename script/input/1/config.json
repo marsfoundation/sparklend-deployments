@@ -81,6 +81,7 @@
         }
     ],
     "d3m": {
-        "hub": "0x12F36cdEA3A28C35aC8C6Cc71D9265c17C74A27F"
+        "hub": "0x12F36cdEA3A28C35aC8C6Cc71D9265c17C74A27F",
+        "ilk": "DIRECT-SPARK-DAI"
     }
 }

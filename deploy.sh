@@ -16,3 +16,4 @@ fi
 for i in $(grep "LENDING_POOL_ADDRESS_PROVIDER=" -A 5 <(cat "out/tmp.out")); do
     echo "export $i" >> .env-deploy
 done
+source .env-deploy
