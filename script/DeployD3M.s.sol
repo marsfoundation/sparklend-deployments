@@ -9,8 +9,6 @@ import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/c
 import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Strings.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 
-import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
-
 import {D3MHub} from 'dss-direct-deposit/D3MHub.sol';
 import {D3MAavePlan} from 'dss-direct-deposit/plans/D3MAavePlan.sol';
 import {D3MAavePool} from 'dss-direct-deposit/pools/D3MAavePool.sol';
@@ -21,7 +19,7 @@ contract DeployD3M is Script {
 
     string config;
 
-    Pool lendingPool;
+    address lendingPool;
     D3MHub hub;
     bytes32 ilk;
 
@@ -51,19 +49,19 @@ contract DeployD3M is Script {
     function run() external {
         config = readInput("config");
 
-        lendingPool = Pool(vm.envAddress("LENDING_POOL"));
+        lendingPool = vm.envAddress("LENDING_POOL");
         hub = D3MHub(config.readAddress(".d3m.hub"));
         ilk = stringToBytes32(config.readString(".d3m.ilk"));
 
         vm.startBroadcast();
         address admin = msg.sender;
 
-        plan = new D3MAavePlan(address(dai), address(lendingPool));
+        plan = new D3MAavePlan(address(dai), lendingPool);
         if (plan.wards(admin) != 1) {
             plan.rely(admin);
             plan.deny(msg.sender);
         }
-        pool = new D3MAavePool(ilk, address(hub), address(dai), address(pool));
+        pool = new D3MAavePool(ilk, address(hub), address(dai), lendingPool);
         if (plan.wards(admin) != 1) {
             plan.rely(admin);
             plan.deny(msg.sender);
