@@ -79,5 +79,8 @@
             "reserveFactor": 2000,
             "eModeCategory": 0
         }
-    ]
+    ],
+    "d3m": {
+        "hub": "0x12F36cdEA3A28C35aC8C6Cc71D9265c17C74A27F"
+    }
 }
