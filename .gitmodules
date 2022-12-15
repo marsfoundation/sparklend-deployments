@@ -6,3 +6,7 @@
 	path = lib/aave-v3-core
 	url = https://github.com/aave/aave-v3-core
 	branch = v1.16.2
+[submodule "lib/aave-v3-periphery"]
+	path = lib/aave-v3-periphery
+	url = https://github.com/aave/aave-v3-periphery
+	branch = v3.0.1
