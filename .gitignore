@@ -7,3 +7,4 @@ out/
 
 # Dotenv file
 .env
+.env-deploy
