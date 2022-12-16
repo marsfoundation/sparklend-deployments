@@ -10,7 +10,3 @@
 	path = lib/aave-v3-periphery
 	url = https://github.com/aave/aave-v3-periphery
 	branch = v3.0.1
-[submodule "lib/dss-direct-deposit"]
-	path = lib/dss-direct-deposit
-	url = https://github.com/makerdao/dss-direct-deposit
-	branch = v1.0.0
