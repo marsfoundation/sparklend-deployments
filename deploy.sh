@@ -13,7 +13,7 @@ echo "Deploying D3M contracts..."
 export DEPLOY_D3M_TYPE="aave"
 export DEPLOY_ADMIN="$ETH_FROM"
 export DEPLOY_ILK="DIRECT-SPARK-DAI"
-export DEPLOY_AAVE_LENDING_POOL="$DEPLOY_Pool"
+export DEPLOY_AAVE_LENDING_POOL="$(cast call $DEPLOY_PoolAddressesProvider 'getPool()(address)')"
 
 cd dependencies/dss-direct-deposit
 forge script script/DeployD3M.s.sol:DeployD3M --use solc:0.8.14 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
