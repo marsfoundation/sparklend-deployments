@@ -26,13 +26,12 @@ echo "Initializing D3M contracts..."
 export DSSTEST_EXPORT_POOL="$DEPLOY_D3MAavePool"
 export DSSTEST_EXPORT_PLAN="$DEPLOY_D3MAavePlan"
 export DSSTEST_EXPORT_ORACLE="$DEPLOY_D3MOracle"
+export D3M_MAX_LINE="300000000"
+export D3M_GAP="300000000"
 
 cast rpc anvil_setBalance $MCD_PAUSE_PROXY 0x10000000000000000
 cast rpc anvil_impersonateAccount $MCD_PAUSE_PROXY
-forge script script/InitD3M.s.sol:InitD3M --use solc:0.8.14 --rpc-url $ETH_RPC_URL --sender $MCD_PAUSE_PROXY
-# Can't impersonate with forge script so broadcast all the txs manually
-for s in $( jq -r ".transactions|to_entries|map_values(\"\(.value.transaction.to):\(.value.transaction.data)\")|.[]" broadcast/InitD3M.s.sol/1/dry-run/run-latest.json ); do
-    cast send --from $MCD_PAUSE_PROXY "$(echo $s | cut -d ':' -f 1)" "$(echo $s | cut -d ':' -f 2)"
-done
+unset ETH_FROM
+forge script script/InitD3M.s.sol:InitD3M --use solc:0.8.14 --rpc-url $ETH_RPC_URL --broadcast --unlocked --sender $MCD_PAUSE_PROXY
 cast rpc anvil_stopImpersonatingAccount $MCD_PAUSE_PROXY
 cd ../..

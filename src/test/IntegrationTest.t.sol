@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity ^0.8.10;
+pragma solidity 0.8.10;
 
 import "forge-std/Test.sol";
 
@@ -16,6 +16,10 @@ import {ReserveConfiguration} from "aave-v3-core/contracts/protocol/libraries/co
 
 interface stETHLike {
     function getTotalShares() external view returns (uint256);
+}
+
+interface D3MHubLike {
+    function exec(bytes32) external;
 }
 
 contract User {
@@ -51,6 +55,7 @@ contract IntegrationTest is Test {
     address[] assets;
 
     // TODO these should not be hard coded
+    D3MHubLike hub = D3MHubLike(0x12F36cdEA3A28C35aC8C6Cc71D9265c17C74A27F);
     IERC20 weth = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
     IERC20 stETH = IERC20(0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84);
     IERC20 wbtc = IERC20(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
@@ -105,8 +110,8 @@ contract IntegrationTest is Test {
     }
 
     function setUp() public {
-        poolAddressesProvider = PoolAddressesProvider(vm.envAddress("LENDING_POOL_ADDRESS_PROVIDER"));
-        pool = Pool(vm.envAddress("LENDING_POOL"));
+        poolAddressesProvider = PoolAddressesProvider(vm.envAddress("DEPLOY_PoolAddressesProvider"));
+        pool = Pool(poolAddressesProvider.getPool());
         aaveOracle = AaveOracle(poolAddressesProvider.getPriceOracle());
 
         assets = pool.getReservesList();
@@ -131,8 +136,22 @@ contract IntegrationTest is Test {
     }
 
     function getLTV(address asset) internal view returns (uint256) {
-        DataTypes.ReserveData memory borrowData = pool.getReserveData(asset);
-        return ReserveConfiguration.getLtv(borrowData.configuration);
+        DataTypes.ReserveData memory data = pool.getReserveData(asset);
+        return ReserveConfiguration.getLtv(data.configuration);
+    }
+
+    function getAToken(address asset) internal view returns (IERC20) {
+        DataTypes.ReserveData memory data = pool.getReserveData(asset);
+        return IERC20(data.aTokenAddress);
+    }
+
+    function test_d3m() public {
+        IERC20 adai = getAToken(address(dai));
+        uint256 prevAmount = dai.balanceOf(address(adai));
+
+        hub.exec("DIRECT-SPARK-DAI");
+
+        assertEq(dai.balanceOf(address(adai)), prevAmount + 300_000_000 * 10 ** 18);
     }
 
     function test_borrow() public {
