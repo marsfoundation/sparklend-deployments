@@ -12,6 +12,7 @@ source out/contract-exports.env
 echo "Deploying D3M contracts..."
 
 export D3M_TYPE="aave"
+export D3M_PLAN_TYPE="debt-ceiling"
 export D3M_ADMIN="$MCD_PAUSE_PROXY"
 export D3M_ILK="DIRECT-SPARK-DAI"
 export D3M_AAVE_LENDING_POOL="$FOUNDRY_EXPORT_LENDING_POOL"
