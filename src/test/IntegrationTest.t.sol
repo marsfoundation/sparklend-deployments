@@ -110,7 +110,7 @@ contract IntegrationTest is DSSTest {
     }
 
     function setUp() public {
-        poolAddressesProvider = PoolAddressesProvider(vm.envAddress("DEPLOY_PoolAddressesProvider"));
+        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
         pool = Pool(poolAddressesProvider.getPool());
         aaveOracle = AaveOracle(poolAddressesProvider.getPriceOracle());
 
