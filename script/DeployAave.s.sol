@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 
 import "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
+import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Strings.sol';
@@ -59,6 +60,7 @@ struct EModeConfig {
 contract DeployAave is Script {
 
     using stdJson for string;
+    using ScriptTools for string;
 
     string config;
 
@@ -81,12 +83,6 @@ contract DeployAave is Script {
     ConfiguratorInputTypes.InitReserveInput[] reserves;
     address[] assets;
     address[] assetOracleSources;
-
-    function readInput(string memory input) internal view returns (string memory) {
-        string memory root = vm.projectRoot();
-        string memory chainInputFolder = string(string.concat(bytes("/script/input/"), bytes(vm.toString(block.chainid)), bytes("/")));
-        return vm.readFile(string(string.concat(bytes(root), bytes(chainInputFolder), string.concat(bytes(input), bytes(".json")))));
-    }
 
     function parseReserves() internal view returns (ReserveConfig[] memory) {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
@@ -153,11 +149,11 @@ contract DeployAave is Script {
     }
 
     function run() external {
-        config = readInput("config");
+        config = ScriptTools.readInput("config");
+
+        address admin = config.readAddress(".admin", "AAVE_ADMIN");
 
         vm.startBroadcast();
-        address admin = msg.sender;
-
         poolAddressesProvider = new PoolAddressesProvider(config.readString(".marketId"), admin);
         poolAddressesProvider.setACLAdmin(admin);
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
@@ -241,12 +237,12 @@ contract DeployAave is Script {
         }
         vm.stopBroadcast();
 
-        console.log(string(abi.encodePacked("LENDING_POOL_ADDRESS_PROVIDER=", Strings.toHexString(uint256(uint160(address(poolAddressesProvider))), 20))));
-        console.log(string(abi.encodePacked("LENDING_POOL=", Strings.toHexString(uint256(uint160(address(pool))), 20))));
-        console.log(string(abi.encodePacked("WETH_GATEWAY=", Strings.toHexString(uint256(uint160(address(wethGateway))), 20))));
-        console.log(string(abi.encodePacked("WALLET_BALANCE_PROVIDER=", Strings.toHexString(uint256(uint160(address(walletBalanceProvider))), 20))));
-        console.log(string(abi.encodePacked("UI_POOL_DATA_PROVIDER=", Strings.toHexString(uint256(uint160(address(uiPoolDataProvider))), 20))));
-        console.log(string(abi.encodePacked("UI_INCENTIVE_DATA_PROVIDER=", Strings.toHexString(uint256(uint160(address(uiIncentiveDataProvider))), 20))));
+        ScriptTools.exportContract("LENDING_POOL_ADDRESS_PROVIDER", address(poolAddressesProvider));
+        ScriptTools.exportContract("LENDING_POOL", address(pool));
+        ScriptTools.exportContract("WETH_GATEWAY", address(wethGateway));
+        ScriptTools.exportContract("WALLET_BALANCE_PROVIDER", address(walletBalanceProvider));
+        ScriptTools.exportContract("UI_POOL_DATA_PROVIDER", address(uiPoolDataProvider));
+        ScriptTools.exportContract("UI_INCENTIVE_DATA_PROVIDER", address(uiIncentiveDataProvider));
     }
 
 }

@@ -3,35 +3,32 @@ set -e
 
 echo "Deploying Aave contracts..."
 
+export AAVE_ADMIN="$ETH_FROM"
+
+rm -f out/contract-exports.env
 forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
-for s in $( jq -r ".transactions|to_entries|map_values(\"\(.value.contractName)=\(.value.contractAddress)\")|.[]" broadcast/DeployAave.s.sol/1/run-latest.json ); do
-    export "DEPLOY_$s"
-done
+source out/contract-exports.env
 
 echo "Deploying D3M contracts..."
 
 export D3M_TYPE="aave"
 export D3M_ADMIN="$MCD_PAUSE_PROXY"
 export D3M_ILK="DIRECT-SPARK-DAI"
-export D3M_AAVE_LENDING_POOL="$(cast call $DEPLOY_PoolAddressesProvider 'getPool()(address)')"
+export D3M_AAVE_LENDING_POOL="$FOUNDRY_EXPORT_LENDING_POOL"
 
 cd dependencies/dss-direct-deposit
-forge script script/DeployD3M.s.sol:DeployD3M --use solc:0.8.14 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
-for s in $( jq -r ".transactions|to_entries|map_values(\"\(.value.contractName)=\(.value.contractAddress)\")|.[]" broadcast/DeployD3M.s.sol/1/run-latest.json ); do
-    export "DEPLOY_$s"
-done
+rm -f out/contract-exports.env
+forge script script/D3MDeploy.s.sol:D3MDeployScript --use solc:0.8.14 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
+source out/contract-exports.env
 
 echo "Initializing D3M contracts..."
 
-export DSSTEST_EXPORT_POOL="$DEPLOY_D3MAavePool"
-export DSSTEST_EXPORT_PLAN="$DEPLOY_D3MAavePlan"
-export DSSTEST_EXPORT_ORACLE="$DEPLOY_D3MOracle"
 export D3M_MAX_LINE="300000000"
 export D3M_GAP="300000000"
 
 cast rpc anvil_setBalance $MCD_PAUSE_PROXY 0x10000000000000000
 cast rpc anvil_impersonateAccount $MCD_PAUSE_PROXY
 unset ETH_FROM
-forge script script/InitD3M.s.sol:InitD3M --use solc:0.8.14 --rpc-url $ETH_RPC_URL --broadcast --unlocked --sender $MCD_PAUSE_PROXY
+forge script script/D3MInit.s.sol:D3MInitScript --use solc:0.8.14 --rpc-url $ETH_RPC_URL --broadcast --unlocked --sender $MCD_PAUSE_PROXY
 cast rpc anvil_stopImpersonatingAccount $MCD_PAUSE_PROXY
 cd ../..

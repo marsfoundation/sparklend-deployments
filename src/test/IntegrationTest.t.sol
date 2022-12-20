@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.10;
 
-import "forge-std/Test.sol";
+import "dss-test/DSSTest.sol";
 
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
@@ -45,7 +45,7 @@ contract User {
 
 }
 
-contract IntegrationTest is Test {
+contract IntegrationTest is DSSTest {
 
     PoolAddressesProvider poolAddressesProvider;
     Pool pool;

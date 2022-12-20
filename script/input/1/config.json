@@ -1,4 +1,5 @@
 {
+    "admin": "0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB",
     "marketId": "Spark Lending",
     "aTokenNamePrefix": "Spark ",
     "aTokenSymbolPrefix": "sp",
