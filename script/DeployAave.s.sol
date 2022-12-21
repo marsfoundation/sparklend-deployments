@@ -32,6 +32,9 @@ import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvider.sol";
 import {IEACAggregatorProxy} from "aave-v3-periphery/misc/interfaces/IEACAggregatorProxy.sol";
 
+import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.sol";
+import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
+
 struct ReserveConfig {
     string name;
     address token;
@@ -41,6 +44,7 @@ struct ReserveConfig {
     uint256 irVariableRateSlope1;
     uint256 irVariableRateSlope2;
     address oracle;
+    uint256 oracleMockPrice;
     uint256 ltv;
     uint256 liquidationThreshold;
     uint256 liquidationBonus;
@@ -75,6 +79,8 @@ contract DeployAave is Script {
     StableDebtToken stableDebtTokenImpl;
     VariableDebtToken variableDebtTokenImpl;
 
+    address weth;
+    address wethOracle;
     UiPoolDataProviderV3 uiPoolDataProvider;
     UiIncentiveDataProviderV3 uiIncentiveDataProvider;
     WrappedTokenGatewayV3 wethGateway;
@@ -99,6 +105,7 @@ contract DeployAave is Script {
                 irVariableRateSlope1: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope1")))),
                 irVariableRateSlope2: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope2")))),
                 oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
+                oracleMockPrice: config.readUint(string(string.concat(bytes(base), bytes(".oracleMockPrice")))),
                 ltv: config.readUint(string(string.concat(bytes(base), bytes(".ltv")))),
                 liquidationThreshold: config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold")))),
                 liquidationBonus: config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus")))),
@@ -173,16 +180,22 @@ contract DeployAave is Script {
         stableDebtTokenImpl = new StableDebtToken(pool);
         variableDebtTokenImpl = new VariableDebtToken(pool);
 
-        IEACAggregatorProxy proxy = IEACAggregatorProxy(config.readAddress(".uiPoolCurrencyAggregatorProxy"));
-        uiPoolDataProvider = new UiPoolDataProviderV3(proxy, proxy);
-        uiIncentiveDataProvider = new UiIncentiveDataProviderV3();
-        wethGateway = new WrappedTokenGatewayV3(config.readAddress(".weth"), admin, IPool(address(pool)));
-        walletBalanceProvider = new WalletBalanceProvider();
-
         // Init reserves
         ReserveConfig[] memory reserveConfigs = parseReserves();
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
+
+            if (cfg.token == address(0)) {
+                cfg.token = address(new MintableERC20(cfg.name, cfg.name, 18));
+            }
+            if (cfg.oracle == address(0)) {
+                cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 18)));
+            }
+
+            if (keccak256(bytes(cfg.name)) == keccak256("WETH")) {
+                weth = cfg.token;
+                wethOracle = cfg.oracle;
+            }
 
             require(keccak256(bytes(IERC20Detailed(address(cfg.token)).symbol())) == keccak256(bytes(cfg.name)), "Token name doesn't match symbol");
 
@@ -206,6 +219,12 @@ contract DeployAave is Script {
         }
         poolConfigurator.initReserves(reserves);
         poolConfigurator.updateFlashloanPremiumTotal(0);    // Flash loans are free
+
+        IEACAggregatorProxy proxy = IEACAggregatorProxy(wethOracle);
+        uiPoolDataProvider = new UiPoolDataProviderV3(proxy, proxy);
+        uiIncentiveDataProvider = new UiIncentiveDataProviderV3();
+        wethGateway = new WrappedTokenGatewayV3(weth, admin, IPool(address(pool)));
+        walletBalanceProvider = new WalletBalanceProvider();
 
         // Setup oracles
         aaveOracle = new AaveOracle(
