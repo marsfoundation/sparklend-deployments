@@ -9,6 +9,11 @@ rm -f out/contract-exports.env
 forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
 source out/contract-exports.env
 
+if [ $(cast chain-id) -eq 5 ]; then
+    echo "No D3M hub on Goerli. Exiting..."
+    exit
+fi
+
 echo "Deploying D3M contracts..."
 
 export D3M_TYPE="aave"
