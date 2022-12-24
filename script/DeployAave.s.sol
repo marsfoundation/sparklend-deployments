@@ -192,12 +192,12 @@ contract DeployAave is Script {
                 cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 18)));
             }
 
-            if (keccak256(bytes(cfg.name)) == keccak256("WETH")) {
+            if (cfg.name.eq("WETH")) {
                 weth = cfg.token;
                 wethOracle = cfg.oracle;
             }
 
-            require(keccak256(bytes(IERC20Detailed(address(cfg.token)).symbol())) == keccak256(bytes(cfg.name)), "Token name doesn't match symbol");
+            require(IERC20Detailed(address(cfg.token)).symbol().eq(cfg.name), "Token name doesn't match symbol");
 
             reserves.push(makeReserve(
                 IERC20Detailed(address(cfg.token)),
