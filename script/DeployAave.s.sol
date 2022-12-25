@@ -9,6 +9,7 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Strings.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {InitializableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
 
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
 import {AaveProtocolDataProvider} from "aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol";
@@ -25,6 +26,9 @@ import {ConfiguratorInputTypes} from "aave-v3-core/contracts/protocol/libraries/
 import {IReserveInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {DefaultReserveInterestRateStrategy} from "aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategy.sol";
 
+import {Collector} from "aave-v3-periphery/treasury/Collector.sol";
+import {CollectorController} from "aave-v3-periphery/treasury/CollectorController.sol";
+
 import {UiPoolDataProviderV3} from "aave-v3-periphery/misc/UiPoolDataProviderV3.sol";
 import {UiIncentiveDataProviderV3} from "aave-v3-periphery/misc/UiIncentiveDataProviderV3.sol";
 import {WrappedTokenGatewayV3} from "aave-v3-periphery/misc/WrappedTokenGatewayV3.sol";
@@ -33,6 +37,7 @@ import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvide
 import {IEACAggregatorProxy} from "aave-v3-periphery/misc/interfaces/IEACAggregatorProxy.sol";
 
 import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.sol";
+import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
 import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
 struct ReserveConfig {
@@ -78,6 +83,9 @@ contract DeployAave is Script {
     AToken aTokenImpl;
     StableDebtToken stableDebtTokenImpl;
     VariableDebtToken variableDebtTokenImpl;
+
+    Collector treasury;
+    CollectorController treasuryController;
 
     address weth;
     address wethOracle;
@@ -143,7 +151,7 @@ contract DeployAave is Script {
         input.underlyingAssetDecimals = token.decimals();
         input.interestRateStrategyAddress = address(strategy);
         input.underlyingAsset = address(token);
-        input.treasury = address(0);
+        input.treasury = address(treasury);
         input.incentivesController = address(0);
         input.aTokenName = string(string.concat("Spark ", bytes(token.symbol())));
         input.aTokenSymbol = string(string.concat("sp", bytes(token.symbol())));
@@ -180,13 +188,27 @@ contract DeployAave is Script {
         stableDebtTokenImpl = new StableDebtToken(pool);
         variableDebtTokenImpl = new VariableDebtToken(pool);
 
+        treasuryController = new CollectorController(admin);
+        InitializableAdminUpgradeabilityProxy _treasury = new InitializableAdminUpgradeabilityProxy();
+        treasury = Collector(address(_treasury));
+        Collector collector = new Collector();
+        _treasury.initialize(
+            address(collector),
+            admin,
+            abi.encodeWithSignature("initialize(address)", address(treasuryController))
+        );
+
         // Init reserves
         ReserveConfig[] memory reserveConfigs = parseReserves();
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
 
             if (cfg.token == address(0)) {
-                cfg.token = address(new MintableERC20(cfg.name, cfg.name, 18));
+                if (cfg.name.eq("WETH")) {
+                    cfg.token = address(new WETH9Mocked());
+                } else {
+                    cfg.token = address(new MintableERC20(cfg.name, cfg.name, 18));
+                }
             }
             if (cfg.oracle == address(0)) {
                 cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 18)));

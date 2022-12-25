@@ -32,7 +32,7 @@
             "ltv": 7700,
             "liquidationThreshold": 9000,
             "liquidationBonus": 10400,
-            "reserveFactor": 0,
+            "reserveFactor": 10000,
             "eModeCategory": 0
         },
         {
