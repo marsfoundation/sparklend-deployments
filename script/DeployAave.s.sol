@@ -207,11 +207,11 @@ contract DeployAave is Script {
                 if (cfg.name.eq("WETH")) {
                     cfg.token = address(new WETH9Mocked());
                 } else {
-                    cfg.token = address(new MintableERC20(cfg.name, cfg.name, 18));
+                    cfg.token = address(new MintableERC20(cfg.name, cfg.name, cfg.name.eq("WBTC") ? 8 : 18));
                 }
             }
             if (cfg.oracle == address(0)) {
-                cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 18)));
+                cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
             }
 
             if (cfg.name.eq("WETH")) {
