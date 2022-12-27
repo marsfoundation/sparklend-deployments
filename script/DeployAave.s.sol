@@ -11,6 +11,7 @@ import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contract
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {InitializableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
 
+import {PoolAddressesProviderRegistry} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol";
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
 import {AaveProtocolDataProvider} from "aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol";
 import {PoolConfigurator} from "aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol";
@@ -28,6 +29,8 @@ import {DefaultReserveInterestRateStrategy} from "aave-v3-core/contracts/protoco
 
 import {Collector} from "aave-v3-periphery/treasury/Collector.sol";
 import {CollectorController} from "aave-v3-periphery/treasury/CollectorController.sol";
+import {RewardsController} from "aave-v3-periphery/rewards/RewardsController.sol";
+import {EmissionManager} from "aave-v3-periphery/rewards/EmissionManager.sol";
 
 import {UiPoolDataProviderV3} from "aave-v3-periphery/misc/UiPoolDataProviderV3.sol";
 import {UiIncentiveDataProviderV3} from "aave-v3-periphery/misc/UiIncentiveDataProviderV3.sol";
@@ -73,6 +76,7 @@ contract DeployAave is Script {
 
     string config;
 
+    PoolAddressesProviderRegistry registry;
     PoolAddressesProvider poolAddressesProvider;
     AaveProtocolDataProvider protocolDataProvider;
     PoolConfigurator poolConfigurator;
@@ -86,6 +90,8 @@ contract DeployAave is Script {
 
     Collector treasury;
     CollectorController treasuryController;
+    RewardsController incentives;
+    EmissionManager emissionManager;
 
     address weth;
     address wethOracle;
@@ -169,6 +175,7 @@ contract DeployAave is Script {
         address admin = config.readAddress(".admin", "AAVE_ADMIN");
 
         vm.startBroadcast();
+        registry = new PoolAddressesProviderRegistry(admin);
         poolAddressesProvider = new PoolAddressesProvider(config.readString(".marketId"), admin);
         poolAddressesProvider.setACLAdmin(admin);
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
@@ -176,6 +183,7 @@ contract DeployAave is Script {
         Pool _pool = new Pool(poolAddressesProvider);
         aclManager = new ACLManager(poolAddressesProvider);
         aclManager.addPoolAdmin(admin);
+        registry.registerAddressesProvider(address(poolAddressesProvider), 1);
 
         poolAddressesProvider.setPoolDataProvider(address(protocolDataProvider));
         poolAddressesProvider.setPoolImpl(address(_pool));
@@ -196,6 +204,16 @@ contract DeployAave is Script {
             address(collector),
             admin,
             abi.encodeWithSignature("initialize(address)", address(treasuryController))
+        );
+
+        InitializableAdminUpgradeabilityProxy _incentives = new InitializableAdminUpgradeabilityProxy();
+        incentives = RewardsController(address(_incentives));
+        RewardsController incentivesImpl = new RewardsController();
+        emissionManager = new EmissionManager(address(incentives), admin);
+        _incentives.initialize(
+            address(incentivesImpl),
+            admin,
+            abi.encodeWithSignature("initialize(address)", address(emissionManager))
         );
 
         // Init reserves
