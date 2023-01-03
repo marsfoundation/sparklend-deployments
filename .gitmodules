@@ -20,3 +20,7 @@
 	path = lib/v3-core
 	url = https://github.com/uniswap/v3-core
 	branch = v1.0.0
+[submodule "lib/dss-direct-deposit"]
+	path = lib/dss-direct-deposit
+	url = https://github.com/makerdao/dss-direct-deposit
+	branch = v1.0.0
