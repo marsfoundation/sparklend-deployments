@@ -10,7 +10,7 @@ rm -f out/contract-exports.env
 forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
 source out/contract-exports.env
 
-cd dependencies/dss-direct-deposit
+cd lib/dss-direct-deposit
 rm -f out/contract-exports.env
 
 export D3M_TYPE="aave"

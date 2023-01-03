@@ -12,18 +12,11 @@ import { Pool } from "aave-v3-core/contracts/protocol/pool/Pool.sol";
 import { AaveOracle } from 'aave-v3-core/contracts/misc/AaveOracle.sol';
 import { MintableERC20 } from "aave-v3-core/contracts/mocks/tokens/MintableERC20.sol";
 
-//import { MintableERC20 } from "v3-core/contracts/mocks/tokens/MintableERC20.sol";
+import { IUniswapV3Factory } from "v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import { IUniswapV3Pool } from "v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import { DaiFaucet } from "../src/DaiFaucet.sol";
-
-interface UniswapV3FactoryLike {
-    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address pool);
-    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool);
-}
-
-interface UniswapV3PoolLike {
-    function mint(address to, int24 tickLower, int24 tickUpper, uint128 amount, bytes calldata data) external;
-}
+import { LiquidityAmounts } from "../src/LiquidityAmounts.sol";
 
 contract SeedTestnet is Script {
 
@@ -36,7 +29,15 @@ contract SeedTestnet is Script {
     PoolAddressesProvider poolAddressesProvider;
     Pool pool;
     AaveOracle oracle;
-    UniswapV3FactoryLike factory;
+
+    IUniswapV3Factory factory;
+
+    address[] tokens;
+    address tokenA;
+    address tokenB;
+    uint24 fee;
+    address token0;
+    address token1;
 
     function run() external {
         config = ScriptTools.readInput("config");
@@ -45,7 +46,7 @@ contract SeedTestnet is Script {
         poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
         pool = Pool(ScriptTools.importContract("LENDING_POOL"));
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());
-        //factory = UniswapV3FactoryLike(vm.envAddr("UNISWAP_V3_FACTORY"));
+        factory = IUniswapV3Factory(vm.envAddress("UNISWAP_V3_FACTORY"));
 
         address deployer = msg.sender;
 
@@ -57,24 +58,32 @@ contract SeedTestnet is Script {
         pool.supply(address(dss.dai), dss.dai.balanceOf(deployer) / 2, deployer, 0);    // Only supply half to pool (other half goes to Uni V3 pools)
 
         // Add tokens to each of the Uniswap V3 pools
-        address[] memory tokens = pool.getReservesList();
-        address tokenB = address(dss.dai);
-        uint24 fee = 500;
+        tokens = pool.getReservesList();
+        tokenB = address(dss.dai);
+        fee = 500;
         uint256 perTokenDai = dss.dai.balanceOf(deployer) / (tokens.length - 1);
         for (uint256 i = 0; i < tokens.length; i++) {
-            address tokenA = tokens[i];
+            tokenA = tokens[i];
             if (tokenA == address(dss.dai)) continue;
 
             // Create the pool if it doesn't exist
-            (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-            address pool = factory.getPool(token0, token1, fee);
-            if (pool == address(0)) {
-                pool = factory.createPool(token0, token1, fee);
+            (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+            address upool = factory.getPool(token0, token1, fee);
+            if (upool == address(0)) {
+                upool = factory.createPool(token0, token1, fee);
             }
 
             // Add some liquidity to the pool
-            //MintableERC20(tokenA).mint(deployer, amtToMint);
-            //UniswapV3PoolLike(pool).mint(deployer, -887272, 887272, amtToMint, "");
+            uint256 tokensToMint = perTokenDai * oracle.getAssetPrice(tokenB) * 100 / oracle.getAssetPrice(tokenA);
+            MintableERC20(tokenA).mint(deployer, tokensToMint);
+            (uint160 sqrtRatioX96, , , , , , ) = IUniswapV3Pool(upool).slot0();
+            IUniswapV3Pool(upool).mint(deployer, -887272, 887272, LiquidityAmounts.getLiquidityForAmounts(
+                sqrtRatioX96,
+                4295128739,
+                1461446703485210103287273052203988822378723970342,
+                tokenA == token0 ? tokensToMint : perTokenDai,
+                tokenA == token0 ? perTokenDai : tokensToMint
+            ), "");
         }
         vm.stopBroadcast();
     }

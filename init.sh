@@ -5,7 +5,7 @@ set -e
 
 source out/contract-exports.env
 
-cd dependencies/dss-direct-deposit
+cd lib/dss-direct-deposit
 source out/contract-exports.env
 
 export ETH_FROM_ORIG="$ETH_FROM"
