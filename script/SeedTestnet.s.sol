@@ -12,6 +12,8 @@ import { Pool } from "aave-v3-core/contracts/protocol/pool/Pool.sol";
 import { AaveOracle } from 'aave-v3-core/contracts/misc/AaveOracle.sol';
 import { MintableERC20 } from "aave-v3-core/contracts/mocks/tokens/MintableERC20.sol";
 
+//import { MintableERC20 } from "v3-core/contracts/mocks/tokens/MintableERC20.sol";
+
 import { DaiFaucet } from "../src/DaiFaucet.sol";
 
 interface UniswapV3FactoryLike {
@@ -40,10 +42,10 @@ contract SeedTestnet is Script {
         config = ScriptTools.readInput("config");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog", "SEED_CHAINLOG"));
 
-        poolAddressProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
+        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
         pool = Pool(ScriptTools.importContract("LENDING_POOL"));
-        oracle = AaveOracle(poolAddressProvider.getPriceOracle());
-        factory = UniswapV3FactoryLike(vm.envAddr("UNISWAP_V3_FACTORY"));
+        oracle = AaveOracle(poolAddressesProvider.getPriceOracle());
+        //factory = UniswapV3FactoryLike(vm.envAddr("UNISWAP_V3_FACTORY"));
 
         address deployer = msg.sender;
 
@@ -71,8 +73,8 @@ contract SeedTestnet is Script {
             }
 
             // Add some liquidity to the pool
-            MintableERC20(tokenA).mint(deployer, amtToMint);
-            UniswapV3PoolLike(pool).mint(deployer, -887272, 887272, amtToMint, "");
+            //MintableERC20(tokenA).mint(deployer, amtToMint);
+            //UniswapV3PoolLike(pool).mint(deployer, -887272, 887272, amtToMint, "");
         }
         vm.stopBroadcast();
     }
