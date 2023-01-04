@@ -1,7 +1,7 @@
 {
     "admin": "0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB",
     "chainlog": "0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F",
-    "marketId": "Spark Lending",
+    "marketId": "Spark Lend",
     "aTokenNamePrefix": "Spark ",
     "aTokenSymbolPrefix": "sp",
     "variableDebtTokenNamePrefix": "Spark Variable Debt ",

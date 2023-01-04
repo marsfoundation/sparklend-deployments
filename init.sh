@@ -5,6 +5,9 @@ set -e
 
 source out/contract-exports.env
 
+export CHAINID="$(cast chain-id)"
+export FOUNDRY_SCRIPT_CONFIG_TEXT=`jq -c < script/input/$CHAINID/d3m-aave.json`
+
 cd lib/dss-direct-deposit
 source out/contract-exports.env
 
@@ -12,14 +15,6 @@ export ETH_FROM_ORIG="$ETH_FROM"
 cast rpc anvil_setBalance $MCD_PAUSE_PROXY 0x10000000000000000
 cast rpc anvil_impersonateAccount $MCD_PAUSE_PROXY
 unset ETH_FROM
-
-export D3M_TYPE="aave"
-export D3M_PLAN_TYPE="debt-ceiling"
-export D3M_ADMIN="$MCD_PAUSE_PROXY"
-export D3M_ILK="DIRECT-SPARK-DAI"
-export D3M_AAVE_LENDING_POOL="$FOUNDRY_EXPORT_LENDING_POOL"
-export D3M_MAX_LINE="300000000"
-export D3M_GAP="300000000"
 
 if [ $(cast chain-id) -eq 5 ]; then
     echo "Initializing D3M Core contracts..."    
