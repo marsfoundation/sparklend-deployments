@@ -83,15 +83,14 @@ contract SeedTestnet is Script {
             sqrtPriceX96;
             if (upool == address(0)) {
                 upool = factory.createPool(token0, token1, fee);
-                // TODO needs to take decimals into account for WBTC
-                sqrtPriceX96 = uint160(sqrt(oracle.getAssetPrice(tokenB) * (1 << 96) / oracle.getAssetPrice(tokenA)) << 48);
+                sqrtPriceX96 = uint160(sqrt(oracle.getAssetPrice(tokenB) * (10 ** MintableERC20(tokenA).decimals()) * (1 << 96) / (oracle.getAssetPrice(tokenA) * (10 ** MintableERC20(tokenB).decimals()))) << 48);
                 IUniswapV3Pool(upool).initialize(sqrtPriceX96);
             } else {
                 (sqrtPriceX96,,,,,,) = IUniswapV3Pool(upool).slot0();
             }
 
             // Add some liquidity to the pool
-            tokensToMint = perTokenDai * oracle.getAssetPrice(tokenB) * 100 / oracle.getAssetPrice(tokenA);
+            tokensToMint = perTokenDai * oracle.getAssetPrice(tokenB) * (10 ** MintableERC20(tokenA).decimals()) * 100 / (oracle.getAssetPrice(tokenA) * (10 ** MintableERC20(tokenB).decimals()));
             MintableERC20(tokenA).mint(deployer, tokensToMint);
             MintableERC20(tokenA).approve(address(manager), type(uint256).max);
             MintableERC20(tokenB).approve(address(manager), type(uint256).max);
