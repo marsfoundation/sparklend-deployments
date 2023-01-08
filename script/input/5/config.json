@@ -36,6 +36,22 @@
             "eModeCategory": 0
         },
         {
+            "name": "USDC",
+            "token": "0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43",
+            "borrow": false,
+            "irOptimalUsageRatio": 10000,
+            "irBaseVariableBorrowRate": 200,
+            "irVariableRateSlope1": 0,
+            "irVariableRateSlope2": 0,
+            "oracle": "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7",
+            "oracleMockPrice": 1,
+            "ltv": 7600,
+            "liquidationThreshold": 8900,
+            "liquidationBonus": 10450,
+            "reserveFactor": 1000,
+            "eModeCategory": 0
+        },
+        {
             "name": "WETH",
             "token": "0x0000000000000000000000000000000000000000",
             "borrow": true,
