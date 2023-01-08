@@ -22,6 +22,7 @@
         {
             "name": "DAI",
             "token": "0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844",
+            "decimals": 18,
             "borrow": true,
             "irOptimalUsageRatio": 10000,
             "irBaseVariableBorrowRate": 200,
@@ -37,7 +38,8 @@
         },
         {
             "name": "USDC",
-            "token": "0xA2025B15a1757311bfD68cb14eaeFCc237AF5b43",
+            "token": "0x0000000000000000000000000000000000000000",
+            "decimals": 6,
             "borrow": false,
             "irOptimalUsageRatio": 10000,
             "irBaseVariableBorrowRate": 200,
@@ -54,6 +56,7 @@
         {
             "name": "WETH",
             "token": "0x0000000000000000000000000000000000000000",
+            "decimals": 18,
             "borrow": true,
             "irOptimalUsageRatio": 7000,
             "irBaseVariableBorrowRate": 0,
@@ -70,6 +73,7 @@
         {
             "name": "stETH",
             "token": "0x0000000000000000000000000000000000000000",
+            "decimals": 18,
             "borrow": false,
             "irOptimalUsageRatio": 6000,
             "irBaseVariableBorrowRate": 0,
@@ -86,6 +90,7 @@
         {
             "name": "WBTC",
             "token": "0x0000000000000000000000000000000000000000",
+            "decimals": 8,
             "borrow": true,
             "irOptimalUsageRatio": 6500,
             "irBaseVariableBorrowRate": 0,

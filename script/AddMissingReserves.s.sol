@@ -70,36 +70,23 @@ struct EModeConfig {
     string label;
 }
 
-contract DeployAave is Script {
+contract AddMissingReserves is Script {
 
     using stdJson for string;
     using ScriptTools for string;
 
     string config;
 
-    PoolAddressesProviderRegistry registry;
     PoolAddressesProvider poolAddressesProvider;
-    AaveProtocolDataProvider protocolDataProvider;
     PoolConfigurator poolConfigurator;
     Pool pool;
-    ACLManager aclManager;
     AaveOracle aaveOracle;
 
-    AToken aTokenImpl;
-    StableDebtToken stableDebtTokenImpl;
-    VariableDebtToken variableDebtTokenImpl;
+    address aTokenImpl;
+    address stableDebtTokenImpl;
+    address variableDebtTokenImpl;
 
-    Collector treasury;
-    CollectorController treasuryController;
-    RewardsController incentives;
-    EmissionManager emissionManager;
-
-    address weth;
-    address wethOracle;
-    UiPoolDataProviderV3 uiPoolDataProvider;
-    UiIncentiveDataProviderV3 uiIncentiveDataProvider;
-    WrappedTokenGatewayV3 wethGateway;
-    WalletBalanceProvider walletBalanceProvider;
+    address treasury;
 
     ConfiguratorInputTypes.InitReserveInput[] reserves;
     address[] assets;
@@ -132,22 +119,6 @@ contract DeployAave is Script {
         return _reserves;
     }
 
-    function setupEModeCategories() internal {
-        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".emodeCategories");
-        for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".emodeCategories["), bytes(Strings.toString(i)), "]"));
-            poolConfigurator.setEModeCategory({
-                categoryId: uint8(config.readUint(string(string.concat(bytes(base), bytes(".categoryId"))))),
-                ltv: uint16(config.readUint(string(string.concat(bytes(base), bytes(".ltv"))))),
-                liquidationThreshold: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold"))))),
-                liquidationBonus: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus"))))),
-                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
-                label: config.readString(string(string.concat(bytes(base), bytes(".label"))))
-            });
-        }
-    }
-
     function makeReserve(
         IERC20Detailed token,
         IReserveInterestRateStrategy strategy
@@ -174,54 +145,32 @@ contract DeployAave is Script {
     function run() external {
         config = ScriptTools.readInput("config");
 
-        address admin = config.readAddress(".admin", "AAVE_ADMIN");
+        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
+        poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
+        pool = Pool(poolAddressesProvider.getPool());
+        aaveOracle = AaveOracle(poolAddressesProvider.getPriceOracle());
+
+        aTokenImpl = vm.envAddress("AAVE_ATOKEN_IMPL");
+        variableDebtTokenImpl = vm.envAddress("AAVE_VARIABLE_DEBT_IMPL");
+        stableDebtTokenImpl = vm.envAddress("AAVE_STABLE_DEBT_IMPL");
+        treasury = vm.envAddress("AAVE_TREASURY");
 
         vm.startBroadcast();
-        registry = new PoolAddressesProviderRegistry(admin);
-        poolAddressesProvider = new PoolAddressesProvider(config.readString(".marketId"), admin);
-        poolAddressesProvider.setACLAdmin(admin);
-        protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
-        PoolConfigurator _poolConfigurator = new PoolConfigurator();
-        Pool _pool = new Pool(poolAddressesProvider);
-        aclManager = new ACLManager(poolAddressesProvider);
-        aclManager.addPoolAdmin(admin);
-        registry.registerAddressesProvider(address(poolAddressesProvider), 1);
-
-        poolAddressesProvider.setPoolDataProvider(address(protocolDataProvider));
-        poolAddressesProvider.setPoolImpl(address(_pool));
-        pool = Pool(poolAddressesProvider.getPool());
-        poolAddressesProvider.setPoolConfiguratorImpl(address(_poolConfigurator));
-        poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
-        poolAddressesProvider.setACLManager(address(aclManager));
-
-        aTokenImpl = new AToken(pool);
-        stableDebtTokenImpl = new StableDebtToken(pool);
-        variableDebtTokenImpl = new VariableDebtToken(pool);
-
-        treasuryController = new CollectorController(admin);
-        InitializableAdminUpgradeabilityProxy _treasury = new InitializableAdminUpgradeabilityProxy();
-        treasury = Collector(address(_treasury));
-        Collector collector = new Collector();
-        _treasury.initialize(
-            address(collector),
-            admin,
-            abi.encodeWithSignature("initialize(address)", address(treasuryController))
-        );
-
-        InitializableAdminUpgradeabilityProxy _incentives = new InitializableAdminUpgradeabilityProxy();
-        incentives = RewardsController(address(_incentives));
-        RewardsController incentivesImpl = new RewardsController();
-        emissionManager = new EmissionManager(address(incentives), admin);
-        _incentives.initialize(
-            address(incentivesImpl),
-            admin,
-            abi.encodeWithSignature("initialize(address)", address(emissionManager))
-        );
 
         // Init reserves
         ReserveConfig[] memory reserveConfigs = parseReserves();
+        address[] memory existingReserves = pool.getReservesList();
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
+
+            bool skip = false;
+            for (uint256 o = 0; o < existingReserves.length; o++) {
+                if (MintableERC20(existingReserves[o]).symbol().eq(cfg.name)) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) continue;
 
             if (cfg.token == address(0)) {
                 if (cfg.name.eq("WETH")) {
@@ -232,11 +181,6 @@ contract DeployAave is Script {
             }
             if (cfg.oracle == address(0)) {
                 cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
-            }
-
-            if (cfg.name.eq("WETH")) {
-                weth = cfg.token;
-                wethOracle = cfg.oracle;
             }
 
             require(IERC20Detailed(address(cfg.token)).symbol().eq(cfg.name), "Token name doesn't match symbol");
@@ -260,31 +204,22 @@ contract DeployAave is Script {
             assetOracleSources.push(address(cfg.oracle));
         }
         poolConfigurator.initReserves(reserves);
-        poolConfigurator.updateFlashloanPremiumTotal(0);    // Flash loans are free
-
-        IEACAggregatorProxy proxy = IEACAggregatorProxy(wethOracle);
-        uiPoolDataProvider = new UiPoolDataProviderV3(proxy, proxy);
-        uiIncentiveDataProvider = new UiIncentiveDataProviderV3();
-        wethGateway = new WrappedTokenGatewayV3(weth, admin, IPool(address(pool)));
-        walletBalanceProvider = new WalletBalanceProvider();
 
         // Setup oracles
-        aaveOracle = new AaveOracle(
-            poolAddressesProvider,
-            assets,
-            assetOracleSources,
-            address(0),
-            address(0),     // USD
-            1e8
-        );
-        poolAddressesProvider.setPriceOracle(address(aaveOracle));
-
-        // Setup e-mode categories
-        setupEModeCategories();
+        aaveOracle.setAssetSources(assets, assetOracleSources);
 
         // Setup reserves
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
+
+            bool skip = false;
+            for (uint256 o = 0; o < existingReserves.length; o++) {
+                if (MintableERC20(existingReserves[o]).symbol().eq(cfg.name)) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) continue;
 
             poolConfigurator.setReserveBorrowing(address(cfg.token), cfg.borrowEnabled == 1);
             poolConfigurator.configureReserveAsCollateral({
@@ -296,14 +231,8 @@ contract DeployAave is Script {
             poolConfigurator.setReserveFactor(address(cfg.token), cfg.reserveFactor);
             poolConfigurator.setAssetEModeCategory(address(cfg.token), uint8(cfg.eModeCategory));
         }
-        vm.stopBroadcast();
 
-        ScriptTools.exportContract("LENDING_POOL_ADDRESS_PROVIDER", address(poolAddressesProvider));
-        ScriptTools.exportContract("LENDING_POOL", address(pool));
-        ScriptTools.exportContract("WETH_GATEWAY", address(wethGateway));
-        ScriptTools.exportContract("WALLET_BALANCE_PROVIDER", address(walletBalanceProvider));
-        ScriptTools.exportContract("UI_POOL_DATA_PROVIDER", address(uiPoolDataProvider));
-        ScriptTools.exportContract("UI_INCENTIVE_DATA_PROVIDER", address(uiIncentiveDataProvider));
+        vm.stopBroadcast();
     }
 
 }
