@@ -95,17 +95,17 @@ contract CreateLiquidations is Script {
             uint256 cindex = i % tokens.length;
             uint256 bindex = (i / tokens.length) % tokens.length;
             address ctoken = tokens[cindex];
-            if (!originalSettings[bindex].borrowingEnabled || cindex == 3) {     // FIXME Skip WBTC as collateral for now -- it's broken for some reason
+            if (!originalSettings[bindex].borrowingEnabled) {
                 numUsers++;
                 continue;
             }
             address btoken = tokens[bindex];
-            uint256 bfactor = ((i % 2) == 0) ? 10200 : 11000;
+            uint256 bfactor = (((block.number + i) % 2) == 0) ? 10200 : 11000;
             AaveUser user = new AaveUser(address(pool));
             
             // Deposit collateral
             uint256 depositAmount = valuePerAsset * (10 ** MintableERC20(ctoken).decimals()) * oracle.BASE_CURRENCY_UNIT() / oracle.getAssetPrice(ctoken);
-            uint256 borrowAmount = valuePerAsset * originalSettings[bindex].liquidationThreshold * bfactor * (10 ** MintableERC20(btoken).decimals()) * oracle.BASE_CURRENCY_UNIT() / (oracle.getAssetPrice(btoken) * 1e8);
+            uint256 borrowAmount = valuePerAsset * originalSettings[cindex].liquidationThreshold * bfactor * (10 ** MintableERC20(btoken).decimals()) * oracle.BASE_CURRENCY_UNIT() / (oracle.getAssetPrice(btoken) * 1e8);
             if (MintableERC20(ctoken).balanceOf(deployer) >= depositAmount) {
                 MintableERC20(ctoken).transfer(address(user), depositAmount);
             } else {
