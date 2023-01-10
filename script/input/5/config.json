@@ -38,7 +38,7 @@
         },
         {
             "name": "USDC",
-            "token": "0x0000000000000000000000000000000000000000",
+            "token": "0x6Fb5ef893d44F4f88026430d82d4ef269543cB23",
             "decimals": 6,
             "borrow": false,
             "irOptimalUsageRatio": 10000,
