@@ -8,6 +8,8 @@
     "variableDebtTokenSymbolPrefix": "variableDebt",
     "stableDebtTokenNamePrefix": "Spark Stable Debt ",
     "stableDebtTokenSymbolPrefix": "stableDebt",
+    "makerFaucet": "0xa473CdDD6E4FAc72481dc36f39A409D86980D187",
+    "usdcPsm": "0xb480B8dD5A232Cb7B227989Eacda728D1F247dB6",
     "emodeCategories": [
         {
             "categoryId": 1,
@@ -25,7 +27,7 @@
             "decimals": 18,
             "borrow": true,
             "irOptimalUsageRatio": 10000,
-            "irBaseVariableBorrowRate": 200,
+            "irBaseVariableBorrowRate": 100,
             "irVariableRateSlope1": 0,
             "irVariableRateSlope2": 0,
             "oracle": "0x0d79df66BE487753B02D015Fb622DED7f0E9798d",
@@ -42,7 +44,7 @@
             "decimals": 6,
             "borrow": false,
             "irOptimalUsageRatio": 10000,
-            "irBaseVariableBorrowRate": 200,
+            "irBaseVariableBorrowRate": 100,
             "irVariableRateSlope1": 0,
             "irVariableRateSlope2": 0,
             "oracle": "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7",

@@ -16,7 +16,7 @@ import { IUniswapV3Factory } from "v3-core/contracts/interfaces/IUniswapV3Factor
 import { IUniswapV3Pool } from "v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
 import { TickMath } from "../src/TickMath.sol";
-import { DaiFaucet } from "../src/DaiFaucet.sol";
+import { Faucet } from "../src/Faucet.sol";
 import { LiquidityAmounts } from "../src/LiquidityAmounts.sol";
 import { INonfungiblePositionManager } from "../src/INonfungiblePositionManager.sol";
 
@@ -34,7 +34,7 @@ contract SeedTestnet is Script {
     Pool pool;
     AaveOracle oracle;
 
-    DaiFaucet daiFaucet;
+    Faucet faucet;
 
     IUniswapV3Factory factory;
     INonfungiblePositionManager manager;
@@ -58,13 +58,13 @@ contract SeedTestnet is Script {
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());
         factory = IUniswapV3Factory(vm.envAddress("UNISWAP_V3_FACTORY"));
         manager = INonfungiblePositionManager(vm.envAddress("UNISWAP_V3_POSITION_MANAGER"));
+        faucet = Faucet(ScriptTools.importContract("FAUCET"));
 
         deployer = msg.sender;
 
         vm.startBroadcast();
         // Add some faucet DAI to the pool to simulate a D3M deposit
-        daiFaucet = new DaiFaucet(dss.chainlog.getAddress("MCD_PSM_USDC_A"), dss.chainlog.getAddress("FAUCET"));
-        daiFaucet.gulp(deployer, 1);
+        faucet.mint(address(dss.dai), 1);
         dss.dai.approve(address(pool), type(uint256).max);
         pool.supply(address(dss.dai), dss.dai.balanceOf(deployer) / 2, deployer, 0);    // Only supply half to pool (other half goes to Uni V3 pools)
 

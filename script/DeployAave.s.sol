@@ -43,6 +43,8 @@ import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.s
 import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
 import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
+import {Faucet} from "../src/Faucet.sol";
+
 struct ReserveConfig {
     string name;
     address token;
@@ -100,6 +102,7 @@ contract DeployAave is Script {
     UiIncentiveDataProviderV3 uiIncentiveDataProvider;
     WrappedTokenGatewayV3 wethGateway;
     WalletBalanceProvider walletBalanceProvider;
+    Faucet faucet;
 
     ConfiguratorInputTypes.InitReserveInput[] reserves;
     address[] assets;
@@ -296,11 +299,18 @@ contract DeployAave is Script {
             poolConfigurator.setReserveFactor(address(cfg.token), cfg.reserveFactor);
             poolConfigurator.setAssetEModeCategory(address(cfg.token), uint8(cfg.eModeCategory));
         }
+        
+        // Deploy a faucet if this is a testnet
+        address makerFaucet = config.readAddress(".makerFaucet");
+        if (makerFaucet != address(0)) {
+            faucet = new Faucet(makerFaucet, config.readAddress(".usdcPsm"));
+        }
         vm.stopBroadcast();
 
         ScriptTools.exportContract("LENDING_POOL_ADDRESS_PROVIDER", address(poolAddressesProvider));
         ScriptTools.exportContract("LENDING_POOL", address(pool));
         ScriptTools.exportContract("WETH_GATEWAY", address(wethGateway));
+        if (address(faucet) != address(0)) ScriptTools.exportContract("FAUCET", address(faucet));
         ScriptTools.exportContract("WALLET_BALANCE_PROVIDER", address(walletBalanceProvider));
         ScriptTools.exportContract("UI_POOL_DATA_PROVIDER", address(uiPoolDataProvider));
         ScriptTools.exportContract("UI_INCENTIVE_DATA_PROVIDER", address(uiIncentiveDataProvider));
