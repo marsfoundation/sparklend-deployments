@@ -43,7 +43,7 @@ import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.s
 import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
 import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
-import {Faucet} from "../src/Faucet.sol";
+import {Faucet} from "../src/testnet/Faucet.sol";
 
 struct ReserveConfig {
     string name;

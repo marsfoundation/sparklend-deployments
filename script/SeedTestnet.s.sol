@@ -15,10 +15,10 @@ import { MintableERC20 } from "aave-v3-core/contracts/mocks/tokens/MintableERC20
 import { IUniswapV3Factory } from "v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import { IUniswapV3Pool } from "v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-import { TickMath } from "../src/TickMath.sol";
-import { Faucet } from "../src/Faucet.sol";
-import { LiquidityAmounts } from "../src/LiquidityAmounts.sol";
-import { INonfungiblePositionManager } from "../src/INonfungiblePositionManager.sol";
+import { TickMath } from "../src/testnet/TickMath.sol";
+import { Faucet } from "../src/testnet/Faucet.sol";
+import { LiquidityAmounts } from "../src/testnet/LiquidityAmounts.sol";
+import { INonfungiblePositionManager } from "../src/testnet/INonfungiblePositionManager.sol";
 
 contract SeedTestnet is Script {
 
