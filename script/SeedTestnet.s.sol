@@ -91,7 +91,8 @@ contract SeedTestnet is Script {
 
             // Add some liquidity to the pool
             tokensToMint = perTokenDai * oracle.getAssetPrice(tokenB) * (10 ** MintableERC20(tokenA).decimals()) * 100 / (oracle.getAssetPrice(tokenA) * (10 ** MintableERC20(tokenB).decimals()));
-            MintableERC20(tokenA).mint(deployer, tokensToMint);
+            faucet.mint(tokenA, tokensToMint);
+            tokensToMint = MintableERC20(tokenA).balanceOf(deployer);
             MintableERC20(tokenA).approve(address(manager), type(uint256).max);
             MintableERC20(tokenB).approve(address(manager), type(uint256).max);
             manager.mint(

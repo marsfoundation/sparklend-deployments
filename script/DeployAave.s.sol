@@ -213,8 +213,8 @@ contract DeployAave is Script {
 
         InitializableAdminUpgradeabilityProxy _incentives = new InitializableAdminUpgradeabilityProxy();
         incentives = RewardsController(address(_incentives));
-        RewardsController incentivesImpl = new RewardsController();
-        emissionManager = new EmissionManager(address(incentives), admin);
+        emissionManager = new EmissionManager(admin);
+        RewardsController incentivesImpl = new RewardsController(address(emissionManager));
         _incentives.initialize(
             address(incentivesImpl),
             admin,
