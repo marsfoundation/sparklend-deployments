@@ -10,30 +10,36 @@ import {IVariableInterestToken} from './IVariableInterestToken.sol';
  */
 interface IFixedRatesManager {
     /**
-    * @dev Emitted when an fixedRatesManager is initialized
-    * @param pool The pool contract that is initializing this contract
-    * @param vToken The address of the vToken
-    * @param owner The address of the owner of this contract
-    * @param treasury The treasury contract
-    **/
+     * @dev Emitted when an fixedRatesManager is initialized
+     * @param pool The pool contract that is initializing this contract
+     * @param vToken The address of the vToken
+     * @param admin The address of the admin of this contract
+     * @param treasury The treasury contract
+     **/
     event Initialized(
         address indexed pool,
         address indexed vToken,
-        address owner,
+        address admin,
         address treasury
     );
 
     /**
-    * @notice Initializes the variableInterestToken
-    * @param pool The pool contract that is initializing this contract
-    * @param vToken The address of the vToken
-    * @param owner The address of the owner of this contract
-    * @param treasury The treasury contract
-    */
+     * @dev Emitted during the transfer of ownership of the administrator address
+     * @param admin The new administrator address
+     **/
+    event NewAdmin(address indexed admin);
+
+    /**
+     * @notice Initializes the variableInterestToken
+     * @param pool The pool contract that is initializing this contract
+     * @param vToken The address of the vToken
+     * @param admin The address of the admin of this contract
+     * @param treasury The treasury contract
+     */
     function initialize(
         IPool pool,
         IVariableInterestToken vToken,
-        address owner,
+        address admin,
         address treasury
     ) external;
 
@@ -58,10 +64,27 @@ interface IFixedRatesManager {
     ) external;
 
     /**
+     * @notice Burns `amount` variableInterestTokens and repays the loan of `to`
+     * @dev Note that this only works if there is enough liquidity in the pool
+     * @param to The address of the user that has a loan
+     * @param amount The amount of tokens getting repaid
+     */
+    function redeemAndRepay(
+        address to,
+        uint256 amount
+    ) external;
+
+    /**
      * @notice Updates all interest rate calculations, pulls in tokens and splits between vToken and treasury
      * @return The variable borrow index as of this current timestamp
      */
     function update() external returns (uint256);
+
+    /**
+     * @notice Returns the last index value
+     * @return The last index value
+     */
+    function getLastIndex() external view returns (uint256);
 
     /**
      * @notice Returns the address of the pool
@@ -98,4 +121,17 @@ interface IFixedRatesManager {
         address to,
         uint256 amount
     ) external;
+
+    /**
+     * @dev Retrieve the current administrator
+     * @return The address of the administrator
+     */
+    function getAdmin() external view returns (address);
+
+    /**
+     * @dev Transfer the ownership of the administrator role.
+            This function should only be callable by the current administrator.
+     * @param admin The address of the new administrator
+     */
+    function setAdmin(address admin) external;
 }
