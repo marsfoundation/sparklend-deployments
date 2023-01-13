@@ -298,6 +298,7 @@ contract DeployAave is Script {
             });
             poolConfigurator.setReserveFactor(address(cfg.token), cfg.reserveFactor);
             poolConfigurator.setAssetEModeCategory(address(cfg.token), uint8(cfg.eModeCategory));
+            poolConfigurator.setReserveFlashLoaning(address(cfg.token), true);
         }
         
         // Deploy a faucet if this is a testnet

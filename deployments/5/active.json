@@ -603,7 +603,7 @@
     {
       "hash": "0x9eb3181f6894f4aeb84b509841b36cdd573126d44d30bbc8b74da4b85673d06c",
       "transactionType": "CREATE",
-      "contractName": "Incentives",
+      "contractName": "IncentivesController",
       "contractAddress": "0x033c8556F25d14E3f8B918a901BCa565ae5571d8",
       "function": null,
       "arguments": null,
