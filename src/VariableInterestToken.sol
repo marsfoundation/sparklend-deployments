@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.10;
 
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
@@ -12,8 +12,9 @@ import {IAaveIncentivesController} from 'aave-v3-core/contracts/interfaces/IAave
 import {ScaledBalanceTokenBase} from 'aave-v3-core/contracts/protocol/tokenization/base/ScaledBalanceTokenBase.sol';
 import {IncentivizedERC20} from 'aave-v3-core/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {EIP712Base} from 'aave-v3-core/contracts/protocol/tokenization/base/EIP712Base.sol';
-import {IVariableInterestToken} from './IVariableInterestToken.sol';
-import {IInitializableVariableInterestToken} from './IInitializableVariableInterestToken.sol';
+import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
+import {IVariableInterestToken} from './interfaces/IVariableInterestToken.sol';
+import {IInitializableVariableInterestToken} from './interfaces/IInitializableVariableInterestToken.sol';
 
 /**
  * @title Spark Variable Interest Token
@@ -30,13 +31,14 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     uint256 public constant VARIABLE_INTEREST_REVISION = 0x1;
 
     address internal _manager;
+    address internal _aToken;
     address internal _underlyingAsset;
 
     /**
     * @dev Only manager can call functions marked by this modifier.
     **/
     modifier onlyManager() {
-        require(_msgSender() == address(_manager), "ONLY_MANAGER");
+        require(_msgSender() == _manager, "ONLY_MANAGER");
         _;
     }
 
@@ -60,7 +62,7 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     function initialize(
         IPool initializingPool,
         address manager,
-        address underlyingAsset,
+        IAToken aToken,
         IAaveIncentivesController incentivesController,
         uint8 variableInterestTokenDecimals,
         string calldata variableInterestTokenName,
@@ -73,13 +75,14 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
         _setDecimals(variableInterestTokenDecimals);
 
         _manager = manager;
-        _underlyingAsset = underlyingAsset;
+        _aToken = address(aToken);
+        _underlyingAsset = aToken.UNDERLYING_ASSET_ADDRESS();
         _incentivesController = incentivesController;
 
         _domainSeparator = _calculateDomainSeparator();
 
         emit Initialized(
-            underlyingAsset,
+            address(aToken),
             address(POOL),
             manager,
             address(incentivesController),
@@ -92,24 +95,21 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
 
     /// @inheritdoc IVariableInterestToken
     function mint(
-        address caller,
-        address onBehalfOf,
-        uint256 amount,
-        uint256 index
+        address to,
+        uint256 amount
     ) external virtual override onlyManager returns (bool) {
-        return _mintScaled(caller, onBehalfOf, amount, index);
+        return _mintScaled(_msgSender(), to, amount, POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
     }
 
     /// @inheritdoc IVariableInterestToken
     function burn(
         address from,
         address receiverOfUnderlying,
-        uint256 amount,
-        uint256 index
+        uint256 amount
     ) external virtual override onlyManager {
-        _burnScaled(from, receiverOfUnderlying, amount, index);
+        _burnScaled(from, receiverOfUnderlying, amount, POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
         if (receiverOfUnderlying != address(this)) {
-            IERC20(_underlyingAsset).safeTransfer(receiverOfUnderlying, amount);
+            IERC20(address(_aToken)).safeTransfer(receiverOfUnderlying, amount);
         }
     }
 
@@ -138,6 +138,11 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     /// @inheritdoc IVariableInterestToken
     function RESERVE_MANAGER_ADDRESS() external view override returns (address) {
         return _manager;
+    }
+
+    /// @inheritdoc IVariableInterestToken
+    function ATOKEN_ADDRESS() external view override returns (address) {
+        return _aToken;
     }
 
     /// @inheritdoc IVariableInterestToken
@@ -198,7 +203,7 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
         address to,
         uint256 amount
     ) external override onlyPoolAdmin {
-        require(token != _underlyingAsset, Errors.UNDERLYING_CANNOT_BE_RESCUED);
+        require(token != _aToken, Errors.UNDERLYING_CANNOT_BE_RESCUED);
         IERC20(token).safeTransfer(to, amount);
     }
 }

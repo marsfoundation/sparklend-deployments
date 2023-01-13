@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0
+// SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.10;
 
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
@@ -12,34 +12,28 @@ import {IInitializableVariableInterestToken} from './IInitializableVariableInter
 interface IVariableInterestToken is IERC20, IScaledBalanceToken, IInitializableVariableInterestToken {
 
     /**
-     * @notice Mints `amount` aTokens to `user`
-     * @param caller The address performing the mint
-     * @param onBehalfOf The address of the user that will receive the minted aTokens
+     * @notice Mints `amount` variableInterestTokens to `to`
+     * @param to The address of the user that will receive the minted variableInterestTokens
      * @param amount The amount of tokens getting minted
-     * @param index The next liquidity index of the reserve
      * @return `true` if the the previous balance of the user was 0
      */
     function mint(
-        address caller,
-        address onBehalfOf,
-        uint256 amount,
-        uint256 index
+        address to,
+        uint256 amount
     ) external returns (bool);
 
     /**
-     * @notice Burns aTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
+     * @notice Burns variableInterestTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`
      * @dev In some instances, the mint event could be emitted from a burn transaction
      * if the amount to burn is less than the interest that the user accrued
-     * @param from The address from which the aTokens will be burned
+     * @param from The address from which the variableInterestTokens will be burned
      * @param receiverOfUnderlying The address that will receive the underlying
      * @param amount The amount being burned
-     * @param index The next liquidity index of the reserve
      **/
     function burn(
         address from,
         address receiverOfUnderlying,
-        uint256 amount,
-        uint256 index
+        uint256 amount
     ) external;
 
     /**
@@ -63,6 +57,12 @@ interface IVariableInterestToken is IERC20, IScaledBalanceToken, IInitializableV
         bytes32 r,
         bytes32 s
     ) external;
+
+    /**
+     * @notice Returns the address of the aToken
+     * @return The address of the aToken
+     **/
+    function ATOKEN_ADDRESS() external view returns (address);
 
     /**
      * @notice Returns the address of the underlying asset of this aToken (E.g. WETH for aWETH)
