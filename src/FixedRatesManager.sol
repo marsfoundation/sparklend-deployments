@@ -87,6 +87,7 @@ contract FixedRatesManager is VersionedInitializable, IFixedRatesManager {
     function redeemAndRepay(address to, uint256 amount) external {
         this.update();
         _vToken.burn(msg.sender, address(this), amount);
+        _pool.withdraw(_underlyingAsset, amount, address(this));
         _pool.repay(_underlyingAsset, amount, 2, to);
     }
 

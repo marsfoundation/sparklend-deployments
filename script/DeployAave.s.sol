@@ -92,12 +92,14 @@ contract DeployAave is Script {
     VariableDebtToken variableDebtTokenImpl;
 
     Collector treasury;
+    Collector daiTreasury;
     CollectorController treasuryController;
     RewardsController incentives;
     EmissionManager emissionManager;
 
     address weth;
     address wethOracle;
+    address savingsDai;
     UiPoolDataProviderV3 uiPoolDataProvider;
     UiIncentiveDataProviderV3 uiIncentiveDataProvider;
     WrappedTokenGatewayV3 wethGateway;
@@ -162,7 +164,7 @@ contract DeployAave is Script {
         input.underlyingAssetDecimals = token.decimals();
         input.interestRateStrategyAddress = address(strategy);
         input.underlyingAsset = address(token);
-        input.treasury = address(treasury);
+        input.treasury = token.symbol().eq("DAI") ? address(daiTreasury) : address(treasury);
         input.incentivesController = address(0);
         input.aTokenName = string(string.concat("Spark ", bytes(token.symbol())));
         input.aTokenSymbol = string(string.concat("sp", bytes(token.symbol())));
@@ -172,6 +174,17 @@ contract DeployAave is Script {
         input.stableDebtTokenSymbol = string(string.concat("stableDebt", bytes(token.symbol())));
         input.params = "";
         return input;
+    }
+
+    function createCollector(address admin) internal returns (Collector collector) {
+        InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
+        collector = Collector(address(proxy));
+        Collector collector = new Collector();
+        proxy.initialize(
+            address(collector),
+            admin,
+            abi.encodeWithSignature("initialize(address)", address(treasuryController))
+        );
     }
 
     function run() external {
@@ -202,21 +215,15 @@ contract DeployAave is Script {
         variableDebtTokenImpl = new VariableDebtToken(pool);
 
         treasuryController = new CollectorController(admin);
-        InitializableAdminUpgradeabilityProxy _treasury = new InitializableAdminUpgradeabilityProxy();
-        treasury = Collector(address(_treasury));
-        Collector collector = new Collector();
-        _treasury.initialize(
-            address(collector),
-            admin,
-            abi.encodeWithSignature("initialize(address)", address(treasuryController))
-        );
+        treasury = createCollector(admin);
+        daiTreasury = createCollector(admin);
 
-        InitializableAdminUpgradeabilityProxy _incentives = new InitializableAdminUpgradeabilityProxy();
-        incentives = RewardsController(address(_incentives));
+        InitializableAdminUpgradeabilityProxy incentivesProxy = new InitializableAdminUpgradeabilityProxy();
+        incentives = RewardsController(address(incentivesProxy));
         emissionManager = new EmissionManager(admin);
-        RewardsController incentivesImpl = new RewardsController(address(emissionManager));
-        _incentives.initialize(
-            address(incentivesImpl),
+        RewardsController rewardsController = new RewardsController(address(emissionManager));
+        incentivesProxy.initialize(
+            address(rewardsController),
             admin,
             abi.encodeWithSignature("initialize(address)", address(emissionManager))
         );
@@ -240,6 +247,10 @@ contract DeployAave is Script {
             if (cfg.name.eq("WETH")) {
                 weth = cfg.token;
                 wethOracle = cfg.oracle;
+            }
+
+            if (cfg.name.eq("sDAI")) {
+                savingsDai = cfg.token;
             }
 
             require(IERC20Detailed(address(cfg.token)).symbol().eq(cfg.name), "Token name doesn't match symbol");
@@ -304,7 +315,7 @@ contract DeployAave is Script {
         // Deploy a faucet if this is a testnet
         address makerFaucet = config.readAddress(".makerFaucet");
         if (makerFaucet != address(0)) {
-            faucet = new Faucet(makerFaucet, config.readAddress(".usdcPsm"));
+            faucet = new Faucet(makerFaucet, config.readAddress(".usdcPsm"), savingsDai);
         }
         vm.stopBroadcast();
 

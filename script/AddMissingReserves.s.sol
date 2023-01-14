@@ -87,6 +87,7 @@ contract AddMissingReserves is Script {
     address variableDebtTokenImpl;
 
     address treasury;
+    address daiTreasury;
 
     ConfiguratorInputTypes.InitReserveInput[] reserves;
     address[] assets;
@@ -130,7 +131,7 @@ contract AddMissingReserves is Script {
         input.underlyingAssetDecimals = token.decimals();
         input.interestRateStrategyAddress = address(strategy);
         input.underlyingAsset = address(token);
-        input.treasury = address(treasury);
+        input.treasury = token.symbol().eq("DAI") ? address(daiTreasury) : address(treasury);
         input.incentivesController = address(0);
         input.aTokenName = string(string.concat("Spark ", bytes(token.symbol())));
         input.aTokenSymbol = string(string.concat("sp", bytes(token.symbol())));
@@ -154,6 +155,8 @@ contract AddMissingReserves is Script {
         variableDebtTokenImpl = vm.envAddress("AAVE_VARIABLE_DEBT_IMPL");
         stableDebtTokenImpl = vm.envAddress("AAVE_STABLE_DEBT_IMPL");
         treasury = vm.envAddress("AAVE_TREASURY");
+        daiTreasury = vm.envAddress("AAVE_DAI_TREASURY");
+
 
         vm.startBroadcast();
 
@@ -230,6 +233,7 @@ contract AddMissingReserves is Script {
             });
             poolConfigurator.setReserveFactor(address(cfg.token), cfg.reserveFactor);
             poolConfigurator.setAssetEModeCategory(address(cfg.token), uint8(cfg.eModeCategory));
+            poolConfigurator.setReserveFlashLoaning(address(cfg.token), true);
         }
 
         vm.stopBroadcast();

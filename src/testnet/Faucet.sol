@@ -18,6 +18,7 @@ interface TokenLike {
     function transfer(address, uint256) external;
     function balanceOf(address) external view returns (uint256);
     function mint(address, uint256) external;
+    function deposit(uint256, address) external returns (uint256);
 }
 
 interface MakerFaucetLike {
@@ -36,16 +37,19 @@ contract Faucet {
 
     PsmLike public immutable psm;
     TokenLike public immutable dai;
+    TokenLike public immutable sDai;
     TokenLike public immutable gem;
     MakerFaucetLike public immutable makerFaucet;
 
-    constructor(address _makerFaucet, address _psm) {
+    constructor(address _makerFaucet, address _psm, address _sDai) {
         psm = PsmLike(_psm);
         dai = TokenLike(psm.dai());
+        sDai = TokenLike(_sDai);
         gem = TokenLike(GemJoinLike(psm.gemJoin()).gem());
         makerFaucet = MakerFaucetLike(_makerFaucet);
 
         gem.approve(psm.gemJoin(), type(uint256).max);
+        dai.approve(_sDai, type(uint256).max);
     }
 
     function mint(address token, uint256 amount) external {
@@ -53,6 +57,11 @@ contract Faucet {
             GulpProxy proxy = new GulpProxy();
             proxy.gulp(makerFaucet, gem, address(this));
             psm.sellGem(msg.sender, gem.balanceOf(address(this)));
+        } else if (token == address(sDai)) {
+            GulpProxy proxy = new GulpProxy();
+            proxy.gulp(makerFaucet, gem, address(this));
+            psm.sellGem(address(this), gem.balanceOf(address(this)));
+            sDai.deposit(dai.balanceOf(address(this)), msg.sender);
         } else if (makerFaucet.amt(token) > 0) {
             GulpProxy proxy = new GulpProxy();
             proxy.gulp(makerFaucet, TokenLike(token), msg.sender);

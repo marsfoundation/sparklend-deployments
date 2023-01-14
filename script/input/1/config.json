@@ -39,6 +39,23 @@
             "eModeCategory": 0
         },
         {
+            "name": "sDAI",
+            "token": "0x0000000000000000000000000000000000000000",
+            "decimals": 18,
+            "borrow": false,
+            "irOptimalUsageRatio": 0,
+            "irBaseVariableBorrowRate": 0,
+            "irVariableRateSlope1": 0,
+            "irVariableRateSlope2": 0,
+            "oracle": "0x0000000000000000000000000000000000000000",
+            "oracleMockPrice": 1,
+            "ltv": 7700,
+            "liquidationThreshold": 9000,
+            "liquidationBonus": 10400,
+            "reserveFactor": 10,
+            "eModeCategory": 0
+        },
+        {
             "name": "USDC",
             "token": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
             "decimals": 6,
