@@ -2,8 +2,8 @@
 pragma solidity 0.8.10;
 
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {Ownable} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol';
 import {GPv2SafeERC20} from 'aave-v3-core/contracts/dependencies/gnosis/contracts/GPv2SafeERC20.sol';
-import {VersionedInitializable} from 'aave-v3-core/contracts/protocol/libraries/aave-upgradeability/VersionedInitializable.sol';
 import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
 import {IAToken} from 'aave-v3-core/contracts/interfaces/IAToken.sol';
 import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
@@ -14,110 +14,80 @@ import {IVariableInterestToken} from './interfaces/IVariableInterestToken.sol';
  * @title Spark Fixed Rates Manager
  * @notice Mints variable interest tokens and sends them to external protocols.
  */
-contract FixedRatesManager is VersionedInitializable, IFixedRatesManager {
+contract FixedRatesManager is Ownable, IFixedRatesManager {
     using WadRayMath for uint256;
     using GPv2SafeERC20 for IERC20;
 
-    uint256 public constant FIXED_RATES_MANAGER_REVISION = 0x1;
-    uint256 public constant DUST = 1 ether;
-
-    uint256 private constant RAY = 10 ** 27;
-
-    IPool internal _pool;
-    IVariableInterestToken internal _vToken;
-    address internal _admin;
-    IAToken internal _aToken;
-    address internal _underlyingAsset;
-    address internal _treasury;
-
-    uint256 internal _lastIndex;
+    IPool internal immutable _pool;
+    IVariableInterestToken internal immutable _vToken;
+    IAToken internal immutable _aToken;
+    address internal immutable _underlyingAsset;
+    address internal immutable _treasurySource;
+    address internal immutable _treasuryDestination;
 
     /**
-     * @dev Allow only the administrator address to call functions marked by this modifier
+     * @notice Creates the fixed rates manager
+     * @param pool The pool contract
+     * @param vToken The address of the vToken
+     * @param admin The address of the admin of this contract
+     * @param treasurySource The treasury contract to pull funds from
+     * @param treasuryDestination The treasury contract to send excess funds to
      */
-    modifier onlyAdmin() {
-        require(msg.sender == _admin, 'ONLY_BY_ADMIN');
-        _;
-    }
-
-    /// @inheritdoc IFixedRatesManager
-    function initialize(
+    constructor(
         IPool pool,
         IVariableInterestToken vToken,
         address admin,
-        address treasury
-    ) external override initializer {
+        address treasurySource,
+        address treasuryDestination
+    ) {
         _pool = pool;
         _vToken = vToken;
         _aToken = IAToken(vToken.ATOKEN_ADDRESS());
         _underlyingAsset = vToken.UNDERLYING_ASSET_ADDRESS();
-        _treasury = treasury;
-        _lastIndex = 10 ** 27;
-        _setAdmin(admin);
+        _treasurySource = treasurySource;
+        _treasuryDestination = treasuryDestination;
+        transferOwnership(admin);
 
-        // Need DUST amount of dai to trigger index updates
-        IERC20(_underlyingAsset).safeTransferFrom(msg.sender, address(this), DUST);
         IERC20(_underlyingAsset).approve(address(pool), type(uint256).max);
-
-        emit Initialized(
-            address(pool),
-            address(vToken),
-            admin,
-            treasury
-        );
-    }
-
-    function _triggerIndexUpdate() private {
-        _pool.supply(_underlyingAsset, 1, address(this), 2);
+        _aToken.approve(address(vToken), type(uint256).max);
     }
 
     /// @inheritdoc IFixedRatesManager
-    function mint(address to, uint256 amount) external onlyAdmin {
-        this.update();
+    function mint(address to, uint256 amount) external onlyOwner {
+        _pullFunds();
         _vToken.mint(to, amount);
+        _pushFunds();
     }
 
     /// @inheritdoc IFixedRatesManager
     function redeem(address to, uint256 amount) external {
-        this.update();
+        _pullFunds();
         _vToken.burn(msg.sender, to, amount);
+        _pushFunds();
     }
 
     /// @inheritdoc IFixedRatesManager
     function redeemAndRepay(address to, uint256 amount) external {
-        this.update();
+        _pullFunds();
         _vToken.burn(msg.sender, address(this), amount);
+        _pushFunds();
+
         _pool.withdraw(_underlyingAsset, amount, address(this));
         _pool.repay(_underlyingAsset, amount, 2, to);
     }
 
-    /// @inheritdoc IFixedRatesManager
-    function update() public returns (uint256 index) {
+    // Pull latest amount of funds from the pool / treasury source
+    function _pullFunds() private {
         _triggerIndexUpdate();
-        index = _pool.getReserveNormalizedVariableDebt(_underlyingAsset);
-
-        // Pull latest amount of the asset back
         address[] memory assets = new address[](1);
         assets[0] = _underlyingAsset;
         _pool.mintToTreasury(assets);
-
-        // Send the delta to the vToken
-        uint256 delta = (index - _lastIndex).rayMul(_vToken.totalSupply());  // TODO: check this math is correct
-        _aToken.transfer(address(_vToken), delta);
-        _lastIndex = index;
-
-        // Send anything left over to the treasury
-        _aToken.transfer(_treasury, _aToken.balanceOf(address(this)));
+        IERC20(address(_aToken)).safeTransferFrom(_treasurySource, address(this), _aToken.balanceOf(_treasurySource));
     }
 
-    /// @inheritdoc VersionedInitializable
-    function getRevision() internal pure virtual override returns (uint256) {
-        return FIXED_RATES_MANAGER_REVISION;
-    }
-
-    /// @inheritdoc IFixedRatesManager
-    function getLastIndex() external view override returns (uint256) {
-        return _lastIndex;
+    // Push any unclaimed funds to the treausry destination
+    function _pushFunds() private {
+        IERC20(address(_aToken)).safeTransfer(_treasuryDestination, _aToken.balanceOf(address(this)));
     }
 
     /// @inheritdoc IFixedRatesManager
@@ -141,31 +111,36 @@ contract FixedRatesManager is VersionedInitializable, IFixedRatesManager {
     }
 
     /// @inheritdoc IFixedRatesManager
+    function TREASURY_SOURCE() external view override returns (address) {
+        return _treasurySource;
+    }
+
+    /// @inheritdoc IFixedRatesManager
+    function TREASURY_DESTINATION() external view override returns (address) {
+        return _treasuryDestination;
+    }
+
+    /// @inheritdoc IFixedRatesManager
     function rescueTokens(
         address token,
         address to,
         uint256 amount
-    ) external override onlyAdmin {
+    ) external override onlyOwner {
         IERC20(token).safeTransfer(to, amount);
     }
 
-    /// @inheritdoc IFixedRatesManager
-    function setAdmin(address admin) external onlyAdmin {
-        _setAdmin(admin);
+    function _triggerIndexUpdate() private {
+        // Not great for gas, but this is the only way to trigger index update without requiring any assets
+        _pool.flashLoanSimple(address(this), _underlyingAsset, 1, "", 0);
     }
-
-    /**
-     * @dev Transfer the ownership of the administrator role.
-     * @param admin The address of the new administrator
-     */
-    function _setAdmin(address admin) internal {
-        _admin = admin;
-        emit NewAdmin(admin);
-    }
-
-    /// @inheritdoc IFixedRatesManager
-    function getAdmin() external view returns (address) {
-        return _admin;
+    function executeOperation(
+        address,
+        uint256,
+        uint256,
+        address,
+        bytes calldata
+    ) external pure returns (bool) {
+        return true;
     }
 
 }

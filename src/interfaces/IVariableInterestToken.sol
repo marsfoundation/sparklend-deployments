@@ -74,7 +74,7 @@ interface IVariableInterestToken is IERC20, IScaledBalanceToken, IInitializableV
      * @notice Returns the address of the manager.
      * @return Address of the manager
      **/
-    function RESERVE_MANAGER_ADDRESS() external view returns (address);
+    function MANAGER_ADDRESS() external view returns (address);
 
     /**
      * @notice Get the domain separator for the token
@@ -101,4 +101,10 @@ interface IVariableInterestToken is IERC20, IScaledBalanceToken, IInitializableV
         address to,
         uint256 amount
     ) external;
+
+    /**
+     * @notice Returns the last index value
+     * @return The last index value
+     */
+    function getLastIndex() external view returns (uint256);
 }

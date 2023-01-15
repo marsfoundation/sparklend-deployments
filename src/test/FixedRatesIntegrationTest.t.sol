@@ -9,13 +9,13 @@ import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/c
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {InitializableImmutableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/protocol/libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 import {WadRayMath} from 'aave-v3-core/contracts/protocol/libraries/math/WadRayMath.sol';
-
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
 import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
 import {IAToken} from "aave-v3-core/contracts/interfaces/IAToken.sol";
 import {IAaveIncentivesController} from "aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol";
 import {DataTypes} from "aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
 import {ReserveConfiguration} from "aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import {ICollector} from "aave-v3-periphery/treasury/interfaces/ICollector.sol";
 
 import {VariableInterestToken} from "../VariableInterestToken.sol";
 import {FixedRatesManager} from "../FixedRatesManager.sol";
@@ -52,14 +52,13 @@ contract FixedRatesIntegrationTest is DSSTest {
         aToken = getAToken(address(dai));
         treasury = aToken.RESERVE_TREASURY_ADDRESS();
 
-        InitializableImmutableAdminUpgradeabilityProxy managerProxy = new InitializableImmutableAdminUpgradeabilityProxy(TEST_ADDRESS);
         vToken = VariableInterestToken(initProxy(
             TEST_ADDRESS,
             address(new VariableInterestToken(pool)),
             abi.encodeWithSelector(
                 VariableInterestToken.initialize.selector,
                 address(pool),
-                address(managerProxy),
+                computeCreateAddress(address(this), 3),
                 aToken,
                 IAaveIncentivesController(address(0)),
                 18,
@@ -68,19 +67,16 @@ contract FixedRatesIntegrationTest is DSSTest {
                 ""
             )
         ));
-        address(dai).setBalance(address(this), 1 ether);
-        dai.approve(address(managerProxy), 1 ether);
-        mgr = FixedRatesManager(initProxy(
-            managerProxy,
-            address(new FixedRatesManager()),
-            abi.encodeWithSelector(
-                FixedRatesManager.initialize.selector,
-                address(pool),
-                address(vToken),
-                address(this),
-                treasury
-            )
-        ));
+        mgr = new FixedRatesManager(
+            pool,
+            vToken,
+            address(this),
+            treasury,
+            treasury
+        );
+        assertEq(vToken.MANAGER_ADDRESS(), address(mgr));
+        vm.prank(ICollector(treasury).getFundsAdmin());
+        ICollector(treasury).approve(aToken, address(mgr), type(uint256).max);
 
         // Borrow 100k of DAI
         loanSize = 100_000 ether;
@@ -129,7 +125,7 @@ contract FixedRatesIntegrationTest is DSSTest {
 
         // Accumulate some interest
         vm.warp(block.timestamp + 1 days);
-        pool.supply(address(dai), 1, address(this), 0);     // Trigger interest accumulation
+        _triggerIndexUpdate();
         address[] memory assets = new address[](1);
         assets[0] = address(dai);
         pool.mintToTreasury(assets);
@@ -139,6 +135,19 @@ contract FixedRatesIntegrationTest is DSSTest {
         assertApproxEqAbs(vToken.balanceOf(address(this)), loanSize + delta.wadMul(ratio), 10);
 
         //mgr.redeem(address(this), loanSize);
+    }
+
+    function _triggerIndexUpdate() private {
+        pool.flashLoanSimple(address(this), address(dai), 1, "", 0);
+    }
+    function executeOperation(
+        address,
+        uint256,
+        uint256,
+        address,
+        bytes calldata
+    ) external pure returns (bool) {
+        return true;
     }
 
 }

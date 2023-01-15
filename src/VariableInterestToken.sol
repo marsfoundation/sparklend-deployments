@@ -34,6 +34,8 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     address internal _aToken;
     address internal _underlyingAsset;
 
+    uint256 internal _lastIndex;
+
     /**
     * @dev Only manager can call functions marked by this modifier.
     **/
@@ -78,6 +80,7 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
         _aToken = address(aToken);
         _underlyingAsset = aToken.UNDERLYING_ASSET_ADDRESS();
         _incentivesController = incentivesController;
+        _lastIndex = POOL.getReserveNormalizedVariableDebt(_underlyingAsset);
 
         _domainSeparator = _calculateDomainSeparator();
 
@@ -98,7 +101,9 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
         address to,
         uint256 amount
     ) external virtual override onlyManager returns (bool) {
-        return _mintScaled(_msgSender(), to, amount, POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
+        uint256 index = POOL.getReserveNormalizedVariableDebt(_underlyingAsset);
+        _ensureEnoughTokens(index);
+        return _mintScaled(_msgSender(), to, amount, index);
     }
 
     /// @inheritdoc IVariableInterestToken
@@ -107,10 +112,18 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
         address receiverOfUnderlying,
         uint256 amount
     ) external virtual override onlyManager {
-        _burnScaled(from, receiverOfUnderlying, amount, POOL.getReserveNormalizedVariableDebt(_underlyingAsset));
+        uint256 index = POOL.getReserveNormalizedVariableDebt(_underlyingAsset);
+        _ensureEnoughTokens(index);
+        _burnScaled(from, receiverOfUnderlying, amount, index);
         if (receiverOfUnderlying != address(this)) {
             IERC20(address(_aToken)).safeTransfer(receiverOfUnderlying, amount);
         }
+    }
+
+    function _ensureEnoughTokens(uint256 index) private {
+        uint256 delta = (index - _lastIndex).rayMul(totalSupply());  // TODO: check this math is correct
+        IERC20(address(_aToken)).safeTransferFrom(_manager, address(this), delta);
+        _lastIndex = index;
     }
 
     /// @inheritdoc IERC20
@@ -136,7 +149,7 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     }
 
     /// @inheritdoc IVariableInterestToken
-    function RESERVE_MANAGER_ADDRESS() external view override returns (address) {
+    function MANAGER_ADDRESS() external view override returns (address) {
         return _manager;
     }
 
@@ -205,5 +218,10 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     ) external override onlyPoolAdmin {
         require(token != _aToken, Errors.UNDERLYING_CANNOT_BE_RESCUED);
         IERC20(token).safeTransfer(to, amount);
+    }
+
+    /// @inheritdoc IVariableInterestToken
+    function getLastIndex() external view override returns (uint256) {
+        return _lastIndex;
     }
 }

@@ -9,39 +9,6 @@ import {IVariableInterestToken} from './IVariableInterestToken.sol';
  * @notice Interface for the Fixed Rates Manager contract.
  */
 interface IFixedRatesManager {
-    /**
-     * @dev Emitted when an fixedRatesManager is initialized
-     * @param pool The pool contract that is initializing this contract
-     * @param vToken The address of the vToken
-     * @param admin The address of the admin of this contract
-     * @param treasury The treasury contract
-     **/
-    event Initialized(
-        address indexed pool,
-        address indexed vToken,
-        address admin,
-        address treasury
-    );
-
-    /**
-     * @dev Emitted during the transfer of ownership of the administrator address
-     * @param admin The new administrator address
-     **/
-    event NewAdmin(address indexed admin);
-
-    /**
-     * @notice Initializes the variableInterestToken
-     * @param pool The pool contract that is initializing this contract
-     * @param vToken The address of the vToken
-     * @param admin The address of the admin of this contract
-     * @param treasury The treasury contract
-     */
-    function initialize(
-        IPool pool,
-        IVariableInterestToken vToken,
-        address admin,
-        address treasury
-    ) external;
 
     /**
      * @notice Mints `amount` variableInterestTokens to `to`
@@ -75,18 +42,6 @@ interface IFixedRatesManager {
     ) external;
 
     /**
-     * @notice Updates all interest rate calculations, pulls in tokens and splits between vToken and treasury
-     * @return The variable borrow index as of this current timestamp
-     */
-    function update() external returns (uint256);
-
-    /**
-     * @notice Returns the last index value
-     * @return The last index value
-     */
-    function getLastIndex() external view returns (uint256);
-
-    /**
      * @notice Returns the address of the pool
      * @return The address of the pool
      **/
@@ -105,10 +60,22 @@ interface IFixedRatesManager {
     function ATOKEN_ADDRESS() external view returns (address);
 
     /**
-     * @notice Returns the address of the underlying asset of this vToken
+     * @notice Returns the address of the underlying asset
      * @return The address of the underlying asset
      **/
     function UNDERLYING_ASSET_ADDRESS() external view returns (address);
+
+    /**
+     * @notice Returns the address of the treasury source
+     * @return The address of the treasury source
+     **/
+    function TREASURY_SOURCE() external view returns (address);
+
+    /**
+     * @notice Returns the address of the treasury destination
+     * @return The address of the treasury destination
+     **/
+    function TREASURY_DESTINATION() external view returns (address);
 
     /**
      * @notice Rescue and transfer tokens locked in this contract
@@ -121,17 +88,4 @@ interface IFixedRatesManager {
         address to,
         uint256 amount
     ) external;
-
-    /**
-     * @dev Retrieve the current administrator
-     * @return The address of the administrator
-     */
-    function getAdmin() external view returns (address);
-
-    /**
-     * @dev Transfer the ownership of the administrator role.
-            This function should only be callable by the current administrator.
-     * @param admin The address of the new administrator
-     */
-    function setAdmin(address admin) external;
 }
