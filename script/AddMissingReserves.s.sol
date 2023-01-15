@@ -238,6 +238,8 @@ contract AddMissingReserves is Script {
             poolConfigurator.setReserveFactor(address(cfg.token), cfg.reserveFactor);
             poolConfigurator.setAssetEModeCategory(address(cfg.token), uint8(cfg.eModeCategory));
             poolConfigurator.setReserveFlashLoaning(address(cfg.token), true);
+            if (cfg.supplyCap != 0) poolConfigurator.setSupplyCap(address(cfg.token), cfg.supplyCap);
+            if (cfg.borrowCap != 0) poolConfigurator.setBorrowCap(address(cfg.token), cfg.borrowCap);
         }
 
         vm.stopBroadcast();
