@@ -27,6 +27,8 @@ contract FixedRatesIntegrationTest is DSSTest {
     using GodMode for *;
     using WadRayMath for uint256;
 
+    uint256 constant ERROR_ONE_BPS = WAD / BPS;
+
     string config;
     DssInstance dss;
 
@@ -34,7 +36,8 @@ contract FixedRatesIntegrationTest is DSSTest {
     Pool pool;
     IERC20 dai;
     IAToken aToken;
-    address treasury;
+    address treasurySource;
+    address treasuryDestination;
     
     VariableInterestToken vToken;
     FixedRatesManager mgr;
@@ -50,10 +53,11 @@ contract FixedRatesIntegrationTest is DSSTest {
         poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
         pool = Pool(poolAddressesProvider.getPool());
         aToken = getAToken(address(dai));
-        treasury = aToken.RESERVE_TREASURY_ADDRESS();
+        treasurySource = aToken.RESERVE_TREASURY_ADDRESS();
+        treasuryDestination = TEST_ADDRESS;
 
         vToken = VariableInterestToken(initProxy(
-            TEST_ADDRESS,
+            address(123),
             address(new VariableInterestToken(pool)),
             abi.encodeWithSelector(
                 VariableInterestToken.initialize.selector,
@@ -71,12 +75,10 @@ contract FixedRatesIntegrationTest is DSSTest {
             pool,
             vToken,
             address(this),
-            treasury,
-            treasury
+            treasurySource,
+            treasuryDestination
         );
-        assertEq(vToken.MANAGER_ADDRESS(), address(mgr));
-        vm.prank(ICollector(treasury).getFundsAdmin());
-        ICollector(treasury).approve(aToken, address(mgr), type(uint256).max);
+        assertEq(vToken.MANAGER_ADDRESS(), address(mgr), "bad manager address");
 
         // Borrow 100k of DAI
         loanSize = 100_000 ether;
@@ -88,7 +90,11 @@ contract FixedRatesIntegrationTest is DSSTest {
         address[] memory assets = new address[](1);
         assets[0] = address(dai);
         pool.mintToTreasury(assets);
-        address(dai).setBalance(address(this), 1 ether);
+
+        vm.startPrank(ICollector(treasurySource).getFundsAdmin());
+        ICollector(treasurySource).approve(aToken, address(mgr), type(uint256).max);
+        ICollector(treasurySource).transfer(aToken, treasuryDestination, aToken.balanceOf(treasurySource));
+        vm.stopPrank();
     }
 
     function getLTV(address asset) internal view returns (uint256) {
@@ -113,28 +119,35 @@ contract FixedRatesIntegrationTest is DSSTest {
     }
 
     function test_interest_accumulates() public {
-        assertEq(aToken.balanceOf(address(vToken)), 0);
-        uint256 prevAmount = aToken.balanceOf(treasury);
+        uint256 aTokensDestinationInitial = aToken.balanceOf(treasuryDestination);
+        assertEq(aToken.balanceOf(address(vToken)), 0, "vToken should have no aToken to start");
+        assertEq(aToken.balanceOf(treasurySource), 0, "treasurySource should have no aTokens to start");
         uint256 ratio = loanSize.wadDiv(aToken.totalSupply() - dai.balanceOf(address(aToken)));
         
         mgr.mint(address(this), loanSize);
 
-        assertEq(aToken.balanceOf(address(vToken)), 0);
-        assertApproxEqAbs(aToken.balanceOf(treasury), prevAmount, 1);
-        assertEq(vToken.balanceOf(address(this)), loanSize);
+        assertEq(aToken.balanceOf(address(vToken)), 0, "vToken should still have no aToken after minting");
+        assertEq(aToken.balanceOf(treasurySource), 0, "treasurySource should have no aTokens after minting");
+        assertEq(vToken.balanceOf(address(this)), loanSize, "we should have the loanSize in vTokens after minting");
 
         // Accumulate some interest
-        vm.warp(block.timestamp + 1 days);
+        vm.warp(block.timestamp + 365 days);
         _triggerIndexUpdate();
         address[] memory assets = new address[](1);
         assets[0] = address(dai);
         pool.mintToTreasury(assets);
-        uint256 delta = aToken.balanceOf(treasury) - prevAmount;
+        uint256 delta = aToken.balanceOf(treasurySource);
+        uint256 myInterest = delta.wadMul(ratio);
 
-        assertEq(aToken.balanceOf(address(vToken)), 0);
-        assertApproxEqAbs(vToken.balanceOf(address(this)), loanSize + delta.wadMul(ratio), 10);
+        assertEq(aToken.balanceOf(address(vToken)), 0, "vToken should still have no aToken after collecting interest permissionlessly");
+        assertEq(aToken.balanceOf(treasuryDestination), aTokensDestinationInitial, "treasury destination aTokens should be unchanged");
+        assertApproxEqRel(vToken.balanceOf(address(this)), loanSize + myInterest, ERROR_ONE_BPS, "my vTokens should have increased by my interest");
 
-        //mgr.redeem(address(this), loanSize);
+        mgr.mint(address(this), 0); // Trigger the interest to be transferred to the vToken and any remainder into the treasury
+
+        assertApproxEqRel(aToken.balanceOf(address(vToken)), myInterest, ERROR_ONE_BPS, "aToken balance of vToken should be my interest");
+        assertApproxEqRel(aToken.balanceOf(treasuryDestination), aTokensDestinationInitial + delta - myInterest, ERROR_ONE_BPS, "aToken balance of treasury destination be the remainder");
+        assertEq(aToken.balanceOf(treasurySource), 0, "treasurySource should have no aTokens after minting");
     }
 
     function _triggerIndexUpdate() private {

@@ -15,12 +15,11 @@ interface IVariableInterestToken is IERC20, IScaledBalanceToken, IInitializableV
      * @notice Mints `amount` variableInterestTokens to `to`
      * @param to The address of the user that will receive the minted variableInterestTokens
      * @param amount The amount of tokens getting minted
-     * @return `true` if the the previous balance of the user was 0
      */
     function mint(
         address to,
         uint256 amount
-    ) external returns (bool);
+    ) external;
 
     /**
      * @notice Burns variableInterestTokens from `user` and sends the equivalent amount of underlying to `receiverOfUnderlying`

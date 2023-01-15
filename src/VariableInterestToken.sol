@@ -100,10 +100,10 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     function mint(
         address to,
         uint256 amount
-    ) external virtual override onlyManager returns (bool) {
+    ) external virtual override onlyManager {
         uint256 index = POOL.getReserveNormalizedVariableDebt(_underlyingAsset);
         _ensureEnoughTokens(index);
-        return _mintScaled(_msgSender(), to, amount, index);
+        if (amount != 0) _mintScaled(_msgSender(), to, amount, index);  // Can use mint(_, 0) to trigger an index update
     }
 
     /// @inheritdoc IVariableInterestToken
@@ -121,7 +121,7 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
     }
 
     function _ensureEnoughTokens(uint256 index) private {
-        uint256 delta = (index - _lastIndex).rayMul(totalSupply());  // TODO: check this math is correct
+        uint256 delta = (index - _lastIndex).rayMul(super.totalSupply());
         IERC20(address(_aToken)).safeTransferFrom(_manager, address(this), delta);
         _lastIndex = index;
     }

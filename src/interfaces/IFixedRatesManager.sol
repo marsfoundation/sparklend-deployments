@@ -12,6 +12,8 @@ interface IFixedRatesManager {
 
     /**
      * @notice Mints `amount` variableInterestTokens to `to`
+     * @dev You can call this with `amount` = 0 to pull update the interest and send excess
+     *      to the destination treasury
      * @param to The address of the user that will receive the minted variableInterestTokens
      * @param amount The amount of tokens getting minted
      */
