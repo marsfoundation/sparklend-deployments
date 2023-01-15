@@ -59,6 +59,8 @@ struct ReserveConfig {
     uint256 liquidationBonus;
     uint256 reserveFactor;
     uint256 eModeCategory;
+    uint256 supplyCap;
+    uint256 borrowCap;
 }
 
 struct EModeConfig {
@@ -114,7 +116,9 @@ contract AddMissingReserves is Script {
                 liquidationThreshold: config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold")))),
                 liquidationBonus: config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus")))),
                 reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
-                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory"))))
+                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
+                supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
+                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap"))))
             });
         }
         return _reserves;

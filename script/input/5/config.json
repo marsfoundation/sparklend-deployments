@@ -36,7 +36,9 @@
             "liquidationThreshold": 9000,
             "liquidationBonus": 10400,
             "reserveFactor": 10000,
-            "eModeCategory": 0
+            "eModeCategory": 0,
+            "supplyCap": 0,
+            "borrowCap": 0
         },
         {
             "name": "sDAI",
@@ -53,7 +55,9 @@
             "liquidationThreshold": 9000,
             "liquidationBonus": 10400,
             "reserveFactor": 10,
-            "eModeCategory": 0
+            "eModeCategory": 0,
+            "supplyCap": 0,
+            "borrowCap": 0
         },
         {
             "name": "USDC",
@@ -70,7 +74,9 @@
             "liquidationThreshold": 0,
             "liquidationBonus": 0,
             "reserveFactor": 1000,
-            "eModeCategory": 0
+            "eModeCategory": 0,
+            "supplyCap": 0,
+            "borrowCap": 0
         },
         {
             "name": "WETH",
@@ -87,7 +93,9 @@
             "liquidationThreshold": 8600,
             "liquidationBonus": 10500,
             "reserveFactor": 1000,
-            "eModeCategory": 1
+            "eModeCategory": 1,
+            "supplyCap": 0,
+            "borrowCap": 0
         },
         {
             "name": "stETH",
@@ -104,7 +112,9 @@
             "liquidationThreshold": 8300,
             "liquidationBonus": 10700,
             "reserveFactor": 1000,
-            "eModeCategory": 1
+            "eModeCategory": 1,
+            "supplyCap": 0,
+            "borrowCap": 0
         },
         {
             "name": "WBTC",
@@ -121,7 +131,9 @@
             "liquidationThreshold": 8200,
             "liquidationBonus": 10500,
             "reserveFactor": 2000,
-            "eModeCategory": 0
+            "eModeCategory": 0,
+            "supplyCap": 1000,
+            "borrowCap": 0
         }
     ]
 }

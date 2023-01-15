@@ -61,6 +61,8 @@ struct ReserveConfig {
     uint256 liquidationBonus;
     uint256 reserveFactor;
     uint256 eModeCategory;
+    uint256 supplyCap;
+    uint256 borrowCap;
 }
 
 struct EModeConfig {
@@ -131,7 +133,9 @@ contract DeployAave is Script {
                 liquidationThreshold: config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold")))),
                 liquidationBonus: config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus")))),
                 reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
-                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory"))))
+                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
+                supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
+                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap"))))
             });
         }
         return _reserves;
@@ -310,6 +314,8 @@ contract DeployAave is Script {
             poolConfigurator.setReserveFactor(address(cfg.token), cfg.reserveFactor);
             poolConfigurator.setAssetEModeCategory(address(cfg.token), uint8(cfg.eModeCategory));
             poolConfigurator.setReserveFlashLoaning(address(cfg.token), true);
+            if (cfg.supplyCap != 0) poolConfigurator.setSupplyCap(address(cfg.token), cfg.supplyCap);
+            if (cfg.borrowCap != 0) poolConfigurator.setBorrowCap(address(cfg.token), cfg.borrowCap);
         }
         
         // Deploy a faucet if this is a testnet
