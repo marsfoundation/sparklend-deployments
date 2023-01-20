@@ -54,7 +54,7 @@ contract VariableInterestToken is VersionedInitializable, ScaledBalanceTokenBase
      * @param pool The address of the Pool contract
      */
     constructor(IPool pool)
-        ScaledBalanceTokenBase(pool, 'VARIABLE_DEBT_TOKEN_IMPL', 'VARIABLE_DEBT_TOKEN_IMPL', 0)
+        ScaledBalanceTokenBase(pool, 'VARIABLE_INTEREST_TOKEN_IMPL', 'VARIABLE_INTEREST_TOKEN_IMPL', 0)
         EIP712Base()
     {
         // Intentionally left blank
