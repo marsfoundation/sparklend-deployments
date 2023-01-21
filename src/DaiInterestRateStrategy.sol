@@ -45,8 +45,8 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
      * @param _vat The address of the vat contract
      * @param _pot The address of the pot contract
      * @param _ilk The ilk identifier
-     * @param _spread The spread on top of the dsr
-     * @param _maxRate The maximum rate that can be returned by this strategy
+     * @param _spread The spread on top of the dsr as an APR in RAY units
+     * @param _maxRate The maximum rate that can be returned by this strategy in RAY units
      */
     constructor(
         address _vat,
@@ -60,13 +60,15 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         ilk = _ilk;
         spread = _spread;
         maxRate = _maxRate;
+
+        recompute();
     }
 
     /**
     * @notice Fetch debt ceiling and dsr. Expensive operation should be called only when underlying values change.
     * @dev This incurs a lot of SLOADs and infrequently changes. No need to call this on every calculation.
     */
-    function recompute() external {
+    function recompute() public {
         (,,, uint256 line,) = VatLike(vat).ilks(ilk);
         uint256 rate = (PotLike(pot).dsr() - RAY) * SECONDS_PER_YEAR + spread;
 
