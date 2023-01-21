@@ -105,6 +105,10 @@ contract DaiInterestRateStrategyTest is DSSTest {
         assertEq(getBorrowRate(0), FLAT_RATE, "borrow should be flat rate at 0 debt");
         assertEq(getBorrowRate(1_000_000 * WAD), FLAT_RATE, "borrow should be flat rate at debt ceiling");
         assertEq(getBorrowRate(2_000_000 * WAD), FLAT_RATE + (7500 * ONE_BPS - FLAT_RATE) / 2, "borrow should be about half the max rate when 200% over capacity");
+        vat.setLine(0);
+        interestStrategy.recompute();
+        assertEq(getBorrowRate(1), 7500 * ONE_BPS, "borrow should be max rate when no capacity and any outstanding borrow");
+        assertEq(getBorrowRate(0), FLAT_RATE, "borrow should be flat rate when both are 0");
     }
 
     function makeParams(uint256 totalVariableDebt) internal pure returns (DataTypes.CalculateInterestRatesParams memory) {
