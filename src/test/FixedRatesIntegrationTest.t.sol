@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.10;
 
-import "dss-test/DSSTest.sol";
+import "dss-test/DssTest.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -20,7 +20,7 @@ import {ICollector} from "aave-v3-periphery/treasury/interfaces/ICollector.sol";
 import {VariableInterestToken} from "../VariableInterestToken.sol";
 import {FixedRatesManager} from "../FixedRatesManager.sol";
 
-contract FixedRatesIntegrationTest is DSSTest {
+contract FixedRatesIntegrationTest is DssTest {
 
     using stdJson for string;
     using MCD for *;

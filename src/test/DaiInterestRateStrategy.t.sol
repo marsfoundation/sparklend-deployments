@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.10;
 
-import "dss-test/DSSTest.sol";
+import "dss-test/DssTest.sol";
 
 import "../DaiInterestRateStrategy.sol";
 
@@ -30,7 +30,7 @@ contract PotMock {
 
 }
 
-contract DaiInterestRateStrategyTest is DSSTest {
+contract DaiInterestRateStrategyTest is DssTest {
 
     VatMock vat;
     PotMock pot;

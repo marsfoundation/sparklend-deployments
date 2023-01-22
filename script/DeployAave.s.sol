@@ -183,9 +183,9 @@ contract DeployAave is Script {
     function createCollector(address admin) internal returns (Collector collector) {
         InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
         collector = Collector(address(proxy));
-        Collector collector = new Collector();
+        Collector collectorImpl = new Collector();
         proxy.initialize(
-            address(collector),
+            address(collectorImpl),
             admin,
             abi.encodeWithSignature("initialize(address)", address(treasuryController))
         );

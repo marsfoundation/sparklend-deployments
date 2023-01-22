@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.10;
 
-import "dss-test/DSSTest.sol";
+import "dss-test/DssTest.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -46,7 +46,7 @@ contract User {
 
 }
 
-contract IntegrationTest is DSSTest {
+contract IntegrationTest is DssTest {
 
     using stdJson for string;
     using MCD for *;

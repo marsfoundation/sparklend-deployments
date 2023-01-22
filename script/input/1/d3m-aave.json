@@ -3,11 +3,12 @@
     "admin": "0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB",
     "hub": "0x12F36cdEA3A28C35aC8C6Cc71D9265c17C74A27F",
     "poolType": "aave",
-    "planType": "debt-ceiling",
+    "planType": "liquidity-buffer",
     "ilk": "DIRECT-SPARK-DAI",
-    "maxLine": 300000000,
-    "gap": 300000000,
+    "maxLine": 500000000,
+    "gap": 50000000,
     "ttl": 28800,
     "tau": 604800,
+    "buffer": 50000000,
     "king": "0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB"
 }
