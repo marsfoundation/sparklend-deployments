@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 
 import "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
+import { MCD, DssInstance } from "dss-test/MCD.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -43,6 +44,8 @@ import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.s
 import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
 import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
+import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
+
 struct ReserveConfig {
     string name;
     address token;
@@ -77,7 +80,10 @@ contract AddMissingReserves is Script {
     using stdJson for string;
     using ScriptTools for string;
 
+    uint256 constant RAY = 10 ** 27;
+
     string config;
+    DssInstance dss;
 
     PoolAddressesProvider poolAddressesProvider;
     PoolConfigurator poolConfigurator;
@@ -148,7 +154,8 @@ contract AddMissingReserves is Script {
     }
 
     function run() external {
-        config = ScriptTools.readInput("config");
+        config = ScriptTools.loadConfig("config");
+        dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
         poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
         poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
@@ -160,7 +167,6 @@ contract AddMissingReserves is Script {
         stableDebtTokenImpl = vm.envAddress("AAVE_STABLE_DEBT_IMPL");
         treasury = vm.envAddress("AAVE_TREASURY");
         daiTreasury = vm.envAddress("AAVE_DAI_TREASURY");
-
 
         vm.startBroadcast();
 
@@ -194,18 +200,26 @@ contract AddMissingReserves is Script {
 
             reserves.push(makeReserve(
                 IERC20Detailed(address(cfg.token)),
-                new DefaultReserveInterestRateStrategy(
-                    poolAddressesProvider,
-                    cfg.irOptimalUsageRatio * 1e23,
-                    cfg.irBaseVariableBorrowRate * 1e23,
-                    cfg.irVariableRateSlope1 * 1e23,
-                    cfg.irVariableRateSlope2 * 1e23,
-                    0,
-                    0,
-                    0,
-                    0,
-                    0
-                )
+                cfg.name.eq("DAI") ?
+                    IReserveInterestRateStrategy(new DaiInterestRateStrategy(
+                        address(dss.vat),
+                        address(dss.pot),
+                        config.readString(".ilk").stringToBytes32(),
+                        0,
+                        75 * RAY / 100  // 75%
+                    )) :
+                    IReserveInterestRateStrategy(new DefaultReserveInterestRateStrategy(
+                        poolAddressesProvider,
+                        cfg.irOptimalUsageRatio * 1e23,
+                        cfg.irBaseVariableBorrowRate * 1e23,
+                        cfg.irVariableRateSlope1 * 1e23,
+                        cfg.irVariableRateSlope2 * 1e23,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                    ))
             ));
             assets.push(address(cfg.token));
             assetOracleSources.push(address(cfg.oracle));

@@ -2,6 +2,7 @@
     "admin": "0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121",
     "chainlog": "0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F",
     "marketId": "Spark Lend",
+    "ilk": "DIRECT-SPARK-DAI",
     "aTokenNamePrefix": "Spark ",
     "aTokenSymbolPrefix": "sp",
     "variableDebtTokenNamePrefix": "Spark Variable Debt ",
