@@ -23,7 +23,7 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         // The debt ceiling of this ilk in whole DAI units
         uint88 debtCeiling;
         // The base rate of the reserve. Expressed in ray
-        uint128 rate;
+        uint128 baseRate;
         // Timestamp of last update
         uint40 lastUpdateTimestamp;
     }
@@ -36,8 +36,10 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
     address public immutable vat;
     address public immutable pot;
     bytes32 public immutable ilk;
-    uint256 public immutable spread;
+    uint256 public immutable borrowSpread;
+    uint256 public immutable supplySpread;
     uint256 public immutable maxRate;
+    uint256 public immutable subsidy;
 
     Slot0 private _slot0;
 
@@ -45,21 +47,27 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
      * @param _vat The address of the vat contract
      * @param _pot The address of the pot contract
      * @param _ilk The ilk identifier
-     * @param _spread The spread on top of the dsr as an APR in RAY units
+     * @param _borrowSpread The borrow spread on top of the dsr as an APR in RAY units
+     * @param _supplySpread The supply spread on top of the dsr as an APR in RAY units
      * @param _maxRate The maximum rate that can be returned by this strategy in RAY units
+     * @param _subsidy Suppliers will subsidize the protocol up to this amount of DAI in WAD units.
      */
     constructor(
         address _vat,
         address _pot,
         bytes32 _ilk,
-        uint256 _spread,
-        uint256 _maxRate
+        uint256 _borrowSpread,
+        uint256 _supplySpread,
+        uint256 _maxRate,
+        uint256 _subsidy
     ) {
         vat = _vat;
         pot = _pot;
         ilk = _ilk;
-        spread = _spread;
+        borrowSpread = _borrowSpread;
+        supplySpread = _supplySpread;
         maxRate = _maxRate;
+        subsidy = _subsidy;
 
         recompute();
     }
@@ -70,12 +78,12 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
     */
     function recompute() public {
         (,,, uint256 line,) = VatLike(vat).ilks(ilk);
-        uint256 rate = (PotLike(pot).dsr() - RAY) * SECONDS_PER_YEAR + spread;
+        // Convert the dsr to an APR
+        uint256 baseRate = (PotLike(pot).dsr() - RAY) * SECONDS_PER_YEAR;
 
         _slot0 = Slot0({
             debtCeiling: uint88(line / RAD),
-            // Convert the dsr to an APR with spread
-            rate: uint128(rate < maxRate ? rate : maxRate),
+            baseRate: uint128(baseRate),
             lastUpdateTimestamp: uint40(block.timestamp)
         });
     }
@@ -86,42 +94,40 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         view
         override
         returns (
-            uint256,
-            uint256,
-            uint256
+            uint256 supplyRate,
+            uint256 stableBorrowRate,
+            uint256 variableBorrowRate
         )
     {
         Slot0 memory slot0 = _slot0;
 
+        uint256 baseRate = slot0.baseRate;
         uint256 outstandingBorrow = params.totalVariableDebt;
+        supplyRate = baseRate + supplySpread;
+        if (outstandingBorrow < subsidy) {
+            supplyRate = supplyRate * outstandingBorrow / subsidy;
+        }
         uint256 debtCeiling;
         unchecked {
             // Debt ceiling is a uint88, so it will definitely fit in a uint256 with a WAD multiplication
             debtCeiling = uint256(slot0.debtCeiling) * WAD;
         }
-
-        if (outstandingBorrow <= debtCeiling) {
-            // Users can borrow at a flat rate
-            return (
-                0,
-                0,
-                slot0.rate
-            );
-        } else {
+        stableBorrowRate = 0;
+        variableBorrowRate = baseRate + borrowSpread;
+        
+        if (variableBorrowRate > maxRate) {
+            variableBorrowRate = maxRate;
+        } else if (outstandingBorrow > debtCeiling) {
             // Maker needs liquidity - rates increase until outstanding borrow is brought back to the debt ceiling
             uint256 borrowDelta;
             uint256 maxRateDelta;
+            // Both of these overflows enforced by conditionals above
             unchecked {
-                // will not underflow due to conditional block
                 borrowDelta = outstandingBorrow - debtCeiling;
-                // maxRate enforced to be greater than slot0.rate in cached computation
-                maxRateDelta = maxRate - slot0.rate;
+                maxRateDelta = maxRate - variableBorrowRate;
             }
-            return (
-                0,
-                0,
-                slot0.rate + maxRateDelta * borrowDelta / outstandingBorrow
-            );
+            
+            variableBorrowRate = variableBorrowRate + maxRateDelta * borrowDelta / outstandingBorrow;
         }
     }
 
@@ -129,8 +135,8 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         return _slot0.debtCeiling;
     }
 
-    function getRate() external view returns (uint256) {
-        return _slot0.rate;
+    function getBaseRate() external view returns (uint256) {
+        return _slot0.baseRate;
     }
 
     function getLastUpdateTimestamp() external view returns (uint256) {

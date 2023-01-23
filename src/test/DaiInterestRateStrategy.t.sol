@@ -36,26 +36,37 @@ contract DaiInterestRateStrategyTest is DssTest {
     PotMock pot;
 
     DaiInterestRateStrategy interestStrategy;
+    DaiInterestRateStrategy interestStrategyNoSubsidy;
 
     bytes32 constant ILK = "DIRECT-SPARK-DAI";
     uint256 constant DSR_ONE_PERCENT = 1000000000315522921573372069;
     uint256 constant DSR_TWO_HUNDRED_PERCENT = 1000000034836767751273470154;
     uint256 constant ONE_PERCENT_APY_AS_APR = 9950330854737861567984000;
     uint256 constant ONE_BPS = RAY / 10000;
-    uint256 constant FLAT_RATE = ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS;
 
     function setUp() public {
         vat = new VatMock();
         vat.setLine(1_000_000 * RAD);
         pot = new PotMock();
-        pot.setDSR(RAY);    // DSR is off
+        pot.setDSR(DSR_ONE_PERCENT);
 
         interestStrategy = new DaiInterestRateStrategy(
             address(vat),
             address(pot),
             ILK,
-            50 * ONE_BPS,       // 0.5% spread
-            7500 * ONE_BPS      // 75% max rate
+            50 * ONE_BPS,       // 0.5% borrow spread
+            25 * ONE_BPS,       // 0.25% supply spread
+            7500 * ONE_BPS,     // 75% max rate
+            100_000 * WAD       // We are subsidizing up to 100k DAI
+        );
+        interestStrategyNoSubsidy = new DaiInterestRateStrategy(
+            address(vat),
+            address(pot),
+            ILK,
+            50 * ONE_BPS,       // 0.5% borrow spread
+            25 * ONE_BPS,       // 0.25% supply spread
+            7500 * ONE_BPS,     // 75% max rate
+            0
         );
     }
 
@@ -63,56 +74,64 @@ contract DaiInterestRateStrategyTest is DssTest {
         assertEq(address(interestStrategy.vat()), address(vat));
         assertEq(address(interestStrategy.pot()), address(pot));
         assertEq(interestStrategy.ilk(), ILK);
-        assertEq(interestStrategy.spread(), 50 * ONE_BPS);
+        assertEq(interestStrategy.borrowSpread(), 50 * ONE_BPS);
+        assertEq(interestStrategy.supplySpread(), 25 * ONE_BPS);
         assertEq(interestStrategy.maxRate(), 7500 * ONE_BPS);
+        assertEq(interestStrategy.subsidy(), 100_000 * WAD);
 
         // Recompute should occur
         assertEq(interestStrategy.getDebtCeiling(), 1_000_000);
-        assertEq(interestStrategy.getRate(), 50 * ONE_BPS);
+        assertEq(interestStrategy.getBaseRate(), ONE_PERCENT_APY_AS_APR);
         assertEq(interestStrategy.getLastUpdateTimestamp(), block.timestamp);
     }
 
     function test_recompute() public {
         vat.setLine(2_000_000 * RAD);
-        pot.setDSR(DSR_ONE_PERCENT);
+        pot.setDSR(RAY);
         vm.warp(block.timestamp + 1 days);
 
         assertEq(interestStrategy.getDebtCeiling(), 1_000_000);
-        assertEq(interestStrategy.getRate(), 50 * ONE_BPS);
+        assertEq(interestStrategy.getBaseRate(), ONE_PERCENT_APY_AS_APR);
         assertEq(interestStrategy.getLastUpdateTimestamp(), block.timestamp - 1 days);
 
         interestStrategy.recompute();
 
         assertEq(interestStrategy.getDebtCeiling(), 2_000_000);
-        assertEq(interestStrategy.getRate(), FLAT_RATE);
+        assertEq(interestStrategy.getBaseRate(), 0);
         assertEq(interestStrategy.getLastUpdateTimestamp(), block.timestamp);
     }
 
-    function test_recompute_rate_over_max_rate() public {
-        pot.setDSR(DSR_TWO_HUNDRED_PERCENT);
-
-        assertEq(interestStrategy.getRate(), 50 * ONE_BPS);
-
-        interestStrategy.recompute();
-
-        assertEq(interestStrategy.getRate(), 7500 * ONE_BPS);
+    function test_calculateInterestRates_under_debt_ceiling() public {
+        assertRates(1_000_000 * WAD, ONE_PERCENT_APY_AS_APR + 25 * ONE_BPS, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS, "Should be normal conditions. supply = dsr + 25bps, borrow = dsr + 50bps");
     }
 
-    function test_calculateInterestRates() public {
-        pot.setDSR(DSR_ONE_PERCENT);
-        interestStrategy.recompute();
+    function test_calculateInterestRates_under_subsidy() public {
+        assertRates(50_000 * WAD, (ONE_PERCENT_APY_AS_APR + 25 * ONE_BPS) / 2, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS, "Should be normal conditions, but within subsidy. supply = (dsr + 25bps) * 50% (subsidy), borrow = dsr + 50bps");
+    }
 
-        assertEq(getBorrowRate(0), FLAT_RATE, "borrow should be flat rate at 0 debt");
-        assertEq(getBorrowRate(1_000_000 * WAD), FLAT_RATE, "borrow should be flat rate at debt ceiling");
-        assertEq(getBorrowRate(2_000_000 * WAD), FLAT_RATE + (7500 * ONE_BPS - FLAT_RATE) / 2, "borrow should be about half the max rate when 200% over capacity");
+    function test_calculateInterestRates_over_debt_ceiling() public {
+        assertRates(2_000_000 * WAD, ONE_PERCENT_APY_AS_APR + 25 * ONE_BPS, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS + (7500 * ONE_BPS - ONE_PERCENT_APY_AS_APR - 50 * ONE_BPS) / 2, "We are 2x debt ceiling - borrow rate should be high. supply = dsr + 25bps, borrow ~= half of max rate");
+    }
+
+    function test_calculateInterestRates_zero_debt() public {
+        // Subtle difference in when subsidy exists or not and zero debt, but in practise makes no difference
+        assertRates(0, 0, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS, "Zero debt with subsidy. supply = zero, borrow = dsr + 50bps");
+        assertRatesNoSubsidy(0, ONE_PERCENT_APY_AS_APR + 25 * ONE_BPS, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS, "Zero debt without subsidy. supply = dsr + 25bps, borrow = dsr + 50bps");
+    }
+
+    function test_calculateInterestRates_zero_debt_ceiling() public {
         vat.setLine(0);
         interestStrategy.recompute();
-        assertEq(getBorrowRate(1), 7500 * ONE_BPS, "borrow should be max rate when no capacity and any outstanding borrow");
-        assertEq(getBorrowRate(0), FLAT_RATE, "borrow should be flat rate when both are 0");
+        interestStrategyNoSubsidy.recompute();
+
+        assertRates(1, 124, 7500 * ONE_BPS, "non-zero debt with zero debt ceiling means supply = very small value with subsidy, borrow is max rate");
+        assertRatesNoSubsidy(1, ONE_PERCENT_APY_AS_APR + 25 * ONE_BPS, 7500 * ONE_BPS, "non-zero debt with zero debt ceiling (no subsidy) means supply is the flat rate, borrow is max rate");
+        assertRates(0, 0, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS, "zero debt with zero debt ceiling means supply is zero, borrow is max rate");
+        assertRatesNoSubsidy(0, ONE_PERCENT_APY_AS_APR + 25 * ONE_BPS, ONE_PERCENT_APY_AS_APR + 50 * ONE_BPS, "zero debt with zero debt ceiling (no subsidy) means supply is flat rate, borrow is flat rate");
     }
 
-    function makeParams(uint256 totalVariableDebt) internal pure returns (DataTypes.CalculateInterestRatesParams memory) {
-        return DataTypes.CalculateInterestRatesParams(
+    function assertRates(uint256 totalVariableDebt, uint256 expectedSupplyRate, uint256 expectedBorrowRate, string memory errorMessage) internal {
+        (uint256 supplyRate,, uint256 borrowRate) = interestStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
             0,
             0,
@@ -122,11 +141,27 @@ contract DaiInterestRateStrategyTest is DssTest {
             0,
             address(0),
             address(0)
-        );
+        ));
+
+        assertEq(supplyRate, expectedSupplyRate, errorMessage);
+        assertEq(borrowRate, expectedBorrowRate, errorMessage);
     }
 
-    function getBorrowRate(uint256 totalVariableDebt) internal view returns (uint256 borrowRate) {
-        (,,borrowRate) = interestStrategy.calculateInterestRates(makeParams(totalVariableDebt));
+    function assertRatesNoSubsidy(uint256 totalVariableDebt, uint256 expectedSupplyRate, uint256 expectedBorrowRate, string memory errorMessage) internal {
+        (uint256 supplyRate,, uint256 borrowRate) = interestStrategyNoSubsidy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
+            0,
+            0,
+            0,
+            0,
+            totalVariableDebt,
+            0,
+            0,
+            address(0),
+            address(0)
+        ));
+
+        assertEq(supplyRate, expectedSupplyRate, errorMessage);
+        assertEq(borrowRate, expectedBorrowRate, errorMessage);
     }
 
 }

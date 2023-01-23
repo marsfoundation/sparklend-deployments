@@ -80,6 +80,7 @@ contract AddMissingReserves is Script {
     using stdJson for string;
     using ScriptTools for string;
 
+    uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
 
     string config;
@@ -206,7 +207,9 @@ contract AddMissingReserves is Script {
                         address(dss.pot),
                         config.readString(".ilk").stringToBytes32(),
                         0,
-                        75 * RAY / 100  // 75%
+                        0,
+                        75 * RAY / 100,  // 75%
+                        500_000_000 * WAD
                     )) :
                     IReserveInterestRateStrategy(new DefaultReserveInterestRateStrategy(
                         poolAddressesProvider,
