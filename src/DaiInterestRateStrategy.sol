@@ -50,7 +50,7 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
      * @param _borrowSpread The borrow spread on top of the dsr as an APR in RAY units
      * @param _supplySpread The supply spread on top of the dsr as an APR in RAY units
      * @param _maxRate The maximum rate that can be returned by this strategy in RAY units
-     * @param _subsidy Suppliers will subsidize the protocol up to this amount of DAI in WAD units.
+     * @param _subsidy Suppliers will subsidize the specified amount of DAI in WAD units.
      */
     constructor(
         address _vat,
@@ -103,9 +103,13 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
 
         uint256 baseRate = slot0.baseRate;
         uint256 outstandingBorrow = params.totalVariableDebt;
-        supplyRate = baseRate + supplySpread;
-        if (outstandingBorrow < subsidy) {
-            supplyRate = supplyRate * outstandingBorrow / subsidy;
+        
+        if (outstandingBorrow > subsidy) {
+            uint256 delta;
+            unchecked {
+                delta = outstandingBorrow - subsidy;
+            }
+            supplyRate = (baseRate + supplySpread) * delta / outstandingBorrow;
         }
         uint256 debtCeiling;
         unchecked {
