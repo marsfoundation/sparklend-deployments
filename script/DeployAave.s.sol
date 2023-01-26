@@ -25,6 +25,7 @@ import {StableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/Stab
 import {VariableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol";
 
 import {ConfiguratorInputTypes} from "aave-v3-core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol";
+import {DataTypes} from "aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
 import {IReserveInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {DefaultReserveInterestRateStrategy} from "aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategy.sol";
 
@@ -78,6 +79,8 @@ struct EModeConfig {
 
 contract DeployAave is Script {
 
+    string constant NAME = "aave";
+
     using stdJson for string;
     using ScriptTools for string;
 
@@ -117,13 +120,14 @@ contract DeployAave is Script {
     ConfiguratorInputTypes.InitReserveInput[] reserves;
     address[] assets;
     address[] assetOracleSources;
+    DataTypes.ReserveData reserveData;
 
     function parseReserves() internal view returns (ReserveConfig[] memory) {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".reserves");
+        bytes[] memory a = config.readBytesArray("reserves");
         ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
         for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
+            string memory base = string(string.concat(bytes("reserves["), bytes(Strings.toString(i)), "]"));
             _reserves[i] = ReserveConfig({
                 name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
                 token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
@@ -149,9 +153,9 @@ contract DeployAave is Script {
 
     function setupEModeCategories() internal {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".emodeCategories");
+        bytes[] memory a = config.readBytesArray("emodeCategories");
         for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".emodeCategories["), bytes(Strings.toString(i)), "]"));
+            string memory base = string(string.concat(bytes("emodeCategories["), bytes(Strings.toString(i)), "]"));
             poolConfigurator.setEModeCategory({
                 categoryId: uint8(config.readUint(string(string.concat(bytes(base), bytes(".categoryId"))))),
                 ltv: uint16(config.readUint(string(string.concat(bytes(base), bytes(".ltv"))))),
@@ -199,13 +203,13 @@ contract DeployAave is Script {
 
     function run() external {
         config = ScriptTools.loadConfig("config");
-        dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
+        dss = MCD.loadFromChainlog(config.readAddress("chainlog"));
 
-        address admin = config.readAddress(".admin", "AAVE_ADMIN");
+        address admin = config.readAddress("admin", "AAVE_ADMIN");
 
         vm.startBroadcast();
         registry = new PoolAddressesProviderRegistry(admin);
-        poolAddressesProvider = new PoolAddressesProvider(config.readString(".marketId"), admin);
+        poolAddressesProvider = new PoolAddressesProvider(config.readString("marketId"), admin);
         poolAddressesProvider.setACLAdmin(admin);
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
         PoolConfigurator _poolConfigurator = new PoolConfigurator();
@@ -272,7 +276,7 @@ contract DeployAave is Script {
                     IReserveInterestRateStrategy(new DaiInterestRateStrategy(
                         address(dss.vat),
                         address(dss.pot),
-                        config.readString(".ilk").stringToBytes32(),
+                        config.readString("ilk").stringToBytes32(),
                         0,
                         0,
                         75 * RAY / 100,  // 75%
@@ -336,19 +340,39 @@ contract DeployAave is Script {
         }
         
         // Deploy a faucet if this is a testnet
-        address makerFaucet = config.readAddress(".makerFaucet");
+        address makerFaucet = config.readAddress("makerFaucet");
         if (makerFaucet != address(0)) {
-            faucet = new Faucet(makerFaucet, config.readAddress(".usdcPsm"), savingsDai);
+            faucet = new Faucet(makerFaucet, config.readAddress("usdcPsm"), savingsDai);
         }
         vm.stopBroadcast();
 
-        ScriptTools.exportContract("LENDING_POOL_ADDRESS_PROVIDER", address(poolAddressesProvider));
-        ScriptTools.exportContract("LENDING_POOL", address(pool));
-        ScriptTools.exportContract("WETH_GATEWAY", address(wethGateway));
-        if (address(faucet) != address(0)) ScriptTools.exportContract("FAUCET", address(faucet));
-        ScriptTools.exportContract("WALLET_BALANCE_PROVIDER", address(walletBalanceProvider));
-        ScriptTools.exportContract("UI_POOL_DATA_PROVIDER", address(uiPoolDataProvider));
-        ScriptTools.exportContract("UI_INCENTIVE_DATA_PROVIDER", address(uiIncentiveDataProvider));
+        ScriptTools.exportContract(NAME, "poolAddressesProviderRegistry", address(registry));
+        ScriptTools.exportContract(NAME, "poolAddressesProvider", address(poolAddressesProvider));
+        ScriptTools.exportContract(NAME, "protocolDataProvider", address(protocolDataProvider));
+        ScriptTools.exportContract(NAME, "poolConfigurator", address(poolConfigurator));
+        ScriptTools.exportContract(NAME, "pool", address(pool));
+        ScriptTools.exportContract(NAME, "aclManager", address(aclManager));
+        ScriptTools.exportContract(NAME, "aaveOracle", address(aaveOracle));
+        ScriptTools.exportContract(NAME, "aTokenImpl", address(aTokenImpl));
+        ScriptTools.exportContract(NAME, "stableDebtTokenImpl", address(stableDebtTokenImpl));
+        ScriptTools.exportContract(NAME, "variableDebtTokenImpl", address(variableDebtTokenImpl));
+        ScriptTools.exportContract(NAME, "treasury", address(treasury));
+        ScriptTools.exportContract(NAME, "daiTreasury", address(daiTreasury));
+        ScriptTools.exportContract(NAME, "treasuryController", address(treasuryController));
+        ScriptTools.exportContract(NAME, "incentives", address(incentives));
+        ScriptTools.exportContract(NAME, "emissionManager", address(emissionManager));
+        ScriptTools.exportContract(NAME, "uiPoolDataProvider", address(uiPoolDataProvider));
+        ScriptTools.exportContract(NAME, "uiIncentiveDataProvider", address(uiIncentiveDataProvider));
+        ScriptTools.exportContract(NAME, "wethGateway", address(wethGateway));
+        ScriptTools.exportContract(NAME, "walletBalanceProvider", address(walletBalanceProvider));
+        if (address(faucet) != address(0)) ScriptTools.exportContract(NAME, "faucet", address(faucet));
+        for (uint256 i = 0; i < assets.length; i++) {
+            reserveData = pool.getReserveData(assets[i]);
+            ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_aToken")), address(reserveData.aTokenAddress));
+            ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_stableDebtToken")), address(reserveData.stableDebtTokenAddress));
+            ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_variableDebtToken")), address(reserveData.variableDebtTokenAddress));
+            ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_interestRateStrategy")), address(reserveData.interestRateStrategyAddress));
+        }
     }
 
 }

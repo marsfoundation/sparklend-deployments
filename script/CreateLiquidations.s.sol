@@ -48,6 +48,7 @@ contract CreateLiquidations is Script {
     using ScriptTools for string;
 
     string config;
+    string deployedContracts;
     DssInstance dss;
 
     address deployer;
@@ -64,9 +65,10 @@ contract CreateLiquidations is Script {
 
     function run() external {
         config = ScriptTools.readInput("config");
+        deployedContracts = ScriptTools.readOutput("spark");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog", "SEED_CHAINLOG"));
 
-        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
         pool = Pool(poolAddressesProvider.getPool());
         configurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());

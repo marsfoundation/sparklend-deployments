@@ -2,8 +2,10 @@
 cache/
 out/
 
-# Ignores broadcast logs
+# Ignores broadcast logs and output scripts
 /broadcast
+/script/output/*/*.json
+!/script/output/*/*-latest.json
 
 # Dotenv file
 .env

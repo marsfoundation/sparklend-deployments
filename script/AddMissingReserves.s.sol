@@ -84,6 +84,7 @@ contract AddMissingReserves is Script {
     uint256 constant RAY = 10 ** 27;
 
     string config;
+    string deployedContracts;
     DssInstance dss;
 
     PoolAddressesProvider poolAddressesProvider;
@@ -104,10 +105,10 @@ contract AddMissingReserves is Script {
 
     function parseReserves() internal view returns (ReserveConfig[] memory) {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".reserves");
+        bytes[] memory a = config.readBytesArray("reserves");
         ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
         for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
+            string memory base = string(string.concat(bytes("reserves["), bytes(Strings.toString(i)), "]"));
             _reserves[i] = ReserveConfig({
                 name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
                 token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
@@ -156,9 +157,10 @@ contract AddMissingReserves is Script {
 
     function run() external {
         config = ScriptTools.loadConfig("config");
-        dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
+        deployedContracts = ScriptTools.readOutput("spark");
+        dss = MCD.loadFromChainlog(config.readAddress("chainlog"));
 
-        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
         poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         pool = Pool(poolAddressesProvider.getPool());
         aaveOracle = AaveOracle(poolAddressesProvider.getPriceOracle());

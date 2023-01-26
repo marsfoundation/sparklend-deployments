@@ -52,6 +52,7 @@ contract IntegrationTest is DssTest {
     using MCD for *;
 
     string config;
+    string deployedContracts;
     DssInstance dss;
 
     PoolAddressesProvider poolAddressesProvider;
@@ -69,6 +70,7 @@ contract IntegrationTest is DssTest {
 
     function setUp() public {
         config = ScriptTools.readInput("config");
+        deployedContracts = ScriptTools.readOutput("spark");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
         hub = D3MHubLike(dss.chainlog.getAddress("DIRECT_HUB"));
@@ -77,7 +79,7 @@ contract IntegrationTest is DssTest {
         wbtc = IERC20(dss.chainlog.getAddress("WBTC"));
         dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
 
-        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
         pool = Pool(poolAddressesProvider.getPool());
         aaveOracle = AaveOracle(poolAddressesProvider.getPriceOracle());
 

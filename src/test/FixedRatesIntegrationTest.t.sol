@@ -30,6 +30,7 @@ contract FixedRatesIntegrationTest is DssTest {
     uint256 constant ERROR_ONE_BPS = WAD / BPS;
 
     string config;
+    string deployedContracts;
     DssInstance dss;
 
     PoolAddressesProvider poolAddressesProvider;
@@ -46,11 +47,12 @@ contract FixedRatesIntegrationTest is DssTest {
 
     function setUp() public {
         config = ScriptTools.readInput("config");
+        deployedContracts = ScriptTools.readOutput("spark");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
         dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
 
-        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
         pool = Pool(poolAddressesProvider.getPool());
         aToken = getAToken(address(dai));
         treasurySource = aToken.RESERVE_TREASURY_ADDRESS();

@@ -9,9 +9,6 @@
 [submodule "dependencies/dss-direct-deposit"]
 	path = dependencies/dss-direct-deposit
 	url = https://github.com/makerdao/dss-direct-deposit
-[submodule "lib/dss-test"]
-	path = lib/dss-test
-	url = https://github.com/makerdao/dss-test
 [submodule "lib/v3-periphery"]
 	path = lib/v3-periphery
 	url = https://github.com/uniswap/v3-periphery

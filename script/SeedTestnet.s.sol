@@ -26,6 +26,7 @@ contract SeedTestnet is Script {
     using ScriptTools for string;
 
     string config;
+    string deployedContracts;
     DssInstance dss;
 
     address deployer;
@@ -51,14 +52,15 @@ contract SeedTestnet is Script {
 
     function run() external {
         config = ScriptTools.readInput("config");
+        deployedContracts = ScriptTools.readOutput("spark");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog", "SEED_CHAINLOG"));
 
-        poolAddressesProvider = PoolAddressesProvider(ScriptTools.importContract("LENDING_POOL_ADDRESS_PROVIDER"));
-        pool = Pool(ScriptTools.importContract("LENDING_POOL"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
+        pool = Pool(poolAddressesProvider.getPool());
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());
         factory = IUniswapV3Factory(vm.envAddress("UNISWAP_V3_FACTORY"));
         manager = INonfungiblePositionManager(vm.envAddress("UNISWAP_V3_POSITION_MANAGER"));
-        faucet = Faucet(ScriptTools.importContract("FAUCET"));
+        faucet = Faucet(deployedContracts.readAddress("faucet"));
 
         deployer = msg.sender;
 
