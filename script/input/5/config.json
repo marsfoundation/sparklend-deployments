@@ -99,7 +99,7 @@
             "borrowCap": 0
         },
         {
-            "name": "stETH",
+            "name": "wstETH",
             "token": "0x0000000000000000000000000000000000000000",
             "decimals": 18,
             "borrow": false,
