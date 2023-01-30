@@ -1,7 +1,7 @@
 {
     "admin": "0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121",
     "chainlog": "0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F",
-    "marketId": "Spark Lend",
+    "marketId": "Spark Protocol",
     "ilk": "DIRECT-SPARK-DAI",
     "aTokenNamePrefix": "Spark ",
     "aTokenSymbolPrefix": "sp",
@@ -15,8 +15,8 @@
         {
             "categoryId": 1,
             "ltv": 9000,
-            "liquidationThreshold": 9500,
-            "liquidationBonus": 10200,
+            "liquidationThreshold": 9300,
+            "liquidationBonus": 10100,
             "oracle": "0x0000000000000000000000000000000000000000",
             "label": "ETH"
         }
@@ -55,7 +55,7 @@
             "ltv": 7700,
             "liquidationThreshold": 9000,
             "liquidationBonus": 10400,
-            "reserveFactor": 10,
+            "reserveFactor": 1000,
             "eModeCategory": 0,
             "supplyCap": 0,
             "borrowCap": 0
