@@ -63,6 +63,7 @@ contract DaiInterestRateStrategyTest is DssTest {
     uint256 constant DSR_TWO_HUNDRED_PERCENT = 1000000034836767751273470154;
     uint256 constant BR = 9950330854737861567984000;    // DSR at 1% APY expressed as an APR
     uint256 constant RBPS = RAY / 10000;
+    uint256 constant ONE_TRILLION = 1_000_000_000_000;
 
     function setUp() public {
         vat = new VatMock();
@@ -161,6 +162,53 @@ contract DaiInterestRateStrategyTest is DssTest {
 
         uint256 br = 749999997624926423513756790;
         assertRates(100_000 * WAD, br, br, "Maker wants to go to zero debt - always maxRate. supply = maxRate, borrow = maxRate");
+    }
+
+    function test_calculateInterestRates_fuzz(
+        uint256 line,
+        uint256 art,
+        uint256 dsr,
+        uint256 totalVariableDebt,
+        uint256 liquidity
+    ) public {
+        // Keep the numbers sane
+        line = line % (ONE_TRILLION * RAD);
+        art = art % (ONE_TRILLION * WAD);
+        dsr = dsr % (DSR_TWO_HUNDRED_PERCENT - RAY) + RAY;
+        totalVariableDebt = totalVariableDebt % (ONE_TRILLION * WAD);
+        liquidity = liquidity % (ONE_TRILLION * WAD);
+
+        vat.setLine(line);
+        vat.setArt(art);
+        pot.setDSR(dsr);
+        dai.setLiquidity(liquidity);
+        interestStrategy.recompute();
+
+        uint256 supplyRatio = totalVariableDebt > 0 ? totalVariableDebt * WAD / (totalVariableDebt + liquidity) : 0;
+        (uint256 supplyRate,, uint256 borrowRate) = interestStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
+            0,
+            0,
+            0,
+            0,
+            totalVariableDebt,
+            0,
+            0,
+            address(dai),
+            address(0)
+        ));
+
+        assertLe(supplyRatio, WAD, "supply ratio should be less than or equal to 1");
+        if (supplyRatio > 0) {
+            uint256 adjBorrowRate = borrowRate * supplyRatio;
+            assertGe(adjBorrowRate, supplyRate, "adjusted borrow rate should always be greater than or equal to the supply rate");
+        } else {
+            assertGe(borrowRate, supplyRate, "borrow rate should always be greater than or equal to the supply rate");
+        }
+        if (interestStrategy.getBaseRate() + 50 * RBPS <= 7500 * RBPS) {
+            assertGe(borrowRate, interestStrategy.getBaseRate() + 50 * RBPS, "borrow rate should be greater than or equal to base rate + spread");
+        }
+        assertLe(borrowRate, 7500 * RBPS, "borrow rate should be less than or equal to max rate");
+        assertLe(supplyRate, 7500 * RBPS, "supply rate should be less than or equal to max rate");
     }
 
     function assertRates(

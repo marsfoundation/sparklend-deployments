@@ -134,9 +134,7 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         stableBorrowRate = 0;
         variableBorrowRate = baseRate + borrowSpread;
         
-        if (variableBorrowRate > maxRate) {
-            variableBorrowRate = maxRate;
-        } else if (debtRatio > WAD) {
+        if (debtRatio > WAD) {
             // Maker needs liquidity - rates increase until D3M debt is brought back to the debt ceiling
             uint256 maxRateDelta;
             // Overflow enforced by conditional above
@@ -146,6 +144,12 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
             
             variableBorrowRate = maxRate - maxRateDelta * WAD / debtRatio;
             // Drop the performance bonus to incentivize third party suppliers as much as possible
+            supplyRate = variableBorrowRate * supplyUtilization / WAD;
+        }
+
+        // Rounding errors and/or a very high base rate can cause rates to exceed the max rate - cap them
+        if (variableBorrowRate > maxRate) {
+            variableBorrowRate = maxRate;
             supplyRate = variableBorrowRate * supplyUtilization / WAD;
         }
     }
