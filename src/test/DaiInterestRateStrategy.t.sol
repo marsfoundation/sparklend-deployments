@@ -8,10 +8,15 @@ import "../DaiInterestRateStrategy.sol";
 
 contract VatMock {
 
+    uint256 Art;
     uint256 line;
 
     function ilks(bytes32) public view returns (uint256, uint256, uint256, uint256, uint256) {
-        return (0, 0, 0, line, 0);
+        return (Art, 0, 0, line, 0);
+    }
+
+    function setArt(uint256 _art) external {
+        Art = _art;
     }
 
     function setLine(uint256 _line) external {
@@ -30,10 +35,25 @@ contract PotMock {
 
 }
 
+contract DaiMock {
+
+    uint256 public liquidity;
+
+    function balanceOf(address) external view returns (uint256) {
+        return liquidity;
+    }
+
+    function setLiquidity(uint256 _liquidity) external {
+        liquidity = _liquidity;
+    }
+
+}
+
 contract DaiInterestRateStrategyTest is DssTest {
 
     VatMock vat;
     PotMock pot;
+    DaiMock dai;
 
     DaiInterestRateStrategy interestStrategy;
     DaiInterestRateStrategy interestStrategyNoSubsidy;
@@ -49,6 +69,7 @@ contract DaiInterestRateStrategyTest is DssTest {
         vat.setLine(1_000_000 * RAD);
         pot = new PotMock();
         pot.setDSR(DSR_ONE_PERCENT);
+        dai = new DaiMock();
 
         interestStrategy = new DaiInterestRateStrategy(
             address(vat),
@@ -57,7 +78,7 @@ contract DaiInterestRateStrategyTest is DssTest {
             50 * RBPS,       // 0.5% borrow spread
             25 * RBPS,       // 0.25% supply spread
             7500 * RBPS,     // 75% max rate
-            100_000 * WAD   // We are subsidizing up to 100k DAI
+            100_000 * WAD    // 100k is reserved for performance bonus
         );
     }
 
@@ -68,57 +89,86 @@ contract DaiInterestRateStrategyTest is DssTest {
         assertEq(interestStrategy.borrowSpread(), 50 * RBPS);
         assertEq(interestStrategy.supplySpread(), 25 * RBPS);
         assertEq(interestStrategy.maxRate(), 7500 * RBPS);
-        assertEq(interestStrategy.subsidy(), 100_000 * WAD);
+        assertEq(interestStrategy.performanceBonus(), 100_000 * WAD);
 
         // Recompute should occur
-        assertEq(interestStrategy.getDebtCeiling(), 1_000_000);
+        assertEq(interestStrategy.getDebtRatio(), 0);
         assertEq(interestStrategy.getBaseRate(), BR);
         assertEq(interestStrategy.getLastUpdateTimestamp(), block.timestamp);
     }
 
     function test_recompute() public {
+        vat.setArt(1_000_000 * WAD);
         vat.setLine(2_000_000 * RAD);
         pot.setDSR(RAY);
         vm.warp(block.timestamp + 1 days);
 
-        assertEq(interestStrategy.getDebtCeiling(), 1_000_000);
+        assertEq(interestStrategy.getDebtRatio(), 0);
         assertEq(interestStrategy.getBaseRate(), BR);
         assertEq(interestStrategy.getLastUpdateTimestamp(), block.timestamp - 1 days);
 
         interestStrategy.recompute();
 
-        assertEq(interestStrategy.getDebtCeiling(), 2_000_000);
+        assertEq(interestStrategy.getDebtRatio(), WAD / 2);
         assertEq(interestStrategy.getBaseRate(), 0);
         assertEq(interestStrategy.getLastUpdateTimestamp(), block.timestamp);
     }
 
-    function test_calculateInterestRates_under_debt_ceiling() public {
-        assertRates(1_000_000 * WAD, (BR + 25 * RBPS) * 9 / 10, BR + 50 * RBPS, "Should be normal conditions. supply = dsr + 25bps @ 90%, borrow = dsr + 50bps");
+    function test_calculateInterestRates_no_maker_debt_no_borrows() public {
+        assertRates(0, 0, BR + 50 * RBPS, "No Maker debt, no borrows. supply = 0, borrow = dsr + 50bps");
     }
 
-    function test_calculateInterestRates_under_subsidy() public {
-        assertRates(50_000 * WAD, 0, BR + 50 * RBPS, "Should be normal conditions, but within subsidy. supply = 0, borrow = dsr + 50bps");
+    function test_calculateInterestRates_no_maker_debt_with_borrows() public {
+        dai.setLiquidity(200_000 * WAD);
+
+        assertRates(100_000 * WAD, 0, BR + 50 * RBPS, "No Maker debt, user-only supply under performance bonus. supply = 0, borrow = dsr + 50bps");
+        assertRates(200_000 * WAD, (BR + 25 * RBPS) * 1 / 2 * 1 / 2, BR + 50 * RBPS, "No Maker debt, user-only supply over performance bonus. supply = 0, borrow = dsr + 50bps");
     }
 
-    function test_calculateInterestRates_over_debt_ceiling() public {
-        assertRates(2_000_000 * WAD, (BR + 25 * RBPS) * 19 / 20, BR + 50 * RBPS + (7500 * RBPS - BR - 50 * RBPS) / 2, "We are 2x debt ceiling - borrow rate should be high. supply = dsr + 25bps @ 95%, borrow ~= half of max rate");
-    }
-
-    function test_calculateInterestRates_zero_debt() public {
-        // Subtle difference in when subsidy exists or not and zero debt, but in practise makes no difference
-        assertRates(0, 0, BR + 50 * RBPS, "Zero debt. supply = 0, borrow = dsr + 50bps");
-    }
-
-    function test_calculateInterestRates_zero_debt_ceiling() public {
-        vat.setLine(0);
+    function test_calculateInterestRates_maker_debt_no_borrows() public {
+        vat.setArt(200_000 * WAD);
+        dai.setLiquidity(200_000 * WAD);
         interestStrategy.recompute();
 
-        assertRates(200_000 * WAD, (BR + 25 * RBPS) * 1 / 2, 7500 * RBPS, "above subsidy, zero DC. supply = dsr + 25bps @ 50%, borrow is max rate");
-        assertRates(1, 0, 7500 * RBPS, "very small debt with zero debt ceiling means supply = 0, borrow is max rate");
-        assertRates(0, 0, BR + 50 * RBPS, "zero debt with zero debt ceiling means supply = 0, borrow = dsr + 50bps");
+        assertRates(0, 0, BR + 50 * RBPS, "Only Maker as LP. supply = 0, borrow = dsr + 50bps");
     }
 
-    function assertRates(uint256 totalVariableDebt, uint256 expectedSupplyRate, uint256 expectedBorrowRate, string memory errorMessage) internal {
+    function test_calculateInterestRates_maker_debt_with_borrows() public {
+        vat.setArt(200_000 * WAD);
+        dai.setLiquidity(100_000 * WAD);
+        interestStrategy.recompute();
+
+        assertRates(100_000 * WAD, 0, BR + 50 * RBPS, "Only Maker as LP, borrows under performance bonus. supply = 0, borrow = dsr + 50bps");
+        dai.setLiquidity(0);    // Pool is fully utilized
+        assertRates(200_000 * WAD, (BR + 25 * RBPS) * 1 / 2, BR + 50 * RBPS, "Only Maker as LP, borrows over performance bonus. supply = 0, borrow = dsr + 50bps");
+    }
+
+    function test_calculateInterestRates_over_debt_limit() public {
+        vat.setArt(2_000_000 * WAD);    // 2x over capacity
+        interestStrategy.recompute();
+
+        uint256 br = 7500 * RBPS - (7500 * RBPS - (BR + 50 * RBPS)) / 2;
+        assertEq(br, 382475165427368930783992000, "borrow rate should be about half of max rate");
+        assertRates(2_000_000 * WAD, br, br, "Only Maker as LP, 2x over capacity, 100% utilization. supply = ~maxRate/2, borrow = ~maxRate/2");
+        dai.setLiquidity(1_000_000 * WAD);  // User adds some liquidity, still over capacity
+        assertRates(2_000_000 * WAD, 254983443618245953601011223, br, "Maker+Users as LP, 2x over capacity, 66.7% utilization. supply = ~maxRate/2 * 66.7%, borrow = ~maxRate/2");
+    }
+
+    function test_calculateInterestRates_debt_ceiling_zero() public {
+        vat.setLine(0);
+        vat.setArt(1);  // Infinitely over capacity even with 1 wei of debt
+        interestStrategy.recompute();
+
+        uint256 br = 749999997624926423513756790;
+        assertRates(100_000 * WAD, br, br, "Maker wants to go to zero debt - always maxRate. supply = maxRate, borrow = maxRate");
+    }
+
+    function assertRates(
+        uint256 totalVariableDebt,
+        uint256 expectedSupplyRate,
+        uint256 expectedBorrowRate,
+        string memory errorMessage
+    ) internal {
         (uint256 supplyRate,, uint256 borrowRate) = interestStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
             0,
@@ -127,7 +177,7 @@ contract DaiInterestRateStrategyTest is DssTest {
             totalVariableDebt,
             0,
             0,
-            address(0),
+            address(dai),
             address(0)
         ));
 

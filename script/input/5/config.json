@@ -69,7 +69,7 @@
             "irBaseVariableBorrowRate": 99,
             "irVariableRateSlope1": 0,
             "irVariableRateSlope2": 0,
-            "oracle": "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7",
+            "oracle": "0x0000000000000000000000000000000000000000",
             "oracleMockPrice": 1,
             "ltv": 0,
             "liquidationThreshold": 0,

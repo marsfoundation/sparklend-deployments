@@ -248,15 +248,17 @@ contract DeployAave is Script {
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
 
-            if (cfg.token == address(0)) {
-                if (cfg.name.eq("WETH")) {
-                    cfg.token = address(new WETH9Mocked());
-                } else {
-                    cfg.token = address(new MintableERC20(cfg.name, cfg.name, uint8(cfg.decimals)));
+            if (block.chainid == 5) {
+                if (cfg.token == address(0)) {
+                    if (cfg.name.eq("WETH")) {
+                        cfg.token = address(new WETH9Mocked());
+                    } else {
+                        cfg.token = address(new MintableERC20(cfg.name, cfg.name, uint8(cfg.decimals)));
+                    }
                 }
-            }
-            if (cfg.oracle == address(0)) {
-                cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
+                if (cfg.oracle == address(0)) {
+                    cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
+                }
             }
 
             if (cfg.name.eq("WETH")) {
