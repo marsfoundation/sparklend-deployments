@@ -169,7 +169,11 @@ contract DaiInterestRateStrategyTest is DssTest {
         uint256 art,
         uint256 dsr,
         uint256 totalVariableDebt,
-        uint256 liquidity
+        uint256 liquidity,
+        uint256 borrowSpread,
+        uint256 supplySpread,
+        uint256 maxRate,
+        uint256 performanceBonus
     ) public {
         // Keep the numbers sane
         line = line % (ONE_TRILLION * RAD);
@@ -177,6 +181,20 @@ contract DaiInterestRateStrategyTest is DssTest {
         dsr = dsr % (DSR_TWO_HUNDRED_PERCENT - RAY) + RAY;
         totalVariableDebt = totalVariableDebt % (ONE_TRILLION * WAD);
         liquidity = liquidity % (ONE_TRILLION * WAD);
+        maxRate = maxRate % 1_000_000_00 * RBPS;
+        borrowSpread = maxRate > 0 ? borrowSpread % maxRate : 0;
+        supplySpread = borrowSpread > 0 ? supplySpread % borrowSpread : 0;
+        performanceBonus = performanceBonus % (ONE_TRILLION * WAD);
+
+        interestStrategy = new DaiInterestRateStrategy(
+            address(vat),
+            address(pot),
+            ILK,
+            borrowSpread,
+            supplySpread,
+            maxRate,
+            performanceBonus
+        );
 
         vat.setLine(line);
         vat.setArt(art);
@@ -204,11 +222,8 @@ contract DaiInterestRateStrategyTest is DssTest {
         } else {
             assertGe(borrowRate, supplyRate, "borrow rate should always be greater than or equal to the supply rate");
         }
-        if (interestStrategy.getBaseRate() + 50 * RBPS <= 7500 * RBPS) {
-            assertGe(borrowRate, interestStrategy.getBaseRate() + 50 * RBPS, "borrow rate should be greater than or equal to base rate + spread");
-        }
-        assertLe(borrowRate, 7500 * RBPS, "borrow rate should be less than or equal to max rate");
-        assertLe(supplyRate, 7500 * RBPS, "supply rate should be less than or equal to max rate");
+        assertGe(borrowRate, interestStrategy.getBaseRate() + borrowSpread, "borrow rate should be greater than or equal to base rate + spread");
+        assertLe(borrowRate, maxRate, "borrow rate should be less than or equal to max rate");
     }
 
     function assertRates(

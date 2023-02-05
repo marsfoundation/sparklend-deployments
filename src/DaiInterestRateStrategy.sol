@@ -63,6 +63,9 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         uint256 _maxRate,
         uint256 _performanceBonus
     ) {
+        require(_borrowSpread >= _supplySpread, "DaiInterestRateStrategy/supply-spread-greater-than-borrow-spread");
+        require(_maxRate >= _borrowSpread, "DaiInterestRateStrategy/borrow-spread-too-large");
+
         vat = _vat;
         pot = _pot;
         ilk = _ilk;
@@ -82,6 +85,13 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         (uint256 Art,,, uint256 line,) = VatLike(vat).ilks(ilk);    // Assume rate == RAY because this is a D3M
         // Convert the dsr to an APR
         uint256 baseRate = (PotLike(pot).dsr() - RAY) * SECONDS_PER_YEAR;
+        
+        // Base rate + borrow spread cannot be larger than the max rate
+        if (baseRate + borrowSpread > maxRate) {
+            unchecked {
+                baseRate = maxRate - borrowSpread;  // This is safe because borrowSpread <= maxRate in constructor
+            }
+        }
 
         uint256 _line = line / RAD;
         uint256 debtRatio = Art > 0 ? (_line > 0 ? Art / _line : type(uint88).max) : 0;
@@ -107,6 +117,8 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
             uint256 variableBorrowRate
         )
     {
+        stableBorrowRate = 0;   // Avoid warning message
+
         Slot0 memory slot0 = _slot0;
 
         uint256 baseRate = slot0.baseRate;
@@ -120,21 +132,22 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
                 params.liquidityTaken;
             supplyUtilization = outstandingBorrow * WAD / (availableLiquidity + outstandingBorrow);
         }
-        if (outstandingBorrow > performanceBonus) {
-            uint256 delta;
-            unchecked {
-                delta = outstandingBorrow - performanceBonus;
-            }
-            supplyRate =
-                (baseRate + supplySpread) *     // Flat rate
-                supplyUtilization / WAD *       // Supply utilization
-                delta / outstandingBorrow;      // Performance bonus deduction
-        }
+
         uint256 debtRatio = slot0.debtRatio;
-        stableBorrowRate = 0;
         variableBorrowRate = baseRate + borrowSpread;
-        
-        if (debtRatio > WAD) {
+        if (debtRatio <= WAD) {
+            // Maker has enough liquidity - rates are flat
+            if (outstandingBorrow > performanceBonus) {
+                uint256 delta;
+                unchecked {
+                    delta = outstandingBorrow - performanceBonus;
+                }
+                supplyRate =
+                    (baseRate + supplySpread) *     // Flat rate
+                    supplyUtilization / WAD *       // Supply utilization
+                    delta / outstandingBorrow;      // Performance bonus deduction
+            }
+        } else {
             // Maker needs liquidity - rates increase until D3M debt is brought back to the debt ceiling
             uint256 maxRateDelta;
             // Overflow enforced by conditional above
@@ -143,13 +156,8 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
             }
             
             variableBorrowRate = maxRate - maxRateDelta * WAD / debtRatio;
-            // Drop the performance bonus to incentivize third party suppliers as much as possible
-            supplyRate = variableBorrowRate * supplyUtilization / WAD;
-        }
 
-        // Rounding errors and/or a very high base rate can cause rates to exceed the max rate - cap them
-        if (variableBorrowRate > maxRate) {
-            variableBorrowRate = maxRate;
+            // Drop the performance bonus to incentivize third party suppliers as much as possible
             supplyRate = variableBorrowRate * supplyUtilization / WAD;
         }
     }
