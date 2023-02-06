@@ -11,6 +11,7 @@ import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/c
 import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Strings.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {InitializableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
+import {AggregatorInterface} from 'aave-v3-core/contracts/dependencies/chainlink/AggregatorInterface.sol';
 
 import {PoolAddressesProviderRegistry} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol";
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
@@ -45,6 +46,7 @@ import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
 import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
 import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
+import {SavingsDaiOracle} from "../src/SavingsDaiOracle.sol";
 
 struct ReserveConfig {
     string name;
@@ -91,6 +93,7 @@ contract AddMissingReserves is Script {
     PoolConfigurator poolConfigurator;
     Pool pool;
     AaveOracle aaveOracle;
+    address daiOracle;
 
     address aTokenImpl;
     address stableDebtTokenImpl;
@@ -179,6 +182,10 @@ contract AddMissingReserves is Script {
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
 
+            if (cfg.name.eq("DAI")) {
+                daiOracle = cfg.oracle;
+            }
+
             bool skip = false;
             for (uint256 o = 0; o < existingReserves.length; o++) {
                 if (MintableERC20(existingReserves[o]).symbol().eq(cfg.name)) {
@@ -196,7 +203,11 @@ contract AddMissingReserves is Script {
                         cfg.token = address(new MintableERC20(cfg.name, cfg.name, uint8(cfg.decimals)));
                     }
                 }
-                if (cfg.oracle == address(0)) {
+            }
+            if (cfg.oracle == address(0)) {
+                if (cfg.name.eq("sDAI")) {
+                    cfg.oracle = address(new SavingsDaiOracle(AggregatorInterface(daiOracle), address(dss.pot)));
+                } else {
                     cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
                 }
             }

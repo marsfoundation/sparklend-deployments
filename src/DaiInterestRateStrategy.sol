@@ -150,9 +150,8 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         } else {
             // Maker needs liquidity - rates increase until D3M debt is brought back to the debt ceiling
             uint256 maxRateDelta;
-            // Overflow enforced by conditional above
             unchecked {
-                maxRateDelta = maxRate - variableBorrowRate;
+                maxRateDelta = maxRate - variableBorrowRate;  // Safety enforced by conditional above
             }
             
             variableBorrowRate = maxRate - maxRateDelta * WAD / debtRatio;

@@ -11,6 +11,7 @@ import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/c
 import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Strings.sol';
 import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {InitializableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
+import {AggregatorInterface} from 'aave-v3-core/contracts/dependencies/chainlink/AggregatorInterface.sol';
 
 import {PoolAddressesProviderRegistry} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol";
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
@@ -47,6 +48,7 @@ import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/
 
 import {Faucet} from "../src/testnet/Faucet.sol";
 import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
+import {SavingsDaiOracle} from "../src/SavingsDaiOracle.sol";
 
 struct ReserveConfig {
     string name;
@@ -111,6 +113,7 @@ contract DeployAave is Script {
     address weth;
     address wethOracle;
     address savingsDai;
+    address daiOracle;
     UiPoolDataProviderV3 uiPoolDataProvider;
     UiIncentiveDataProviderV3 uiIncentiveDataProvider;
     WrappedTokenGatewayV3 wethGateway;
@@ -256,7 +259,11 @@ contract DeployAave is Script {
                         cfg.token = address(new MintableERC20(cfg.name, cfg.name, uint8(cfg.decimals)));
                     }
                 }
-                if (cfg.oracle == address(0)) {
+            }
+            if (cfg.oracle == address(0)) {
+                if (cfg.name.eq("sDAI")) {
+                    cfg.oracle = address(new SavingsDaiOracle(AggregatorInterface(daiOracle), address(dss.pot)));
+                } else {
                     cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
                 }
             }
@@ -268,6 +275,10 @@ contract DeployAave is Script {
 
             if (cfg.name.eq("sDAI")) {
                 savingsDai = cfg.token;
+            }
+
+            if (cfg.name.eq("DAI")) {
+                daiOracle = cfg.oracle;
             }
 
             require(IERC20Detailed(address(cfg.token)).symbol().eq(cfg.name), "Token name doesn't match symbol");
@@ -370,6 +381,8 @@ contract DeployAave is Script {
         if (address(faucet) != address(0)) ScriptTools.exportContract(NAME, "faucet", address(faucet));
         for (uint256 i = 0; i < assets.length; i++) {
             reserveData = pool.getReserveData(assets[i]);
+            ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_token")), reserveConfigs[i].token);
+            ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_oracle")), reserveConfigs[i].oracle);
             ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_aToken")), address(reserveData.aTokenAddress));
             ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_stableDebtToken")), address(reserveData.stableDebtTokenAddress));
             ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_variableDebtToken")), address(reserveData.variableDebtTokenAddress));
