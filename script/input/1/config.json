@@ -43,7 +43,7 @@
         },
         {
             "name": "sDAI",
-            "token": "0x0000000000000000000000000000000000000000",
+            "token": "0x83f20f44975d03b1b09e64809b757c47f942beea",
             "decimals": 18,
             "borrow": false,
             "irOptimalUsageRatio": 10000,
