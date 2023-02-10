@@ -209,16 +209,17 @@ contract DeployAave is Script {
         dss = MCD.loadFromChainlog(config.readAddress("chainlog"));
 
         address admin = config.readAddress("admin", "AAVE_ADMIN");
+        address deployer = msg.sender;
 
         vm.startBroadcast();
-        registry = new PoolAddressesProviderRegistry(admin);
-        poolAddressesProvider = new PoolAddressesProvider(config.readString("marketId"), admin);
-        poolAddressesProvider.setACLAdmin(admin);
+        registry = new PoolAddressesProviderRegistry(deployer);
+        poolAddressesProvider = new PoolAddressesProvider(config.readString("marketId"), deployer);
+        poolAddressesProvider.setACLAdmin(deployer);
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
         PoolConfigurator _poolConfigurator = new PoolConfigurator();
         Pool _pool = new Pool(poolAddressesProvider);
         aclManager = new ACLManager(poolAddressesProvider);
-        aclManager.addPoolAdmin(admin);
+        aclManager.addPoolAdmin(deployer);
         registry.registerAddressesProvider(address(poolAddressesProvider), 1);
 
         poolAddressesProvider.setPoolDataProvider(address(protocolDataProvider));
@@ -357,6 +358,16 @@ contract DeployAave is Script {
         if (makerFaucet != address(0)) {
             faucet = new Faucet(makerFaucet, config.readAddress("usdcPsm"), savingsDai);
         }
+
+        // Change all ownership to admin
+        aclManager.addPoolAdmin(admin);
+        aclManager.removePoolAdmin(deployer);
+        aclManager.grantRole(aclManager.DEFAULT_ADMIN_ROLE(), admin);
+        aclManager.revokeRole(aclManager.DEFAULT_ADMIN_ROLE(), deployer);
+        poolAddressesProvider.setACLAdmin(admin);
+        poolAddressesProvider.transferOwnership(admin);
+        registry.transferOwnership(admin);
+
         vm.stopBroadcast();
 
         ScriptTools.exportContract(NAME, "poolAddressesProviderRegistry", address(registry));

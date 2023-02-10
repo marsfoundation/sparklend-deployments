@@ -4,7 +4,6 @@ set -e
 
 echo "Deploying Aave contracts..."
 
-export AAVE_ADMIN="$ETH_FROM"
 export FOUNDRY_ROOT_CHAINID="$(cast chain-id)"
 export EXPORT_DIR="script/output/$FOUNDRY_ROOT_CHAINID"
 export FOUNDRY_EXPORTS_NAME="spark"
