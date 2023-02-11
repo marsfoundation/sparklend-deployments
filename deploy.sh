@@ -10,7 +10,8 @@ export FOUNDRY_EXPORTS_NAME="spark"
 
 mkdir -p "$EXPORT_DIR"
 
-forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
+forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify --slow
+exit
 
 GENERATED_FILE=`ls -tr script/output/$FOUNDRY_ROOT_CHAINID/spark-*.json | tail -1`
 export FOUNDRY_SCRIPT_CONFIG_TEXT=`jq -c ". + { adai: $(jq ".DAI_aToken" < $GENERATED_FILE), lendingPool: $(jq ".pool" < $GENERATED_FILE) }" < script/input/$FOUNDRY_ROOT_CHAINID/d3m-spark.json`
@@ -27,8 +28,8 @@ cd lib/dss-direct-deposit
 
 echo "Deploying D3M contracts..."
 
-forge script script/D3MDeploy.s.sol:D3MDeployScript --use solc:0.8.14 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast
-GENERATED_FILE=`ls -tr script/output/1/spark-*.json | tail -1`
+forge script script/D3MDeploy.s.sol:D3MDeployScript --use solc:0.8.14 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify
+GENERATED_FILE=`ls -tr script/output/$FOUNDRY_ROOT_CHAINID/spark-*.json | tail -1`
 mv "$GENERATED_FILE" "../../$EXPORT_DIR/"
 
 cd ../..

@@ -370,6 +370,7 @@ contract DeployAave is Script {
 
         vm.stopBroadcast();
 
+        ScriptTools.exportContract(NAME, "deployer", deployer);
         ScriptTools.exportContract(NAME, "poolAddressesProviderRegistry", address(registry));
         ScriptTools.exportContract(NAME, "poolAddressesProvider", address(poolAddressesProvider));
         ScriptTools.exportContract(NAME, "protocolDataProvider", address(protocolDataProvider));
