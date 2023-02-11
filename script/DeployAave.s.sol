@@ -105,7 +105,9 @@ contract DeployAave is Script {
     VariableDebtToken variableDebtTokenImpl;
 
     Collector treasury;
+    address treasuryImpl;
     Collector daiTreasury;
+    address daiTreasuryImpl;
     CollectorController treasuryController;
     RewardsController incentives;
     EmissionManager emissionManager;
@@ -193,7 +195,7 @@ contract DeployAave is Script {
         return input;
     }
 
-    function createCollector(address admin) internal returns (Collector collector) {
+    function createCollector(address admin) internal returns (Collector collector, address impl) {
         InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
         collector = Collector(address(proxy));
         Collector collectorImpl = new Collector();
@@ -234,8 +236,8 @@ contract DeployAave is Script {
         variableDebtTokenImpl = new VariableDebtToken(pool);
 
         treasuryController = new CollectorController(admin);
-        treasury = createCollector(admin);
-        daiTreasury = createCollector(admin);
+        (treasury, treasuryImpl) = createCollector(admin);
+        (daiTreasury, daiTreasuryImpl) = createCollector(admin);
 
         InitializableAdminUpgradeabilityProxy incentivesProxy = new InitializableAdminUpgradeabilityProxy();
         incentives = RewardsController(address(incentivesProxy));
@@ -370,21 +372,27 @@ contract DeployAave is Script {
 
         vm.stopBroadcast();
 
+        ScriptTools.exportContract(NAME, "admin", admin);
         ScriptTools.exportContract(NAME, "deployer", deployer);
         ScriptTools.exportContract(NAME, "poolAddressesProviderRegistry", address(registry));
         ScriptTools.exportContract(NAME, "poolAddressesProvider", address(poolAddressesProvider));
         ScriptTools.exportContract(NAME, "protocolDataProvider", address(protocolDataProvider));
         ScriptTools.exportContract(NAME, "poolConfigurator", address(poolConfigurator));
+        ScriptTools.exportContract(NAME, "poolConfiguratorImpl", address(_poolConfigurator));
         ScriptTools.exportContract(NAME, "pool", address(pool));
+        ScriptTools.exportContract(NAME, "poolImpl", address(_pool));
         ScriptTools.exportContract(NAME, "aclManager", address(aclManager));
         ScriptTools.exportContract(NAME, "aaveOracle", address(aaveOracle));
         ScriptTools.exportContract(NAME, "aTokenImpl", address(aTokenImpl));
         ScriptTools.exportContract(NAME, "stableDebtTokenImpl", address(stableDebtTokenImpl));
         ScriptTools.exportContract(NAME, "variableDebtTokenImpl", address(variableDebtTokenImpl));
         ScriptTools.exportContract(NAME, "treasury", address(treasury));
+        ScriptTools.exportContract(NAME, "treasuryImpl", address(treasuryImpl));
         ScriptTools.exportContract(NAME, "daiTreasury", address(daiTreasury));
+        ScriptTools.exportContract(NAME, "daiTreasuryImpl", address(daiTreasuryImpl));
         ScriptTools.exportContract(NAME, "treasuryController", address(treasuryController));
         ScriptTools.exportContract(NAME, "incentives", address(incentives));
+        ScriptTools.exportContract(NAME, "incentivesImpl", address(rewardsController));
         ScriptTools.exportContract(NAME, "emissionManager", address(emissionManager));
         ScriptTools.exportContract(NAME, "uiPoolDataProvider", address(uiPoolDataProvider));
         ScriptTools.exportContract(NAME, "uiIncentiveDataProvider", address(uiIncentiveDataProvider));
