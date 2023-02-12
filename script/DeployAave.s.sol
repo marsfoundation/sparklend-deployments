@@ -112,6 +112,7 @@ contract DeployAave is Script {
     CollectorController treasuryController;
     RewardsController incentives;
     EmissionManager emissionManager;
+    Collector collectorImpl;
 
     address weth;
     address wethOracle;
@@ -200,7 +201,6 @@ contract DeployAave is Script {
     function createCollector(address admin) internal returns (Collector collector, address impl) {
         InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
         collector = Collector(address(proxy));
-        Collector collectorImpl = new Collector();
         impl = address(collectorImpl);
         proxy.initialize(
             address(collectorImpl),
@@ -239,6 +239,7 @@ contract DeployAave is Script {
         variableDebtTokenImpl = new VariableDebtToken(pool);
 
         treasuryController = new CollectorController(admin);
+        collectorImpl = new Collector();
         (treasury, treasuryImpl) = createCollector(admin);
         (daiTreasury, daiTreasuryImpl) = createCollector(admin);
 

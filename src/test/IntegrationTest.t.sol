@@ -106,6 +106,17 @@ contract IntegrationTest is DssTest {
     Pool pool;
     ACLManager aclManager;
     AaveOracle aaveOracle;
+    AToken aTokenImpl;
+    VariableDebtToken variableDebtTokenImpl;
+    StableDebtToken stableDebtTokenImpl;
+    CollectorController treasuryController;
+    Collector treasury;
+    Collector treasuryImpl;
+    Collector daiTreasury;
+    Collector daiTreasuryImpl;
+    EmissionManager emissionManager;
+    RewardsController incentives;
+    RewardsController incentivesImpl;
 
     User[] users;
     address[] assets;
@@ -142,7 +153,7 @@ contract IntegrationTest is DssTest {
             wbtc = IERC20(deployedContracts.readAddress("WBTC_token"));
             dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
             usdc = IERC20(dss.chainlog.getAddress("USDC"));
-            sdai = IERC20(0xd8134205b0328f5676aaefb3b2a0dc15f4029d8c);
+            sdai = IERC20(0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C);
         }
 
         poolAddressesProviderRegistry = PoolAddressesProviderRegistry(deployedContracts.readAddress("poolAddressesProviderRegistry"));
@@ -152,6 +163,20 @@ contract IntegrationTest is DssTest {
         pool = Pool(deployedContracts.readAddress("pool"));
         aclManager = ACLManager(deployedContracts.readAddress("aclManager"));
         aaveOracle = AaveOracle(deployedContracts.readAddress("aaveOracle"));
+
+        aTokenImpl = AToken(deployedContracts.readAddress("aTokenImpl"));
+        variableDebtTokenImpl = VariableDebtToken(deployedContracts.readAddress("variableDebtTokenImpl"));
+        stableDebtTokenImpl = StableDebtToken(deployedContracts.readAddress("stableDebtTokenImpl"));
+
+        treasuryController = CollectorController(deployedContracts.readAddress("treasuryController"));
+        treasury = Collector(deployedContracts.readAddress("treasury"));
+        treasuryImpl = Collector(deployedContracts.readAddress("treasuryImpl"));
+        daiTreasury = Collector(deployedContracts.readAddress("daiTreasury"));
+        daiTreasuryImpl = Collector(deployedContracts.readAddress("daiTreasuryImpl"));
+
+        emissionManager = EmissionManager(deployedContracts.readAddress("emissionManager"));
+        incentives = RewardsController(deployedContracts.readAddress("incentives"));
+        incentivesImpl = RewardsController(deployedContracts.readAddress("incentivesImpl"));
 
         assets = pool.getReservesList();
 
@@ -485,6 +510,42 @@ contract IntegrationTest is DssTest {
             assertEq(st.getBaseVariableBorrowRate(), 0);
             assertEq(st.getMaxVariableBorrowRate(), 30800 * RAY / 10000);
         }
+        // Efficiency Mode Categories
+        {
+            DataTypes.EModeCategory memory cat = pool.getEModeCategoryData(1);
+            assertEq(cat.ltv, 9000);
+            assertEq(cat.liquidationThreshold, 9300);
+            assertEq(cat.liquidationBonus, 10100);
+            assertEq(cat.priceSource, address(0));
+            assertEq(cat.label, "ETH");
+        }
+    }
+
+    function test_spark_deploy_tokenImpls() public {
+        assertEq(address(aTokenImpl.POOL()), address(pool));
+        assertEq(address(variableDebtTokenImpl.POOL()), address(pool));
+        assertEq(address(stableDebtTokenImpl.POOL()), address(pool));
+    }
+
+    function test_spark_deploy_treasury() public {
+        assertEq(address(treasuryController.owner()), admin);
+        assertEq(treasury.REVISION(), 1);
+        assertEq(daiTreasury.REVISION(), 1);
+        assertEq(treasury.getFundsAdmin(), address(treasuryController));
+        assertEq(daiTreasury.getFundsAdmin(), address(treasuryController));
+        vm.prank(admin);
+        assertEq(InitializableAdminUpgradeabilityProxy(payable(address(treasury))).implementation(), address(treasuryImpl));
+        vm.prank(admin);
+        assertEq(InitializableAdminUpgradeabilityProxy(payable(address(daiTreasury))).implementation(), address(daiTreasuryImpl));
+        assertEq(address(treasuryImpl), address(daiTreasuryImpl));
+    }
+
+    function test_spark_deploy_incentives() public {
+        assertEq(address(emissionManager.owner()), admin);
+        assertEq(incentives.REVISION(), 1);
+        assertEq(incentives.EMISSION_MANAGER(), address(emissionManager));
+        vm.prank(admin);
+        assertEq(InitializableAdminUpgradeabilityProxy(payable(address(incentives))).implementation(), address(incentivesImpl));
     }
 
     /*function test_d3m() public {
