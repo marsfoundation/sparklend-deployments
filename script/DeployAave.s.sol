@@ -68,6 +68,7 @@ struct ReserveConfig {
     uint256 eModeCategory;
     uint256 supplyCap;
     uint256 borrowCap;
+    uint256 liquidationProtocolFee;
 }
 
 struct EModeConfig {
@@ -150,7 +151,8 @@ contract DeployAave is Script {
                 reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
                 eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
                 supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
-                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap"))))
+                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap")))),
+                liquidationProtocolFee: config.readUint(string(string.concat(bytes(base), bytes(".liquidationProtocolFee"))))
             });
         }
         return _reserves;
@@ -199,6 +201,7 @@ contract DeployAave is Script {
         InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
         collector = Collector(address(proxy));
         Collector collectorImpl = new Collector();
+        impl = address(collectorImpl);
         proxy.initialize(
             address(collectorImpl),
             admin,
@@ -296,7 +299,7 @@ contract DeployAave is Script {
                         0,
                         0,
                         75 * RAY / 100,  // 75%
-                        500_000_000 * WAD
+                        100_000_000 * WAD
                     )) :
                     IReserveInterestRateStrategy(new DefaultReserveInterestRateStrategy(
                         poolAddressesProvider,
@@ -353,6 +356,7 @@ contract DeployAave is Script {
             poolConfigurator.setReserveFlashLoaning(address(cfg.token), true);
             if (cfg.supplyCap != 0) poolConfigurator.setSupplyCap(address(cfg.token), cfg.supplyCap);
             if (cfg.borrowCap != 0) poolConfigurator.setBorrowCap(address(cfg.token), cfg.borrowCap);
+            if (cfg.liquidationProtocolFee != 0) poolConfigurator.setLiquidationProtocolFee(address(cfg.token), cfg.liquidationProtocolFee);
         }
         
         // Deploy a faucet if this is a testnet

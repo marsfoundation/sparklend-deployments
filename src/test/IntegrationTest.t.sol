@@ -90,6 +90,7 @@ contract IntegrationTest is DssTest {
     using stdJson for string;
     using MCD for *;
     using GodMode for *;
+    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
     string config;
     string deployedContracts;
@@ -226,11 +227,253 @@ contract IntegrationTest is DssTest {
         address[] memory reserves = pool.getReservesList();
         assertEq(reserves.length, 6);
         assertEq(reserves[0], address(dai));
-        if (block.chainid == 1) assertEq(reserves[1], address(sdai));
+        assertEq(reserves[1], address(sdai));
         assertEq(reserves[2], address(usdc));
-        if (block.chainid == 1) assertEq(reserves[3], address(weth));
-        if (block.chainid == 1) assertEq(reserves[4], address(wsteth));
-        if (block.chainid == 1) assertEq(reserves[5], address(wbtc));
+        assertEq(reserves[3], address(weth));
+        assertEq(reserves[4], address(wsteth));
+        assertEq(reserves[5], address(wbtc));
+        {
+            DataTypes.ReserveData memory data = pool.getReserveData(address(dai));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress("DAI_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("DAI_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("DAI_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("DAI_interestRateStrategy"));
+            DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+            assertEq(cfg.getLtv(), 7400);
+            assertEq(cfg.getLiquidationThreshold(), 7600);
+            assertEq(cfg.getLiquidationBonus(), 10450);
+            assertEq(cfg.getDecimals(), 18);
+            assertEq(cfg.getActive(), false);
+            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getPaused(), false);
+            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getSiloedBorrowing(), false);
+            assertEq(cfg.getBorrowingEnabled(), true);
+            assertEq(cfg.getStableRateBorrowingEnabled(), false);
+            assertEq(cfg.getReserveFactor(), 10000);
+            assertEq(cfg.getBorrowCap(), 0);
+            assertEq(cfg.getSupplyCap(), 0);
+            assertEq(cfg.getDebtCeiling(), 0);
+            assertEq(cfg.getLiquidationProtocolFee(), 2000);
+            assertEq(cfg.getUnbackedMintCap(), 0);
+            assertEq(cfg.getEModeCategory(), 0);
+            assertEq(cfg.getFlashLoanEnabled(), true);
+        }
+        {
+            DataTypes.ReserveData memory data = pool.getReserveData(address(sdai));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress("sDAI_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("sDAI_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("sDAI_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("sDAI_interestRateStrategy"));
+            DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+            assertEq(cfg.getLtv(), 7400);
+            assertEq(cfg.getLiquidationThreshold(), 7600);
+            assertEq(cfg.getLiquidationBonus(), 10450);
+            assertEq(cfg.getDecimals(), 18);
+            assertEq(cfg.getActive(), true);
+            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getPaused(), false);
+            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getSiloedBorrowing(), false);
+            assertEq(cfg.getBorrowingEnabled(), false);
+            assertEq(cfg.getStableRateBorrowingEnabled(), false);
+            assertEq(cfg.getReserveFactor(), 1000);
+            assertEq(cfg.getBorrowCap(), 0);
+            assertEq(cfg.getSupplyCap(), 0);
+            assertEq(cfg.getDebtCeiling(), 0);
+            assertEq(cfg.getLiquidationProtocolFee(), 2000);
+            assertEq(cfg.getUnbackedMintCap(), 0);
+            assertEq(cfg.getEModeCategory(), 0);
+            assertEq(cfg.getFlashLoanEnabled(), true);
+
+            // Interest strategy
+            DefaultReserveInterestRateStrategy st = DefaultReserveInterestRateStrategy(data.interestRateStrategyAddress);
+            assertEq(st.OPTIMAL_USAGE_RATIO(), RAY);
+            assertEq(st.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_USAGE_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), RAY);
+            assertEq(address(st.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+            assertEq(st.getVariableRateSlope1(), 0);
+            assertEq(st.getVariableRateSlope2(), 0);
+            assertEq(st.getStableRateSlope1(), 0);
+            assertEq(st.getStableRateSlope2(), 0);
+            assertEq(st.getStableRateExcessOffset(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseVariableBorrowRate(), 1 * RAY / 100);
+            assertEq(st.getMaxVariableBorrowRate(), 1 * RAY / 100);
+        }
+        {
+            DataTypes.ReserveData memory data = pool.getReserveData(address(usdc));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress("USDC_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("USDC_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("USDC_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("USDC_interestRateStrategy"));
+            DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+            assertEq(cfg.getLtv(), 0);
+            assertEq(cfg.getLiquidationThreshold(), 0);
+            assertEq(cfg.getLiquidationBonus(), 0);
+            assertEq(cfg.getDecimals(), 6);
+            assertEq(cfg.getActive(), true);
+            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getPaused(), false);
+            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getSiloedBorrowing(), false);
+            assertEq(cfg.getBorrowingEnabled(), false);
+            assertEq(cfg.getStableRateBorrowingEnabled(), false);
+            assertEq(cfg.getReserveFactor(), 1000);
+            assertEq(cfg.getBorrowCap(), 0);
+            assertEq(cfg.getSupplyCap(), 0);
+            assertEq(cfg.getDebtCeiling(), 0);
+            assertEq(cfg.getLiquidationProtocolFee(), 0);
+            assertEq(cfg.getUnbackedMintCap(), 0);
+            assertEq(cfg.getEModeCategory(), 0);
+            assertEq(cfg.getFlashLoanEnabled(), true);
+
+            // Interest strategy
+            DefaultReserveInterestRateStrategy st = DefaultReserveInterestRateStrategy(data.interestRateStrategyAddress);
+            assertEq(st.OPTIMAL_USAGE_RATIO(), RAY);
+            assertEq(st.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_USAGE_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), RAY);
+            assertEq(address(st.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+            assertEq(st.getVariableRateSlope1(), 0);
+            assertEq(st.getVariableRateSlope2(), 0);
+            assertEq(st.getStableRateSlope1(), 0);
+            assertEq(st.getStableRateSlope2(), 0);
+            assertEq(st.getStableRateExcessOffset(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseVariableBorrowRate(), 1 * RAY / 100);
+            assertEq(st.getMaxVariableBorrowRate(), 1 * RAY / 100);
+        }
+        {
+            DataTypes.ReserveData memory data = pool.getReserveData(address(weth));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress("WETH_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("WETH_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("WETH_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("WETH_interestRateStrategy"));
+            DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+            assertEq(cfg.getLtv(), 8000);
+            assertEq(cfg.getLiquidationThreshold(), 8250);
+            assertEq(cfg.getLiquidationBonus(), 10500);
+            assertEq(cfg.getDecimals(), 18);
+            assertEq(cfg.getActive(), true);
+            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getPaused(), false);
+            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getSiloedBorrowing(), false);
+            assertEq(cfg.getBorrowingEnabled(), true);
+            assertEq(cfg.getStableRateBorrowingEnabled(), false);
+            assertEq(cfg.getReserveFactor(), 1500);
+            assertEq(cfg.getBorrowCap(), 1400000);
+            assertEq(cfg.getSupplyCap(), 0);
+            assertEq(cfg.getDebtCeiling(), 0);
+            assertEq(cfg.getLiquidationProtocolFee(), 1000);
+            assertEq(cfg.getUnbackedMintCap(), 0);
+            assertEq(cfg.getEModeCategory(), 1);
+            assertEq(cfg.getFlashLoanEnabled(), true);
+
+            // Interest strategy
+            DefaultReserveInterestRateStrategy st = DefaultReserveInterestRateStrategy(data.interestRateStrategyAddress);
+            assertEq(st.OPTIMAL_USAGE_RATIO(), 80 * RAY / 100);
+            assertEq(st.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_USAGE_RATIO(), 20 * RAY / 100);
+            assertEq(st.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), RAY);
+            assertEq(address(st.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+            assertEq(st.getVariableRateSlope1(), 380 * RAY / 10000);
+            assertEq(st.getVariableRateSlope2(), 8000 * RAY / 10000);
+            assertEq(st.getStableRateSlope1(), 0);
+            assertEq(st.getStableRateSlope2(), 0);
+            assertEq(st.getStableRateExcessOffset(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseVariableBorrowRate(), 100 * RAY / 10000);
+            assertEq(st.getMaxVariableBorrowRate(), 8480 * RAY / 10000);
+        }
+        {
+            DataTypes.ReserveData memory data = pool.getReserveData(address(wsteth));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress("wstETH_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("wstETH_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("wstETH_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("wstETH_interestRateStrategy"));
+            DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+            assertEq(cfg.getLtv(), 6850);
+            assertEq(cfg.getLiquidationThreshold(), 7950);
+            assertEq(cfg.getLiquidationBonus(), 10700);
+            assertEq(cfg.getDecimals(), 18);
+            assertEq(cfg.getActive(), true);
+            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getPaused(), false);
+            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getSiloedBorrowing(), false);
+            assertEq(cfg.getBorrowingEnabled(), true);
+            assertEq(cfg.getStableRateBorrowingEnabled(), false);
+            assertEq(cfg.getReserveFactor(), 1500);
+            assertEq(cfg.getBorrowCap(), 3000);
+            assertEq(cfg.getSupplyCap(), 200000);
+            assertEq(cfg.getDebtCeiling(), 0);
+            assertEq(cfg.getLiquidationProtocolFee(), 1000);
+            assertEq(cfg.getUnbackedMintCap(), 0);
+            assertEq(cfg.getEModeCategory(), 1);
+            assertEq(cfg.getFlashLoanEnabled(), true);
+
+            // Interest strategy
+            DefaultReserveInterestRateStrategy st = DefaultReserveInterestRateStrategy(data.interestRateStrategyAddress);
+            assertEq(st.OPTIMAL_USAGE_RATIO(), 45 * RAY / 100);
+            assertEq(st.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_USAGE_RATIO(), 55 * RAY / 100);
+            assertEq(st.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), RAY);
+            assertEq(address(st.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+            assertEq(st.getVariableRateSlope1(), 450 * RAY / 10000);
+            assertEq(st.getVariableRateSlope2(), 8000 * RAY / 10000);
+            assertEq(st.getStableRateSlope1(), 0);
+            assertEq(st.getStableRateSlope2(), 0);
+            assertEq(st.getStableRateExcessOffset(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseVariableBorrowRate(), 25 * RAY / 10000);
+            assertEq(st.getMaxVariableBorrowRate(), 8475 * RAY / 10000);
+        }
+        {
+            DataTypes.ReserveData memory data = pool.getReserveData(address(wbtc));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress("WBTC_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("WBTC_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("WBTC_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("WBTC_interestRateStrategy"));
+            DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+            assertEq(cfg.getLtv(), 7000);
+            assertEq(cfg.getLiquidationThreshold(), 7500);
+            assertEq(cfg.getLiquidationBonus(), 10625);
+            assertEq(cfg.getDecimals(), 8);
+            assertEq(cfg.getActive(), true);
+            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getPaused(), false);
+            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getSiloedBorrowing(), false);
+            assertEq(cfg.getBorrowingEnabled(), true);
+            assertEq(cfg.getStableRateBorrowingEnabled(), false);
+            assertEq(cfg.getReserveFactor(), 2000);
+            assertEq(cfg.getBorrowCap(), 500);
+            assertEq(cfg.getSupplyCap(), 1000);
+            assertEq(cfg.getDebtCeiling(), 0);
+            assertEq(cfg.getLiquidationProtocolFee(), 1000);
+            assertEq(cfg.getUnbackedMintCap(), 0);
+            assertEq(cfg.getEModeCategory(), 0);
+            assertEq(cfg.getFlashLoanEnabled(), true);
+
+            // Interest strategy
+            DefaultReserveInterestRateStrategy st = DefaultReserveInterestRateStrategy(data.interestRateStrategyAddress);
+            assertEq(st.OPTIMAL_USAGE_RATIO(), 65 * RAY / 100);
+            assertEq(st.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(), 0);
+            assertEq(st.MAX_EXCESS_USAGE_RATIO(), 35 * RAY / 100);
+            assertEq(st.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), RAY);
+            assertEq(address(st.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+            assertEq(st.getVariableRateSlope1(), 800 * RAY / 10000);
+            assertEq(st.getVariableRateSlope2(), 30000 * RAY / 10000);
+            assertEq(st.getStableRateSlope1(), 0);
+            assertEq(st.getStableRateSlope2(), 0);
+            assertEq(st.getStableRateExcessOffset(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseVariableBorrowRate(), 0);
+            assertEq(st.getMaxVariableBorrowRate(), 30800 * RAY / 10000);
+        }
     }
 
     /*function test_d3m() public {

@@ -66,6 +66,7 @@ struct ReserveConfig {
     uint256 eModeCategory;
     uint256 supplyCap;
     uint256 borrowCap;
+    uint256 liquidationProtocolFee;
 }
 
 struct EModeConfig {
@@ -129,7 +130,8 @@ contract AddMissingReserves is Script {
                 reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
                 eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
                 supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
-                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap"))))
+                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap")))),
+                liquidationProtocolFee: config.readUint(string(string.concat(bytes(base), bytes(".liquidationProtocolFee"))))
             });
         }
         return _reserves;
@@ -272,6 +274,7 @@ contract AddMissingReserves is Script {
             poolConfigurator.setReserveFlashLoaning(address(cfg.token), true);
             if (cfg.supplyCap != 0) poolConfigurator.setSupplyCap(address(cfg.token), cfg.supplyCap);
             if (cfg.borrowCap != 0) poolConfigurator.setBorrowCap(address(cfg.token), cfg.borrowCap);
+            if (cfg.liquidationProtocolFee != 0) poolConfigurator.setLiquidationProtocolFee(address(cfg.token), cfg.liquidationProtocolFee);
         }
 
         vm.stopBroadcast();

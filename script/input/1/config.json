@@ -39,7 +39,8 @@
             "reserveFactor": 10000,
             "eModeCategory": 0,
             "supplyCap": 0,
-            "borrowCap": 0
+            "borrowCap": 0,
+            "liquidationProtocolFee": 2000
         },
         {
             "name": "sDAI",
@@ -58,7 +59,8 @@
             "reserveFactor": 1000,
             "eModeCategory": 0,
             "supplyCap": 0,
-            "borrowCap": 0
+            "borrowCap": 0,
+            "liquidationProtocolFee": 2000
         },
         {
             "name": "USDC",
@@ -66,7 +68,7 @@
             "decimals": 6,
             "borrow": false,
             "irOptimalUsageRatio": 10000,
-            "irBaseVariableBorrowRate": 99,
+            "irBaseVariableBorrowRate": 100,
             "irVariableRateSlope1": 0,
             "irVariableRateSlope2": 0,
             "oracle": "0x0000000000000000000000000000000000000000",
@@ -77,7 +79,8 @@
             "reserveFactor": 1000,
             "eModeCategory": 0,
             "supplyCap": 0,
-            "borrowCap": 0
+            "borrowCap": 0,
+            "liquidationProtocolFee": 0
         },
         {
             "name": "WETH",
@@ -96,13 +99,14 @@
             "reserveFactor": 1500,
             "eModeCategory": 1,
             "supplyCap": 0,
-            "borrowCap": 1400000
+            "borrowCap": 1400000,
+            "liquidationProtocolFee": 1000
         },
         {
             "name": "wstETH",
             "token": "0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0",
             "decimals": 18,
-            "borrow": false,
+            "borrow": true,
             "irOptimalUsageRatio": 4500,
             "irBaseVariableBorrowRate": 25,
             "irVariableRateSlope1": 450,
@@ -115,7 +119,8 @@
             "reserveFactor": 1500,
             "eModeCategory": 1,
             "supplyCap": 200000,
-            "borrowCap": 3000
+            "borrowCap": 3000,
+            "liquidationProtocolFee": 1000
         },
         {
             "name": "WBTC",
@@ -134,7 +139,8 @@
             "reserveFactor": 2000,
             "eModeCategory": 0,
             "supplyCap": 1000,
-            "borrowCap": 500
+            "borrowCap": 500,
+            "liquidationProtocolFee": 1000
         }
     ]
 }
