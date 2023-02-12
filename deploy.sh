@@ -23,8 +23,10 @@ export COMMON_ARGS="--chain-id $FOUNDRY_ROOT_CHAINID --watch"
 forge verify-contract $DEPLOY_poolAddressesProviderRegistry PoolAddressesProviderRegistry $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $ETH_FROM`
 forge verify-contract $DEPLOY_poolAddressesProvider PoolAddressesProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(string,address)' 'Spark Protocol' $ETH_FROM`
 forge verify-contract $DEPLOY_protocolDataProvider AaveProtocolDataProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-#forge verify-contract $DEPLOY_poolConfiguratorImpl PoolConfigurator $COMMON_ARGS // THIS IS BROKEN
+# FIX THIS
+#forge verify-contract $DEPLOY_poolConfiguratorImpl PoolConfigurator $COMMON_ARGS
 forge verify-contract $DEPLOY_poolConfigurator InitializableImmutableAdminUpgradeabilityProxy $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
+# FIX THIS
 #forge verify-contract $DEPLOY_poolImpl Pool $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
 forge verify-contract $DEPLOY_pool InitializableImmutableAdminUpgradeabilityProxy $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
 forge verify-contract $DEPLOY_aclManager ACLManager $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
@@ -34,10 +36,18 @@ forge verify-contract $DEPLOY_variableDebtTokenImpl VariableDebtToken $COMMON_AR
 forge verify-contract $DEPLOY_treasuryController CollectorController $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_admin`
 forge verify-contract $DEPLOY_treasuryImpl Collector $COMMON_ARGS
 forge verify-contract $DEPLOY_treasury InitializableAdminUpgradeabilityProxy $COMMON_ARGS
-#forge verify-contract $DEPLOY_daiTreasuryImpl Collector $COMMON_ARGS       // THESE GET VERIFIED BY THE PREVIOUS VERIFIES
+# THESE GET VERIFIED BY THE PREVIOUS VERIFIES
+#forge verify-contract $DEPLOY_daiTreasuryImpl Collector $COMMON_ARGS
 #forge verify-contract $DEPLOY_daiTreasury InitializableAdminUpgradeabilityProxy $COMMON_ARGS
 forge verify-contract $DEPLOY_incentivesImpl RewardsController $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_emissionManager`
 #forge verify-contract $DEPLOY_incentives InitializableAdminUpgradeabilityProxy $COMMON_ARGS
+forge verify-contract $DEPLOY_uiPoolDataProvider UiPoolDataProviderV3 $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address)' $DEPLOY_WETH_oracle $DEPLOY_WETH_oracle`
+forge verify-contract $DEPLOY_uiIncentiveDataProvider UiIncentiveDataProviderV3 $COMMON_ARGS
+forge verify-contract $DEPLOY_wethGateway WrappedTokenGatewayV3 $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address,address)' $DEPLOY_WETH_token $DEPLOY_admin $DEPLOY_pool`
+forge verify-contract $DEPLOY_walletBalanceProvider WalletBalanceProvider $COMMON_ARGS
+ORACLE_ASSET_ADDRESSES="$DEPLOY_DAI_token,$DEPLOY_sDAI_token,$DEPLOY_USDC_token,$DEPLOY_WETH_token,$DEPLOY_wstETH_token,$DEPLOY_WBTC_token"
+ORACLE_ASSET_SOURCES="$DEPLOY_DAI_oracle,$DEPLOY_sDAI_oracle,$DEPLOY_USDC_oracle,$DEPLOY_WETH_oracle,$DEPLOY_wstETH_oracle,$DEPLOY_WBTC_oracle"
+forge verify-contract $DEPLOY_aaveOracle AaveOracle $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address[],address[],address,address,uint256)' $DEPLOY_poolAddressesProvider \[$ORACLE_ASSET_ADDRESSES\] \[$ORACLE_ASSET_SOURCES\] 0x0000000000000000000000000000000000000000 0x0000000000000000000000000000000000000000 100000000`
 
 exit
 
