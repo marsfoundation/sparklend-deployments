@@ -19,14 +19,19 @@ done
 export FOUNDRY_SCRIPT_CONFIG_TEXT=`jq -c ". + { adai: $(jq ".DAI_aToken" < $GENERATED_FILE), lendingPool: $(jq ".pool" < $GENERATED_FILE) }" < script/input/$FOUNDRY_ROOT_CHAINID/d3m-spark.json`
 
 # Verify the contracts (automated process not working that well)
-export COMMON_ARGS="--chain-id $FOUNDRY_ROOT_CHAINID --watch"
+export LIBS_IN="$(jq -c '.libraries[]' < broadcast/DeployAave.s.sol/$FOUNDRY_ROOT_CHAINID/run-latest.json | sed 's/"//g')"
+export LIBS=""
+for l in $LIBS_IN; do
+    ADDR="$(cast --to-checksum-address `echo $l | cut -d':' -f3`)"
+    export LIBS="$LIBS --libraries `echo $l | cut -d':' -f1`:`echo $l | cut -d':' -f2`:$ADDR"
+done
+export COMMON_ARGS="--chain-id $FOUNDRY_ROOT_CHAINID --watch $LIBS"
 forge verify-contract $DEPLOY_poolAddressesProviderRegistry PoolAddressesProviderRegistry $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $ETH_FROM`
 forge verify-contract $DEPLOY_poolAddressesProvider PoolAddressesProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(string,address)' 'Spark Protocol' $ETH_FROM`
 forge verify-contract $DEPLOY_protocolDataProvider AaveProtocolDataProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-# FIX THIS
-#forge verify-contract $DEPLOY_poolConfiguratorImpl PoolConfigurator $COMMON_ARGS
+forge verify-contract $DEPLOY_poolConfiguratorImpl PoolConfigurator $COMMON_ARGS
 forge verify-contract $DEPLOY_poolConfigurator InitializableImmutableAdminUpgradeabilityProxy $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-# FIX THIS
+# BUG IN FOUNDRY - Two versions of BorrowLogic being deployed, fix this
 #forge verify-contract $DEPLOY_poolImpl Pool $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
 forge verify-contract $DEPLOY_pool InitializableImmutableAdminUpgradeabilityProxy $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
 forge verify-contract $DEPLOY_aclManager ACLManager $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
