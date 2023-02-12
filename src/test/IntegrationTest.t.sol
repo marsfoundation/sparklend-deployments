@@ -117,6 +117,10 @@ contract IntegrationTest is DssTest {
     EmissionManager emissionManager;
     RewardsController incentives;
     RewardsController incentivesImpl;
+    UiPoolDataProviderV3 uiPoolDataProvider;
+    UiIncentiveDataProviderV3 uiIncentiveDataProvider;
+    WrappedTokenGatewayV3 wethGateway;
+    WalletBalanceProvider walletBalanceProvider;
 
     User[] users;
     address[] assets;
@@ -177,6 +181,11 @@ contract IntegrationTest is DssTest {
         emissionManager = EmissionManager(deployedContracts.readAddress("emissionManager"));
         incentives = RewardsController(deployedContracts.readAddress("incentives"));
         incentivesImpl = RewardsController(deployedContracts.readAddress("incentivesImpl"));
+
+        uiPoolDataProvider = UiPoolDataProviderV3(deployedContracts.readAddress("uiPoolDataProvider"));
+        uiIncentiveDataProvider = UiIncentiveDataProviderV3(deployedContracts.readAddress("uiIncentiveDataProvider"));
+        wethGateway = WrappedTokenGatewayV3(payable(deployedContracts.readAddress("wethGateway")));
+        walletBalanceProvider = WalletBalanceProvider(payable(deployedContracts.readAddress("walletBalanceProvider")));
 
         assets = pool.getReservesList();
 
@@ -546,6 +555,13 @@ contract IntegrationTest is DssTest {
         assertEq(incentives.EMISSION_MANAGER(), address(emissionManager));
         vm.prank(admin);
         assertEq(InitializableAdminUpgradeabilityProxy(payable(address(incentives))).implementation(), address(incentivesImpl));
+    }
+
+    function test_spark_deploy_misc_contracts() public {
+        assertEq(address(uiPoolDataProvider.networkBaseTokenPriceInUsdProxyAggregator()), deployedContracts.readAddress("WETH_oracle"));
+        assertEq(address(uiPoolDataProvider.marketReferenceCurrencyPriceInUsdProxyAggregator()), deployedContracts.readAddress("WETH_oracle"));
+        assertEq(wethGateway.owner(), admin);
+        assertEq(wethGateway.getWETHAddress(), address(weth));
     }
 
     /*function test_d3m() public {

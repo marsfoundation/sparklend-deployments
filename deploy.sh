@@ -53,6 +53,7 @@ forge verify-contract $DEPLOY_walletBalanceProvider WalletBalanceProvider $COMMO
 ORACLE_ASSET_ADDRESSES="$DEPLOY_DAI_token,$DEPLOY_sDAI_token,$DEPLOY_USDC_token,$DEPLOY_WETH_token,$DEPLOY_wstETH_token,$DEPLOY_WBTC_token"
 ORACLE_ASSET_SOURCES="$DEPLOY_DAI_oracle,$DEPLOY_sDAI_oracle,$DEPLOY_USDC_oracle,$DEPLOY_WETH_oracle,$DEPLOY_wstETH_oracle,$DEPLOY_WBTC_oracle"
 forge verify-contract $DEPLOY_aaveOracle AaveOracle $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address[],address[],address,address,uint256)' $DEPLOY_poolAddressesProvider \[$ORACLE_ASSET_ADDRESSES\] \[$ORACLE_ASSET_SOURCES\] 0x0000000000000000000000000000000000000000 0x0000000000000000000000000000000000000000 100000000`
+# TODO oracle verify
 
 exit
 
