@@ -127,12 +127,23 @@ contract IntegrationTest is DssTest {
         deployer = deployedContracts.readAddress("deployer");
 
         //hub = D3MHubLike(dss.chainlog.getAddress("DIRECT_HUB"));
-        weth = IERC20(dss.chainlog.getAddress("ETH"));
-        wsteth = IERC20(dss.chainlog.getAddress("WSTETH"));
-        wbtc = IERC20(dss.chainlog.getAddress("WBTC"));
-        dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
-        usdc = IERC20(dss.chainlog.getAddress("USDC"));
-        sdai = IERC20(0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C);
+        if (block.chainid == 1) {
+            // Mainnet
+            weth = IERC20(dss.chainlog.getAddress("ETH"));
+            wsteth = IERC20(dss.chainlog.getAddress("WSTETH"));
+            wbtc = IERC20(dss.chainlog.getAddress("WBTC"));
+            dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
+            usdc = IERC20(dss.chainlog.getAddress("USDC"));
+            sdai = IERC20(0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C);
+        } else {
+            // Goerli
+            weth = IERC20(deployedContracts.readAddress("WETH_token"));
+            wsteth = IERC20(deployedContracts.readAddress("wstETH_token"));
+            wbtc = IERC20(deployedContracts.readAddress("WBTC_token"));
+            dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
+            usdc = IERC20(dss.chainlog.getAddress("USDC"));
+            sdai = IERC20(0xd8134205b0328f5676aaefb3b2a0dc15f4029d8c);
+        }
 
         poolAddressesProviderRegistry = PoolAddressesProviderRegistry(deployedContracts.readAddress("poolAddressesProviderRegistry"));
         poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
