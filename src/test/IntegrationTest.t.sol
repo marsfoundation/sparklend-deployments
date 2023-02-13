@@ -136,10 +136,10 @@ contract IntegrationTest is DssTest {
     function setUp() public {
         config = ScriptTools.readInput("config");
         deployedContracts = ScriptTools.readOutput("spark");
-        dss = MCD.loadFromChainlog(config.readAddress("chainlog"));
+        dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
-        admin = config.readAddress("admin");
-        deployer = deployedContracts.readAddress("deployer");
+        admin = config.readAddress(".admin");
+        deployer = deployedContracts.readAddress(".deployer");
 
         //hub = D3MHubLike(dss.chainlog.getAddress("DIRECT_HUB"));
         if (block.chainid == 1) {
@@ -152,40 +152,40 @@ contract IntegrationTest is DssTest {
             sdai = IERC20(0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C);
         } else {
             // Goerli
-            weth = IERC20(deployedContracts.readAddress("WETH_token"));
-            wsteth = IERC20(deployedContracts.readAddress("wstETH_token"));
-            wbtc = IERC20(deployedContracts.readAddress("WBTC_token"));
+            weth = IERC20(deployedContracts.readAddress(".WETH_token"));
+            wsteth = IERC20(deployedContracts.readAddress(".wstETH_token"));
+            wbtc = IERC20(deployedContracts.readAddress(".WBTC_token"));
             dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
             usdc = IERC20(dss.chainlog.getAddress("USDC"));
             sdai = IERC20(0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C);
         }
 
-        poolAddressesProviderRegistry = PoolAddressesProviderRegistry(deployedContracts.readAddress("poolAddressesProviderRegistry"));
-        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
-        protocolDataProvider = AaveProtocolDataProvider(deployedContracts.readAddress("protocolDataProvider"));
-        poolConfigurator = PoolConfigurator(deployedContracts.readAddress("poolConfigurator"));
-        pool = Pool(deployedContracts.readAddress("pool"));
-        aclManager = ACLManager(deployedContracts.readAddress("aclManager"));
-        aaveOracle = AaveOracle(deployedContracts.readAddress("aaveOracle"));
+        poolAddressesProviderRegistry = PoolAddressesProviderRegistry(deployedContracts.readAddress(".poolAddressesProviderRegistry"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
+        protocolDataProvider = AaveProtocolDataProvider(deployedContracts.readAddress(".protocolDataProvider"));
+        poolConfigurator = PoolConfigurator(deployedContracts.readAddress(".poolConfigurator"));
+        pool = Pool(deployedContracts.readAddress(".pool"));
+        aclManager = ACLManager(deployedContracts.readAddress(".aclManager"));
+        aaveOracle = AaveOracle(deployedContracts.readAddress(".aaveOracle"));
 
-        aTokenImpl = AToken(deployedContracts.readAddress("aTokenImpl"));
-        variableDebtTokenImpl = VariableDebtToken(deployedContracts.readAddress("variableDebtTokenImpl"));
-        stableDebtTokenImpl = StableDebtToken(deployedContracts.readAddress("stableDebtTokenImpl"));
+        aTokenImpl = AToken(deployedContracts.readAddress(".aTokenImpl"));
+        variableDebtTokenImpl = VariableDebtToken(deployedContracts.readAddress(".variableDebtTokenImpl"));
+        stableDebtTokenImpl = StableDebtToken(deployedContracts.readAddress(".stableDebtTokenImpl"));
 
-        treasuryController = CollectorController(deployedContracts.readAddress("treasuryController"));
-        treasury = Collector(deployedContracts.readAddress("treasury"));
-        treasuryImpl = Collector(deployedContracts.readAddress("treasuryImpl"));
-        daiTreasury = Collector(deployedContracts.readAddress("daiTreasury"));
-        daiTreasuryImpl = Collector(deployedContracts.readAddress("daiTreasuryImpl"));
+        treasuryController = CollectorController(deployedContracts.readAddress(".treasuryController"));
+        treasury = Collector(deployedContracts.readAddress(".treasury"));
+        treasuryImpl = Collector(deployedContracts.readAddress(".treasuryImpl"));
+        daiTreasury = Collector(deployedContracts.readAddress(".daiTreasury"));
+        daiTreasuryImpl = Collector(deployedContracts.readAddress(".daiTreasuryImpl"));
 
-        emissionManager = EmissionManager(deployedContracts.readAddress("emissionManager"));
-        incentives = RewardsController(deployedContracts.readAddress("incentives"));
-        incentivesImpl = RewardsController(deployedContracts.readAddress("incentivesImpl"));
+        emissionManager = EmissionManager(deployedContracts.readAddress(".emissionManager"));
+        incentives = RewardsController(deployedContracts.readAddress(".incentives"));
+        incentivesImpl = RewardsController(deployedContracts.readAddress(".incentivesImpl"));
 
-        uiPoolDataProvider = UiPoolDataProviderV3(deployedContracts.readAddress("uiPoolDataProvider"));
-        uiIncentiveDataProvider = UiIncentiveDataProviderV3(deployedContracts.readAddress("uiIncentiveDataProvider"));
-        wethGateway = WrappedTokenGatewayV3(payable(deployedContracts.readAddress("wethGateway")));
-        walletBalanceProvider = WalletBalanceProvider(payable(deployedContracts.readAddress("walletBalanceProvider")));
+        uiPoolDataProvider = UiPoolDataProviderV3(deployedContracts.readAddress(".uiPoolDataProvider"));
+        uiIncentiveDataProvider = UiIncentiveDataProviderV3(deployedContracts.readAddress(".uiIncentiveDataProvider"));
+        wethGateway = WrappedTokenGatewayV3(payable(deployedContracts.readAddress(".wethGateway")));
+        walletBalanceProvider = WalletBalanceProvider(payable(deployedContracts.readAddress(".walletBalanceProvider")));
 
         assets = pool.getReservesList();
 
@@ -279,10 +279,10 @@ contract IntegrationTest is DssTest {
         assertEq(reserves[5], address(wbtc));
         {
             DataTypes.ReserveData memory data = pool.getReserveData(address(dai));
-            assertEq(data.aTokenAddress, deployedContracts.readAddress("DAI_aToken"));
-            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("DAI_stableDebtToken"));
-            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("DAI_variableDebtToken"));
-            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("DAI_interestRateStrategy"));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress(".DAI_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress(".DAI_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress(".DAI_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress(".DAI_interestRateStrategy"));
             DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
             assertEq(cfg.getLtv(), 7400);
             assertEq(cfg.getLiquidationThreshold(), 7600);
@@ -306,10 +306,10 @@ contract IntegrationTest is DssTest {
         }
         {
             DataTypes.ReserveData memory data = pool.getReserveData(address(sdai));
-            assertEq(data.aTokenAddress, deployedContracts.readAddress("sDAI_aToken"));
-            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("sDAI_stableDebtToken"));
-            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("sDAI_variableDebtToken"));
-            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("sDAI_interestRateStrategy"));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress(".sDAI_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress(".sDAI_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress(".sDAI_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress(".sDAI_interestRateStrategy"));
             DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
             assertEq(cfg.getLtv(), 7400);
             assertEq(cfg.getLiquidationThreshold(), 7600);
@@ -349,10 +349,10 @@ contract IntegrationTest is DssTest {
         }
         {
             DataTypes.ReserveData memory data = pool.getReserveData(address(usdc));
-            assertEq(data.aTokenAddress, deployedContracts.readAddress("USDC_aToken"));
-            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("USDC_stableDebtToken"));
-            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("USDC_variableDebtToken"));
-            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("USDC_interestRateStrategy"));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress(".USDC_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress(".USDC_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress(".USDC_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress(".USDC_interestRateStrategy"));
             DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
             assertEq(cfg.getLtv(), 0);
             assertEq(cfg.getLiquidationThreshold(), 0);
@@ -392,10 +392,10 @@ contract IntegrationTest is DssTest {
         }
         {
             DataTypes.ReserveData memory data = pool.getReserveData(address(weth));
-            assertEq(data.aTokenAddress, deployedContracts.readAddress("WETH_aToken"));
-            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("WETH_stableDebtToken"));
-            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("WETH_variableDebtToken"));
-            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("WETH_interestRateStrategy"));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress(".WETH_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress(".WETH_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress(".WETH_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress(".WETH_interestRateStrategy"));
             DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
             assertEq(cfg.getLtv(), 8000);
             assertEq(cfg.getLiquidationThreshold(), 8250);
@@ -435,10 +435,10 @@ contract IntegrationTest is DssTest {
         }
         {
             DataTypes.ReserveData memory data = pool.getReserveData(address(wsteth));
-            assertEq(data.aTokenAddress, deployedContracts.readAddress("wstETH_aToken"));
-            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("wstETH_stableDebtToken"));
-            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("wstETH_variableDebtToken"));
-            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("wstETH_interestRateStrategy"));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress(".wstETH_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress(".wstETH_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress(".wstETH_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress(".wstETH_interestRateStrategy"));
             DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
             assertEq(cfg.getLtv(), 6850);
             assertEq(cfg.getLiquidationThreshold(), 7950);
@@ -478,10 +478,10 @@ contract IntegrationTest is DssTest {
         }
         {
             DataTypes.ReserveData memory data = pool.getReserveData(address(wbtc));
-            assertEq(data.aTokenAddress, deployedContracts.readAddress("WBTC_aToken"));
-            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress("WBTC_stableDebtToken"));
-            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress("WBTC_variableDebtToken"));
-            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress("WBTC_interestRateStrategy"));
+            assertEq(data.aTokenAddress, deployedContracts.readAddress(".WBTC_aToken"));
+            assertEq(data.stableDebtTokenAddress, deployedContracts.readAddress(".WBTC_stableDebtToken"));
+            assertEq(data.variableDebtTokenAddress, deployedContracts.readAddress(".WBTC_variableDebtToken"));
+            assertEq(data.interestRateStrategyAddress, deployedContracts.readAddress(".WBTC_interestRateStrategy"));
             DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
             assertEq(cfg.getLtv(), 7000);
             assertEq(cfg.getLiquidationThreshold(), 7500);
@@ -558,10 +558,39 @@ contract IntegrationTest is DssTest {
     }
 
     function test_spark_deploy_misc_contracts() public {
-        assertEq(address(uiPoolDataProvider.networkBaseTokenPriceInUsdProxyAggregator()), deployedContracts.readAddress("WETH_oracle"));
-        assertEq(address(uiPoolDataProvider.marketReferenceCurrencyPriceInUsdProxyAggregator()), deployedContracts.readAddress("WETH_oracle"));
+        assertEq(address(uiPoolDataProvider.networkBaseTokenPriceInUsdProxyAggregator()), deployedContracts.readAddress(".WETH_oracle"));
+        assertEq(address(uiPoolDataProvider.marketReferenceCurrencyPriceInUsdProxyAggregator()), deployedContracts.readAddress(".WETH_oracle"));
         assertEq(wethGateway.owner(), admin);
         assertEq(wethGateway.getWETHAddress(), address(weth));
+    }
+
+    function test_spark_deploy_oracles() public {
+        assertEq(address(aaveOracle.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+        assertEq(aaveOracle.BASE_CURRENCY(), address(0));
+        assertEq(aaveOracle.BASE_CURRENCY_UNIT(), 10 ** 8);
+        assertEq(aaveOracle.getFallbackOracle(), address(0));
+
+        assertEq(aaveOracle.getSourceOfAsset(address(dai)), deployedContracts.readAddress(".DAI_oracle"));
+        assertEq(aaveOracle.getSourceOfAsset(address(sdai)), deployedContracts.readAddress(".sDAI_oracle"));
+        assertEq(SavingsDaiOracle(aaveOracle.getSourceOfAsset(address(sdai))).POT_ADDRESS(), address(dss.pot));
+        assertEq(aaveOracle.getSourceOfAsset(address(usdc)), deployedContracts.readAddress(".USDC_oracle"));
+        assertEq(aaveOracle.getSourceOfAsset(address(weth)), deployedContracts.readAddress(".WETH_oracle"));
+        assertEq(aaveOracle.getSourceOfAsset(address(wsteth)), deployedContracts.readAddress(".wstETH_oracle"));
+        assertEq(aaveOracle.getSourceOfAsset(address(wbtc)), deployedContracts.readAddress(".WBTC_oracle"));
+
+        // Some basic sanity checks - but should double check manually
+        assertGe(aaveOracle.getAssetPrice(address(dai)), 99000000);
+        assertLe(aaveOracle.getAssetPrice(address(dai)), 101000000);
+        assertGe(aaveOracle.getAssetPrice(address(sdai)), 100000000);
+        assertLe(aaveOracle.getAssetPrice(address(sdai)), 105000000);
+        assertGe(aaveOracle.getAssetPrice(address(usdc)), 99000000);
+        assertLe(aaveOracle.getAssetPrice(address(usdc)), 101000000);
+        assertGe(aaveOracle.getAssetPrice(address(weth)), 500 * 10 ** 8);
+        assertLe(aaveOracle.getAssetPrice(address(weth)), 5000 * 10 ** 8);
+        assertGe(aaveOracle.getAssetPrice(address(wsteth)), 500 * 10 ** 8);
+        assertLe(aaveOracle.getAssetPrice(address(wsteth)), 5000 * 10 ** 8);
+        assertGe(aaveOracle.getAssetPrice(address(wbtc)), 10000 * 10 ** 8);
+        assertLe(aaveOracle.getAssetPrice(address(wbtc)), 100000 * 10 ** 8);
     }
 
     /*function test_d3m() public {
