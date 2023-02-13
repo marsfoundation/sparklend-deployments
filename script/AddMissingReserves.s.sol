@@ -163,9 +163,9 @@ contract AddMissingReserves is Script {
     function run() external {
         config = ScriptTools.loadConfig("config");
         deployedContracts = ScriptTools.readOutput("spark");
-        dss = MCD.loadFromChainlog(config.readAddress("chainlog"));
+        dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
-        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
         poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         pool = Pool(poolAddressesProvider.getPool());
         aaveOracle = AaveOracle(poolAddressesProvider.getPriceOracle());

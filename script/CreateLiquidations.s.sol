@@ -68,7 +68,7 @@ contract CreateLiquidations is Script {
         deployedContracts = ScriptTools.readOutput("spark");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog", "SEED_CHAINLOG"));
 
-        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress("poolAddressesProvider"));
+        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
         pool = Pool(poolAddressesProvider.getPool());
         configurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());

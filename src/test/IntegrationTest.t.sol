@@ -261,7 +261,7 @@ contract IntegrationTest is DssTest {
         assertEq(poolConfigurator.CONFIGURATOR_REVISION(), 1);
     }
 
-    function test_spark_deploy_pool() public {
+    function test_spark_deploy_pool2() public {
         assertEq(pool.POOL_REVISION(), 1);
         assertEq(address(pool.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
         assertEq(pool.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 0.25e4);
@@ -288,7 +288,7 @@ contract IntegrationTest is DssTest {
             assertEq(cfg.getLiquidationThreshold(), 7600);
             assertEq(cfg.getLiquidationBonus(), 10450);
             assertEq(cfg.getDecimals(), 18);
-            assertEq(cfg.getActive(), false);
+            assertEq(cfg.getActive(), true);
             assertEq(cfg.getFrozen(), false);
             assertEq(cfg.getPaused(), false);
             assertEq(cfg.getBorrowableInIsolation(), false);
@@ -429,7 +429,7 @@ contract IntegrationTest is DssTest {
             assertEq(st.getStableRateSlope1(), 0);
             assertEq(st.getStableRateSlope2(), 0);
             assertEq(st.getStableRateExcessOffset(), 0);
-            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 380 * RAY / 10000);
             assertEq(st.getBaseVariableBorrowRate(), 100 * RAY / 10000);
             assertEq(st.getMaxVariableBorrowRate(), 8480 * RAY / 10000);
         }
@@ -472,7 +472,7 @@ contract IntegrationTest is DssTest {
             assertEq(st.getStableRateSlope1(), 0);
             assertEq(st.getStableRateSlope2(), 0);
             assertEq(st.getStableRateExcessOffset(), 0);
-            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 450 * RAY / 10000);
             assertEq(st.getBaseVariableBorrowRate(), 25 * RAY / 10000);
             assertEq(st.getMaxVariableBorrowRate(), 8475 * RAY / 10000);
         }
@@ -515,7 +515,7 @@ contract IntegrationTest is DssTest {
             assertEq(st.getStableRateSlope1(), 0);
             assertEq(st.getStableRateSlope2(), 0);
             assertEq(st.getStableRateExcessOffset(), 0);
-            assertEq(st.getBaseStableBorrowRate(), 0);
+            assertEq(st.getBaseStableBorrowRate(), 800 * RAY / 10000);
             assertEq(st.getBaseVariableBorrowRate(), 0);
             assertEq(st.getMaxVariableBorrowRate(), 30800 * RAY / 10000);
         }

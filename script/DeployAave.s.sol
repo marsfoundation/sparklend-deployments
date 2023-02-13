@@ -131,10 +131,10 @@ contract DeployAave is Script {
 
     function parseReserves() internal view returns (ReserveConfig[] memory) {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray("reserves");
+        bytes[] memory a = config.readBytesArray(".reserves");
         ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
         for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes("reserves["), bytes(Strings.toString(i)), "]"));
+            string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
             _reserves[i] = ReserveConfig({
                 name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
                 token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
@@ -161,9 +161,9 @@ contract DeployAave is Script {
 
     function setupEModeCategories() internal {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray("emodeCategories");
+        bytes[] memory a = config.readBytesArray(".emodeCategories");
         for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes("emodeCategories["), bytes(Strings.toString(i)), "]"));
+            string memory base = string(string.concat(bytes(".emodeCategories["), bytes(Strings.toString(i)), "]"));
             poolConfigurator.setEModeCategory({
                 categoryId: uint8(config.readUint(string(string.concat(bytes(base), bytes(".categoryId"))))),
                 ltv: uint16(config.readUint(string(string.concat(bytes(base), bytes(".ltv"))))),
@@ -211,14 +211,14 @@ contract DeployAave is Script {
 
     function run() external {
         config = ScriptTools.loadConfig("config");
-        dss = MCD.loadFromChainlog(config.readAddress("chainlog"));
+        dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
-        address admin = config.readAddress("admin", "AAVE_ADMIN");
+        address admin = config.readAddress(".admin", "SPARKLEND_ADMIN");
         address deployer = msg.sender;
 
         vm.startBroadcast();
         registry = new PoolAddressesProviderRegistry(deployer);
-        poolAddressesProvider = new PoolAddressesProvider(config.readString("marketId"), deployer);
+        poolAddressesProvider = new PoolAddressesProvider(config.readString(".marketId"), deployer);
         poolAddressesProvider.setACLAdmin(deployer);
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
         PoolConfigurator _poolConfigurator = new PoolConfigurator();
@@ -296,7 +296,7 @@ contract DeployAave is Script {
                     IReserveInterestRateStrategy(new DaiInterestRateStrategy(
                         address(dss.vat),
                         address(dss.pot),
-                        config.readString("ilk").stringToBytes32(),
+                        config.readString(".ilk").stringToBytes32(),
                         0,
                         0,
                         75 * RAY / 100,  // 75%
@@ -361,9 +361,9 @@ contract DeployAave is Script {
         }
         
         // Deploy a faucet if this is a testnet
-        address makerFaucet = config.readAddress("makerFaucet");
+        address makerFaucet = config.readAddress(".makerFaucet");
         if (makerFaucet != address(0)) {
-            faucet = new Faucet(makerFaucet, config.readAddress("usdcPsm"), savingsDai);
+            faucet = new Faucet(makerFaucet, config.readAddress(".usdcPsm"), savingsDai);
         }
 
         // Change all ownership to admin
