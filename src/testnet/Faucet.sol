@@ -52,21 +52,21 @@ contract Faucet {
         dai.approve(_sDai, type(uint256).max);
     }
 
-    function mint(address token, uint256 amount) external {
+    function mint(address token, address to, uint256 amount) external {
         if (token == address(dai)) {
             GulpProxy proxy = new GulpProxy();
             proxy.gulp(makerFaucet, gem, address(this));
-            psm.sellGem(msg.sender, gem.balanceOf(address(this)));
+            psm.sellGem(to, gem.balanceOf(address(this)));
         } else if (token == address(sDai)) {
             GulpProxy proxy = new GulpProxy();
             proxy.gulp(makerFaucet, gem, address(this));
             psm.sellGem(address(this), gem.balanceOf(address(this)));
-            sDai.deposit(dai.balanceOf(address(this)), msg.sender);
+            sDai.deposit(dai.balanceOf(address(this)), to);
         } else if (makerFaucet.amt(token) > 0) {
             GulpProxy proxy = new GulpProxy();
-            proxy.gulp(makerFaucet, TokenLike(token), msg.sender);
+            proxy.gulp(makerFaucet, TokenLike(token), to);
         } else {
-            TokenLike(token).mint(msg.sender, amount);
+            TokenLike(token).mint(to, amount);
         }
     }
 

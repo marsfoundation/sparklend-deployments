@@ -66,7 +66,7 @@ contract SeedTestnet is Script {
 
         vm.startBroadcast();
         // Add some faucet DAI to the pool to simulate a D3M deposit
-        faucet.mint(address(dss.dai), 1);
+        faucet.mint(address(dss.dai), address(this), 1);
         dss.dai.approve(address(pool), type(uint256).max);
         pool.supply(address(dss.dai), dss.dai.balanceOf(deployer) / 2, deployer, 0);    // Only supply half to pool (other half goes to Uni V3 pools)
 
@@ -93,7 +93,7 @@ contract SeedTestnet is Script {
 
             // Add some liquidity to the pool
             tokensToMint = perTokenDai * oracle.getAssetPrice(tokenB) * (10 ** MintableERC20(tokenA).decimals()) * 100 / (oracle.getAssetPrice(tokenA) * (10 ** MintableERC20(tokenB).decimals()));
-            faucet.mint(tokenA, tokensToMint);
+            faucet.mint(tokenA, address(this), tokensToMint);
             tokensToMint = MintableERC20(tokenA).balanceOf(deployer);
             MintableERC20(tokenA).approve(address(manager), type(uint256).max);
             MintableERC20(tokenB).approve(address(manager), type(uint256).max);
