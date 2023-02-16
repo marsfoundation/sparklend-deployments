@@ -297,6 +297,7 @@ contract DeployAave is Script {
                         address(dss.vat),
                         address(dss.pot),
                         config.readString(".ilk").stringToBytes32(),
+                        100 * RAY / 90,  // 1 / 90%
                         0,
                         0,
                         75 * RAY / 100,  // 75%

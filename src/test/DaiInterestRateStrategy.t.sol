@@ -61,7 +61,7 @@ contract DaiInterestRateStrategyTest is DssTest {
     bytes32 constant ILK = "DIRECT-SPARK-DAI";
     uint256 constant DSR_ONE_PERCENT = 1000000000315522921573372069;
     uint256 constant DSR_TWO_HUNDRED_PERCENT = 1000000034836767751273470154;
-    uint256 constant BR = 9950330854737861567984000;    // DSR at 1% APY expressed as an APR
+    uint256 constant BR = 11055923171930957297759999;    // DSR at 1% / 90% to get SFBR as yearly APR
     uint256 constant RBPS = RAY / 10000;
     uint256 constant ONE_TRILLION = 1_000_000_000_000;
 
@@ -76,6 +76,7 @@ contract DaiInterestRateStrategyTest is DssTest {
             address(vat),
             address(pot),
             ILK,
+            100 * RAY / 90,  // SFBR is defined as DSR / 90%
             50 * RBPS,       // 0.5% borrow spread
             25 * RBPS,       // 0.25% supply spread
             7500 * RBPS,     // 75% max rate
@@ -87,6 +88,7 @@ contract DaiInterestRateStrategyTest is DssTest {
         assertEq(address(interestStrategy.vat()), address(vat));
         assertEq(address(interestStrategy.pot()), address(pot));
         assertEq(interestStrategy.ilk(), ILK);
+        assertEq(interestStrategy.baseRateConversion(), 1111111111111111111111111111);
         assertEq(interestStrategy.borrowSpread(), 50 * RBPS);
         assertEq(interestStrategy.supplySpread(), 25 * RBPS);
         assertEq(interestStrategy.maxRate(), 7500 * RBPS);
@@ -149,10 +151,10 @@ contract DaiInterestRateStrategyTest is DssTest {
         interestStrategy.recompute();
 
         uint256 br = 7500 * RBPS - (7500 * RBPS - (BR + 50 * RBPS)) / 2;
-        assertEq(br, 382475165427368930783992000, "borrow rate should be about half of max rate");
+        assertEq(br, 383027961585965478648880000, "borrow rate should be about half of max rate");
         assertRates(2_000_000 * WAD, br, br, "Only Maker as LP, 2x over capacity, 100% utilization. supply = ~maxRate/2, borrow = ~maxRate/2");
         dai.setLiquidity(1_000_000 * WAD);  // User adds some liquidity, still over capacity
-        assertRates(2_000_000 * WAD, 254983443618245953601011223, br, "Maker+Users as LP, 2x over capacity, 66.7% utilization. supply = ~maxRate/2 * 66.7%, borrow = ~maxRate/2");
+        assertRates(2_000_000 * WAD, 255351974390643652177234692, br, "Maker+Users as LP, 2x over capacity, 66.7% utilization. supply = ~maxRate/2 * 66.7%, borrow = ~maxRate/2");
     }
 
     function test_calculateInterestRates_debt_ceiling_zero() public {
@@ -160,7 +162,7 @@ contract DaiInterestRateStrategyTest is DssTest {
         vat.setArt(1);  // Infinitely over capacity even with 1 wei of debt
         interestStrategy.recompute();
 
-        uint256 br = 749999997624926423513756790;
+        uint256 br = 749999997628498784959732204;   // Pretty much maxRate with some rounding errors
         assertRates(100_000 * WAD, br, br, "Maker wants to go to zero debt - always maxRate. supply = maxRate, borrow = maxRate");
     }
 
@@ -168,6 +170,7 @@ contract DaiInterestRateStrategyTest is DssTest {
         uint256 line,
         uint256 art,
         uint256 dsr,
+        uint256 baseRateConversion,
         uint256 totalVariableDebt,
         uint256 liquidity,
         uint256 borrowSpread,
@@ -179,6 +182,7 @@ contract DaiInterestRateStrategyTest is DssTest {
         line = line % (ONE_TRILLION * RAD);
         art = art % (ONE_TRILLION * WAD);
         dsr = dsr % (DSR_TWO_HUNDRED_PERCENT - RAY) + RAY;
+        baseRateConversion = baseRateConversion % (10 * RAY);
         totalVariableDebt = totalVariableDebt % (ONE_TRILLION * WAD);
         liquidity = liquidity % (ONE_TRILLION * WAD);
         maxRate = maxRate % 1_000_000_00 * RBPS;
@@ -190,6 +194,7 @@ contract DaiInterestRateStrategyTest is DssTest {
             address(vat),
             address(pot),
             ILK,
+            baseRateConversion,
             borrowSpread,
             supplySpread,
             maxRate,
