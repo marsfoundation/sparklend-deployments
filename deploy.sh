@@ -26,6 +26,7 @@ for l in $LIBS_IN; do
     export LIBS="$LIBS --libraries `echo $l | cut -d':' -f1`:`echo $l | cut -d':' -f2`:$ADDR"
 done
 export COMMON_ARGS="--chain-id $FOUNDRY_ROOT_CHAINID --watch $LIBS"
+# BUG IN FOUNDRY - NEED TO VERIFY FLASHLOANLOGIC
 forge verify-contract $DEPLOY_poolAddressesProviderRegistry PoolAddressesProviderRegistry $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $ETH_FROM`
 forge verify-contract $DEPLOY_poolAddressesProvider PoolAddressesProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(string,address)' 'Spark Protocol' $ETH_FROM`
 forge verify-contract $DEPLOY_protocolDataProvider AaveProtocolDataProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`

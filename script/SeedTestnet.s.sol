@@ -66,9 +66,11 @@ contract SeedTestnet is Script {
 
         vm.startBroadcast();
         // Add some faucet DAI to the pool to simulate a D3M deposit
-        faucet.mint(address(dss.dai), address(this), 1);
+        for (uint256 i = 0; i < 20; i++) {
+            faucet.mint(address(dss.dai), deployer, 1);
+        }
         dss.dai.approve(address(pool), type(uint256).max);
-        pool.supply(address(dss.dai), dss.dai.balanceOf(deployer) / 2, deployer, 0);    // Only supply half to pool (other half goes to Uni V3 pools)
+        pool.supply(address(dss.dai), dss.dai.balanceOf(deployer) * 9 / 10, deployer, 0);    // Only supply half to pool (other half goes to Uni V3 pools)
 
         // Add tokens to each of the Uniswap V3 pools
         tokens = pool.getReservesList();
@@ -79,8 +81,12 @@ contract SeedTestnet is Script {
             tokenA = tokens[i];
             if (tokenA == address(dss.dai)) continue;
 
+            //faucet.mint(tokenA, deployer, 1000 * 10 ** MintableERC20(tokenA).decimals());
+            //MintableERC20(tokenA).approve(address(pool), type(uint256).max);
+            //pool.supply(tokenA, MintableERC20(tokenA).balanceOf(deployer), deployer, 0);
+
             // Create the pool if it doesn't exist and initialize
-            (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+            /*(token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
             upool = factory.getPool(token0, token1, fee);
             sqrtPriceX96;
             if (upool == address(0)) {
@@ -111,7 +117,7 @@ contract SeedTestnet is Script {
                     recipient: deployer,
                     deadline: block.timestamp + 1 hours
                 })
-            );
+            );*/
         }
         vm.stopBroadcast();
     }
