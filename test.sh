@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+export FOUNDRY_ROOT_CHAINID=`cast chain-id`
+
 source out/contract-exports.env
 
 if [[ -z "$1" ]]; then

@@ -261,7 +261,7 @@ contract IntegrationTest is DssTest {
         assertEq(poolConfigurator.CONFIGURATOR_REVISION(), 1);
     }
 
-    function test_spark_deploy_pool2() public {
+    function test_spark_deploy_pool() public {
         assertEq(pool.POOL_REVISION(), 1);
         assertEq(address(pool.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
         assertEq(pool.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 0.25e4);
