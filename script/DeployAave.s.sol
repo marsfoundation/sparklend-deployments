@@ -368,6 +368,7 @@ contract DeployAave is Script {
         }
 
         // Change all ownership to admin
+        aclManager.addEmergencyAdmin(admin);
         aclManager.addPoolAdmin(admin);
         aclManager.removePoolAdmin(deployer);
         aclManager.grantRole(aclManager.DEFAULT_ADMIN_ROLE(), admin);
