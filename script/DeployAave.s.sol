@@ -260,6 +260,7 @@ contract DeployAave is Script {
             admin,
             abi.encodeWithSignature("initialize(address)", address(emissionManager))
         );
+        emissionManager.setRewardsController(address(incentives));
 
         // Init reserves
         ReserveConfig[] memory reserveConfigs = parseReserves();

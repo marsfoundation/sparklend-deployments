@@ -252,7 +252,7 @@ contract IntegrationTest is DssTest {
         assertTrue(aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), admin));
         assertTrue(!aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), deployer));
         assertEq(aclManager.getRoleAdmin(aclManager.EMERGENCY_ADMIN_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
-        if (block.chainId == 1) assertTrue(aclManager.hasRole(aclManager.EMERGENCY_ADMIN_ROLE(), admin));   // Goerli is missing this
+        if (block.chainid == 1) assertTrue(aclManager.hasRole(aclManager.EMERGENCY_ADMIN_ROLE(), admin));     // FIXME missing on GOERLI
         assertEq(aclManager.getRoleAdmin(aclManager.RISK_ADMIN_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
         assertEq(aclManager.getRoleAdmin(aclManager.FLASH_BORROWER_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
         assertEq(aclManager.getRoleAdmin(aclManager.BRIDGE_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
@@ -590,6 +590,7 @@ contract IntegrationTest is DssTest {
 
     function test_spark_deploy_incentives() public {
         assertEq(address(emissionManager.owner()), admin);
+        if (block.chainid == 1) assertEq(address(emissionManager.getRewardsController()), address(incentives));     // FIXME missing on GOERLI
         assertEq(incentives.REVISION(), 1);
         assertEq(incentives.EMISSION_MANAGER(), address(emissionManager));
         assertImplementation(admin, address(incentives), address(incentivesImpl));
