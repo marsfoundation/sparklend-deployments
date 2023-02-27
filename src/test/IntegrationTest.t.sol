@@ -152,7 +152,7 @@ contract IntegrationTest is DssTest {
             wbtc = IERC20(dss.chainlog.getAddress("WBTC"));
             dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
             usdc = IERC20(dss.chainlog.getAddress("USDC"));
-            sdai = IERC20(0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C);
+            sdai = IERC20(0x83F20F44975D03b1b09e64809B757c47f942BEeA);
         } else {
             // Goerli
             weth = IERC20(deployedContracts.readAddress(".WETH_token"));
@@ -610,8 +610,8 @@ contract IntegrationTest is DssTest {
         assertEq(aaveOracle.getFallbackOracle(), address(0));
 
         assertEq(aaveOracle.getSourceOfAsset(address(dai)), deployedContracts.readAddress(".DAI_oracle"));
-        assertEq(aaveOracle.getSourceOfAsset(address(sdai)), deployedContracts.readAddress(".sDAI_oracle"));
         assertEq(SavingsDaiOracle(aaveOracle.getSourceOfAsset(address(sdai))).POT_ADDRESS(), address(dss.pot));
+        assertEq(SavingsDaiOracle(aaveOracle.getSourceOfAsset(address(sdai))).DAI_PRICE_FEED_ADDRESS(), deployedContracts.readAddress(".DAI_oracle"));
         assertEq(aaveOracle.getSourceOfAsset(address(usdc)), deployedContracts.readAddress(".USDC_oracle"));
         assertEq(aaveOracle.getSourceOfAsset(address(weth)), deployedContracts.readAddress(".WETH_oracle"));
         assertEq(aaveOracle.getSourceOfAsset(address(wsteth)), deployedContracts.readAddress(".wstETH_oracle"));

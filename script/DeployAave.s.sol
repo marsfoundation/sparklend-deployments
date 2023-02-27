@@ -252,7 +252,7 @@ contract DeployAave is Script {
 
         InitializableAdminUpgradeabilityProxy incentivesProxy = new InitializableAdminUpgradeabilityProxy();
         incentives = RewardsController(address(incentivesProxy));
-        emissionManager = new EmissionManager(admin);
+        emissionManager = new EmissionManager(deployer);
         RewardsController rewardsController = new RewardsController(address(emissionManager));
         rewardsController.initialize(address(0));
         incentivesProxy.initialize(
@@ -385,6 +385,7 @@ contract DeployAave is Script {
         poolAddressesProvider.setACLAdmin(admin);
         poolAddressesProvider.transferOwnership(admin);
         registry.transferOwnership(admin);
+        emissionManager.transferOwnership(admin);
 
         vm.stopBroadcast();
 
