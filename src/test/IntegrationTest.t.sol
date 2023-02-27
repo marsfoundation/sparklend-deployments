@@ -547,6 +547,16 @@ contract IntegrationTest is DssTest {
         vm.prank(admin);
         assertEq(InitializableAdminUpgradeabilityProxy(payable(address(daiTreasury))).implementation(), address(daiTreasuryImpl));
         assertEq(address(treasuryImpl), address(daiTreasuryImpl));
+
+        // Test that funds can be extracted
+        GodMode.setBalance(address(dai), address(treasury), 1000 ether);
+        vm.prank(admin);
+        treasuryController.transfer(address(treasury), dai, address(this), 1000 ether);
+        assertEq(dai.balanceOf(address(this)), 1000 ether);
+        GodMode.setBalance(address(dai), address(daiTreasury), 1000 ether);
+        vm.prank(admin);
+        treasuryController.transfer(address(daiTreasury), dai, address(this), 1000 ether);
+        assertEq(dai.balanceOf(address(this)), 2000 ether);
     }
 
     function test_spark_deploy_incentives() public {
