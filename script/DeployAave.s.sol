@@ -28,6 +28,7 @@ import {VariableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/Va
 import {ConfiguratorInputTypes} from "aave-v3-core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol";
 import {DataTypes} from "aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
 import {IReserveInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IReserveInterestRateStrategy.sol";
+import {IAaveIncentivesController} from "aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol";
 import {DefaultReserveInterestRateStrategy} from "aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategy.sol";
 
 import {Collector} from "aave-v3-periphery/treasury/Collector.sol";
@@ -222,7 +223,9 @@ contract DeployAave is Script {
         poolAddressesProvider.setACLAdmin(deployer);
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
         PoolConfigurator _poolConfigurator = new PoolConfigurator();
+        _poolConfigurator.initialize(poolAddressesProvider);
         Pool _pool = new Pool(poolAddressesProvider);
+        _pool.initialize(poolAddressesProvider);
         aclManager = new ACLManager(poolAddressesProvider);
         aclManager.addPoolAdmin(deployer);
         registry.registerAddressesProvider(address(poolAddressesProvider), 1);
@@ -235,11 +238,15 @@ contract DeployAave is Script {
         poolAddressesProvider.setACLManager(address(aclManager));
 
         aTokenImpl = new AToken(pool);
+        aTokenImpl.initialize(pool, address(0), address(0), IAaveIncentivesController(address(0)), 0, "SPTOKEN_IMPL", "SPTOKEN_IMPL", "");
         stableDebtTokenImpl = new StableDebtToken(pool);
+        stableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "STABLE_DEBT_TOKEN_IMPL", "STABLE_DEBT_TOKEN_IMPL", "");
         variableDebtTokenImpl = new VariableDebtToken(pool);
+        variableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "VARIABLE_DEBT_TOKEN_IMPL", "VARIABLE_DEBT_TOKEN_IMPL", "");
 
         treasuryController = new CollectorController(admin);
         collectorImpl = new Collector();
+        collectorImpl.initialize(address(0));
         (treasury, treasuryImpl) = createCollector(admin);
         (daiTreasury, daiTreasuryImpl) = createCollector(admin);
 
@@ -247,6 +254,7 @@ contract DeployAave is Script {
         incentives = RewardsController(address(incentivesProxy));
         emissionManager = new EmissionManager(admin);
         RewardsController rewardsController = new RewardsController(address(emissionManager));
+        rewardsController.initialize(address(0));
         incentivesProxy.initialize(
             address(rewardsController),
             admin,
