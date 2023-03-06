@@ -10,7 +10,7 @@ export FOUNDRY_EXPORTS_NAME="spark"
 
 mkdir -p "$EXPORT_DIR"
 
-forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify --slow
+forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --optimizer-runs 100000 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify --slow
 
 GENERATED_FILE=`ls -tr script/output/$FOUNDRY_ROOT_CHAINID/spark-*.json | tail -1`
 for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" < $GENERATED_FILE); do
