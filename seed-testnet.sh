@@ -2,8 +2,7 @@
 # Seed the testnet with DAI and Uniswap V3 pools
 set -e
 
-source out/contract-exports.env
-
+export FOUNDRY_ROOT_CHAINID="$(cast chain-id)"
 export UNISWAP_V3_FACTORY="0x1F98431c8aD98523631AE4a59f267346ea31F984"
 export UNISWAP_V3_POSITION_MANAGER="0xC36442b4a4522E871399CD717aBDD847Ab11FE88"
 

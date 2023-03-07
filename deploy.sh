@@ -10,51 +10,15 @@ export FOUNDRY_EXPORTS_NAME="spark"
 
 mkdir -p "$EXPORT_DIR"
 
-forge script script/DeployAave.s.sol:DeployAave --use solc:0.8.10 --optimizer-runs 100000 --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify --slow
+if [ "$FOUNDRY_ROOT_CHAINID" -eq 1 ]; then
+    # Mainnet
+    export LIBS="--libraries lib/aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:0x39fb3e784012eb3e650bf79b6909d857e0a49f0c --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/BridgeLogic.sol:BridgeLogic:0x7f3e0bbf4aaee28abc2cfbd571fc2b983662ad52 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:0x66ac02c3120b848d65231ce977af3db1f60b97f9 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:0x202f310828467bb04680a8fe879a7d1814677a24 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/FlashLoanLogic.sol:FlashLoanLogic:0x111b4b22ee7ea68703d8e54ea49aa1bb0d158128 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol:LiquidationLogic:0x6d0bc1defe4379d9cb86bcd8d7c005413ab0e8fb --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol:PoolLogic:0xbc6d76108729be0e85938845b74c2f8ab88b7ea6 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol:SupplyLogic:0x666835b336a3a5198b2895d94109131d1b23ad11"
+else
+    # Goerli
+    export LIBS="--libraries lib/aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:0xF606870D702263235F8BA0bC49cA64Ff3eE8F832 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/BridgeLogic.sol:BridgeLogic:0xB9C222C708E10ef9287a16bdfe7Eed7B2c5b5E7E --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:0xc7129924D87043D8B12Ae879e161a0d378080f31 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:0x3Ee111c3fb80Ad67F80305Ac0d51B16A357aF7f1 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/FlashLoanLogic.sol:FlashLoanLogic:0x2C8E811e12B46FF39f17b968fdf9309Ef88751Db --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol:LiquidationLogic:0x28298a3e41c41246080E8BBE09B2E886a180D9fe --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol:PoolLogic:0xCE5f067F3D0AEe076EB6122c8989A48f82f2499a --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol:SupplyLogic:0x96177A6e8226D0CE86eeB133c5C9e47FD5fAdd13"
+fi
 
-GENERATED_FILE=`ls -tr script/output/$FOUNDRY_ROOT_CHAINID/spark-*.json | tail -1`
-for s in $(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" < $GENERATED_FILE); do
-    export DEPLOY_$s
-done
-export FOUNDRY_SCRIPT_CONFIG_TEXT=`jq -c ". + { adai: $(jq ".DAI_aToken" < $GENERATED_FILE), lendingPool: $(jq ".pool" < $GENERATED_FILE) }" < script/input/$FOUNDRY_ROOT_CHAINID/d3m-spark.json`
-
-# Verify the contracts (automated process not working that well)
-export LIBS_IN="$(jq -c '.libraries[]' < broadcast/DeployAave.s.sol/$FOUNDRY_ROOT_CHAINID/run-latest.json | sed 's/"//g')"
-export LIBS=""
-for l in $LIBS_IN; do
-    ADDR="$(cast --to-checksum-address `echo $l | cut -d':' -f3`)"
-    export LIBS="$LIBS --libraries `echo $l | cut -d':' -f1`:`echo $l | cut -d':' -f2`:$ADDR"
-done
-export COMMON_ARGS="--chain-id $FOUNDRY_ROOT_CHAINID --watch $LIBS"
-# BUG IN FOUNDRY - NEED TO VERIFY FLASHLOANLOGIC
-forge verify-contract $DEPLOY_poolAddressesProviderRegistry PoolAddressesProviderRegistry $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $ETH_FROM`
-forge verify-contract $DEPLOY_poolAddressesProvider PoolAddressesProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(string,address)' 'Spark Protocol' $ETH_FROM`
-forge verify-contract $DEPLOY_protocolDataProvider AaveProtocolDataProvider $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-forge verify-contract $DEPLOY_poolConfiguratorImpl PoolConfigurator $COMMON_ARGS
-forge verify-contract $DEPLOY_poolConfigurator InitializableImmutableAdminUpgradeabilityProxy $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-# BUG IN FOUNDRY - Two versions of BorrowLogic being deployed, fix this
-#forge verify-contract $DEPLOY_poolImpl Pool $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-forge verify-contract $DEPLOY_pool InitializableImmutableAdminUpgradeabilityProxy $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-forge verify-contract $DEPLOY_aclManager ACLManager $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_poolAddressesProvider`
-forge verify-contract $DEPLOY_aTokenImpl AToken $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_pool`
-forge verify-contract $DEPLOY_stableDebtTokenImpl StableDebtToken $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_pool`
-forge verify-contract $DEPLOY_variableDebtTokenImpl VariableDebtToken $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_pool`
-forge verify-contract $DEPLOY_treasuryController CollectorController $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_admin`
-forge verify-contract $DEPLOY_treasuryImpl Collector $COMMON_ARGS
-forge verify-contract $DEPLOY_treasury InitializableAdminUpgradeabilityProxy $COMMON_ARGS
-# THESE GET VERIFIED BY THE PREVIOUS VERIFIES
-#forge verify-contract $DEPLOY_daiTreasuryImpl Collector $COMMON_ARGS
-#forge verify-contract $DEPLOY_daiTreasury InitializableAdminUpgradeabilityProxy $COMMON_ARGS
-forge verify-contract $DEPLOY_incentivesImpl RewardsController $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address)' $DEPLOY_emissionManager`
-#forge verify-contract $DEPLOY_incentives InitializableAdminUpgradeabilityProxy $COMMON_ARGS
-forge verify-contract $DEPLOY_uiPoolDataProvider UiPoolDataProviderV3 $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address)' $DEPLOY_WETH_oracle $DEPLOY_WETH_oracle`
-forge verify-contract $DEPLOY_uiIncentiveDataProvider UiIncentiveDataProviderV3 $COMMON_ARGS
-forge verify-contract $DEPLOY_wethGateway WrappedTokenGatewayV3 $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address,address)' $DEPLOY_WETH_token $DEPLOY_admin $DEPLOY_pool`
-forge verify-contract $DEPLOY_walletBalanceProvider WalletBalanceProvider $COMMON_ARGS
-ORACLE_ASSET_ADDRESSES="$DEPLOY_DAI_token,$DEPLOY_sDAI_token,$DEPLOY_USDC_token,$DEPLOY_WETH_token,$DEPLOY_wstETH_token,$DEPLOY_WBTC_token"
-ORACLE_ASSET_SOURCES="$DEPLOY_DAI_oracle,$DEPLOY_sDAI_oracle,$DEPLOY_USDC_oracle,$DEPLOY_WETH_oracle,$DEPLOY_wstETH_oracle,$DEPLOY_WBTC_oracle"
-forge verify-contract $DEPLOY_aaveOracle AaveOracle $COMMON_ARGS --constructor-args `cast abi-encode 'ctor(address,address[],address[],address,address,uint256)' $DEPLOY_poolAddressesProvider \[$ORACLE_ASSET_ADDRESSES\] \[$ORACLE_ASSET_SOURCES\] 0x0000000000000000000000000000000000000000 0x0000000000000000000000000000000000000000 100000000`
-# TODO oracle verify
+forge script script/DeployAave.s.sol:DeployAave --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify --slow $LIBS
 
 exit
 
