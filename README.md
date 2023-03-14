@@ -14,7 +14,7 @@ A special interest rate strategy is used for the DAI market which anchors to the
 
 You can read more about this [here](https://forum.makerdao.com/t/mip116-d3m-to-spark-lend/19732#mip116c3-debt-ceiling-fee-structure-10).
 
-**IMPORTANT:** The existing Pool contract logic does not support interest rate logic which returns anything but a fixed percentage of the borrow income be split between the suppliers and the reserve. Therefore as a work-around the pool will over-allocate liabilities in the form of spDAI to both the suppliers and the reserve. This is okay because the liabilities of the suppliers will be <= 100% of the income and the reserve can simply burn the excess periodically to balance the accounting. We can be confident in this because the reserve is entirely under the control of Maker Governance.
+**IMPORTANT:** The existing Pool contract logic does not support interest rate logic which returns anything but a fixed percentage of the borrow income be split between the suppliers and the reserve. Therefore as a work-around the pool will over-allocate liabilities in the form of spDAI to both the suppliers and the reserve. This is okay because the liabilities of the suppliers will be <= 100% of the income and the reserve can simply donate the excess periodically to balance the accounting. We can be confident in this because the reserve is entirely under the control of Maker Governance.
 
 It is because of this danger we split the `daiTreasury` into its own contract to be burned before the real amount is sent to the actual `treasury`. In the future this could be made into an automated/permissionless module which compares spDAI liabilities vs DAI assets.
 
