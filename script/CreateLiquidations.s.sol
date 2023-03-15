@@ -76,6 +76,7 @@ contract CreateLiquidations is Script {
     address usdc;
     ReserveSettings[] originalSettings;
     uint256 i;
+    SparkUser[] users;
 
     function run() external {
         config = ScriptTools.readInput("config");
@@ -124,6 +125,7 @@ contract CreateLiquidations is Script {
             address btoken = tokens[bindex];
             uint256 bfactor = 10200;
             SparkUser user = new SparkUser(address(pool));
+            users.push(user);
             
             // Deposit collateral
             uint256 depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
@@ -149,6 +151,10 @@ contract CreateLiquidations is Script {
         }
 
         vm.stopBroadcast();
+
+        for (i = 0; i < users.length; i++) {
+            ScriptTools.exportContract("liquidations", string(string.concat("user", bytes(vm.toString(i)))), address(users[i]));
+        }
     }
 
     function getReserveSettings(address asset) internal view returns (ReserveSettings memory) {
