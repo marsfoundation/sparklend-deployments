@@ -2,8 +2,6 @@
 # Create liquidations for the testnet
 set -e
 
-export NUM_USERS=16
-
 cast rpc anvil_setBalance $MCD_PAUSE_PROXY 0x10000000000000000 > /dev/null
 cast rpc anvil_impersonateAccount $MCD_PAUSE_PROXY > /dev/null
 

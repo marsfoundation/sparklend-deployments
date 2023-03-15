@@ -42,6 +42,10 @@ contract SparkUser is Ownable {
         pool.repay(_token, _amount, 2, address(this));
     }
 
+    function setUserEMode(uint8 _categoryId) external onlyOwner {
+        pool.setUserEMode(_categoryId);
+    }
+
     function rescueTokens(address _token, address _to, uint256 _amount) external onlyOwner {
         IERC20(_token).transfer(_to, _amount);
     }
@@ -56,6 +60,7 @@ contract CreateLiquidations is Script {
         uint256 liquidationThreshold;
         uint256 liquidationBonus;
         bool borrowingEnabled;
+        uint8 emodeCategory;
     }
 
     using stdJson for string;
@@ -77,6 +82,9 @@ contract CreateLiquidations is Script {
     ReserveSettings[] originalSettings;
     uint256 i;
     SparkUser[] users;
+    uint256 numUsers;
+    uint256 valuePerAssetUSD;
+    uint256 depositAmountPerAssetUSD;
 
     function run() external {
         config = ScriptTools.readInput("config");
@@ -89,11 +97,11 @@ contract CreateLiquidations is Script {
         configurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());
         tokens = pool.getReservesList();
-        uint256 numUsers = vm.envOr("NUM_USERS", (tokens.length - 1) * (tokens.length - 1));
+        numUsers = vm.envOr("NUM_USERS", (tokens.length - 1) * (tokens.length - 1));
 
         deployer = msg.sender;
-        uint256 valuePerAssetUSD = 1;
-        uint256 depositAmountPerAssetUSD = 10;
+        valuePerAssetUSD = 1;
+        depositAmountPerAssetUSD = 10;
 
         vm.startBroadcast();
         
@@ -123,7 +131,7 @@ contract CreateLiquidations is Script {
                 continue;
             }
             address btoken = tokens[bindex];
-            uint256 bfactor = 10200;
+            uint256 bfactor = 10200;        // Slightly above the limit in case of oracle price changes
             SparkUser user = new SparkUser(address(pool));
             users.push(user);
             
@@ -137,6 +145,25 @@ contract CreateLiquidations is Script {
             }
             user.supply(ctoken, depositAmount);
             user.borrow(btoken, borrowAmount);
+
+            // Add an e-mode user if it exists
+            uint8 eModeCategory = originalSettings[cindex].emodeCategory;
+            if (eModeCategory > 0 && eModeCategory == originalSettings[bindex].emodeCategory) {
+                SparkUser emodeUser = new SparkUser(address(pool));
+                emodeUser.setUserEMode(eModeCategory);
+                users.push(emodeUser);
+                DataTypes.EModeCategory memory category = pool.getEModeCategoryData(eModeCategory);
+
+                depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
+                borrowAmount = convertUSDToTokenAmount(btoken, valuePerAssetUSD) * category.liquidationThreshold * bfactor / 1e8;
+                if (IERC20(ctoken).balanceOf(deployer) >= depositAmount) {
+                    IERC20(ctoken).transfer(address(user), depositAmount);
+                } else {
+                    revert("Insufficient balance");
+                }
+                user.supply(ctoken, depositAmount);
+                user.borrow(btoken, borrowAmount);
+            }
         }
 
         // Restore original settings
@@ -164,7 +191,8 @@ contract CreateLiquidations is Script {
             ReserveConfiguration.getLtv(data.configuration),
             ReserveConfiguration.getLiquidationThreshold(data.configuration),
             ReserveConfiguration.getLiquidationBonus(data.configuration),
-            ReserveConfiguration.getBorrowingEnabled(data.configuration)
+            ReserveConfiguration.getBorrowingEnabled(data.configuration),
+            uint8(ReserveConfiguration.getEModeCategory(data.configuration))
         );
     }
 
