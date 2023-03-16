@@ -63,6 +63,15 @@ contract CreateLiquidations is Script {
         uint8 emodeCategory;
     }
 
+    struct EModeSettings {
+        uint8 category;
+        uint16 ltv;
+        uint16 liquidationThreshold;
+        uint16 liquidationBonus;
+        address oracle;
+        string label;
+    }
+
     using stdJson for string;
     using ScriptTools for string;
 
@@ -80,6 +89,7 @@ contract CreateLiquidations is Script {
     address[] tokens;
     address usdc;
     ReserveSettings[] originalSettings;
+    EModeSettings[] emodeSettings;
     uint256 i;
     SparkUser[] users;
     uint256 numUsers;
@@ -105,20 +115,34 @@ contract CreateLiquidations is Script {
 
         vm.startBroadcast();
         
-        // Save settings and set everything to 100% LTV (if it is allowed as collateral)
+        // Save settings and set everything to ~100% LTV (if it is allowed as collateral)
         for (i = 0; i < tokens.length; i++) {
             originalSettings.push(getReserveSettings(tokens[i]));
             if (originalSettings[i].ltv == 0) continue;
             configurator.configureReserveAsCollateral(
                 tokens[i],
-                9999,
-                9999,
-                10001
+                9998,
+                9998,
+                10002
             );
 
             // Make sure we have enough liquidity for each asset
             if (IERC20(tokens[i]).allowance(deployer, address(pool)) < type(uint256).max) IERC20(tokens[i]).approve(address(pool), type(uint256).max);
             pool.supply(tokens[i], convertUSDToTokenAmount(tokens[i], depositAmountPerAssetUSD), deployer, 0);
+        }
+
+        // Save e-mode settings and set everything to ~100% LTV
+        for (i = 1; i <= 1; i++) {
+            uint8 category = uint8(i);
+            emodeSettings.push(getEModeSettings(category));
+            configurator.setEModeCategory(
+                category,
+                9999,
+                9999,
+                10001,
+                emodeSettings[i - 1].oracle,
+                emodeSettings[i - 1].label
+            );
         }
 
         // Create a bunch of positions that will be underwater with original settings
@@ -152,17 +176,16 @@ contract CreateLiquidations is Script {
                 SparkUser emodeUser = new SparkUser(address(pool));
                 emodeUser.setUserEMode(eModeCategory);
                 users.push(emodeUser);
-                DataTypes.EModeCategory memory category = pool.getEModeCategoryData(eModeCategory);
 
                 depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
-                borrowAmount = convertUSDToTokenAmount(btoken, valuePerAssetUSD) * category.liquidationThreshold * bfactor / 1e8;
+                borrowAmount = convertUSDToTokenAmount(btoken, valuePerAssetUSD) * emodeSettings[eModeCategory - 1].liquidationThreshold * bfactor / 1e8;
                 if (IERC20(ctoken).balanceOf(deployer) >= depositAmount) {
-                    IERC20(ctoken).transfer(address(user), depositAmount);
+                    IERC20(ctoken).transfer(address(emodeUser), depositAmount);
                 } else {
                     revert("Insufficient balance");
                 }
-                user.supply(ctoken, depositAmount);
-                user.borrow(btoken, borrowAmount);
+                emodeUser.supply(ctoken, depositAmount);
+                emodeUser.borrow(btoken, borrowAmount);
             }
         }
 
@@ -174,6 +197,16 @@ contract CreateLiquidations is Script {
                 originalSettings[i].ltv,
                 originalSettings[i].liquidationThreshold,
                 originalSettings[i].liquidationBonus
+            );
+        }
+        for (i = 0; i < emodeSettings.length; i++) {
+            configurator.setEModeCategory(
+                emodeSettings[i].category,
+                emodeSettings[i].ltv,
+                emodeSettings[i].liquidationThreshold,
+                emodeSettings[i].liquidationBonus,
+                emodeSettings[i].oracle,
+                emodeSettings[i].label
             );
         }
 
@@ -193,6 +226,18 @@ contract CreateLiquidations is Script {
             ReserveConfiguration.getLiquidationBonus(data.configuration),
             ReserveConfiguration.getBorrowingEnabled(data.configuration),
             uint8(ReserveConfiguration.getEModeCategory(data.configuration))
+        );
+    }
+
+    function getEModeSettings(uint8 category) internal view returns (EModeSettings memory) {
+        DataTypes.EModeCategory memory data = pool.getEModeCategoryData(category);
+        return EModeSettings(
+            category,
+            data.ltv,
+            data.liquidationThreshold,
+            data.liquidationBonus,
+            data.priceSource,
+            data.label
         );
     }
 
