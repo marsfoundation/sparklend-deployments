@@ -187,6 +187,30 @@ contract CreateLiquidations is Script {
                 emodeUser.supply(ctoken, depositAmount);
                 emodeUser.borrow(btoken, borrowAmount);
             }
+
+            // Add a cross collateralization position
+            if (bindex != cindex) {
+                SparkUser ccUser = new SparkUser(address(pool));
+                users.push(ccUser);
+
+                depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
+                uint256 depositAmount2 = convertUSDToTokenAmount(btoken, valuePerAssetUSD);
+                borrowAmount =  convertUSDToTokenAmount(btoken, valuePerAssetUSD) * originalSettings[cindex].liquidationThreshold * bfactor / 1e8 +
+                                convertUSDToTokenAmount(btoken, valuePerAssetUSD) * originalSettings[bindex].liquidationThreshold * bfactor / 1e8;
+                if (IERC20(ctoken).balanceOf(deployer) >= depositAmount) {
+                    IERC20(ctoken).transfer(address(ccUser), depositAmount);
+                } else {
+                    revert("Insufficient balance");
+                }
+                if (IERC20(btoken).balanceOf(deployer) >= depositAmount2) {
+                    IERC20(btoken).transfer(address(ccUser), depositAmount2);
+                } else {
+                    revert("Insufficient balance");
+                }
+                ccUser.supply(ctoken, depositAmount);
+                ccUser.supply(btoken, depositAmount2);
+                ccUser.borrow(btoken, borrowAmount);
+            }
         }
 
         // Restore original settings
