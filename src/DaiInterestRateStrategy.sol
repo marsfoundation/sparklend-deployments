@@ -116,7 +116,7 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
     * @dev This incurs a lot of SLOADs and infrequently changes. No need to call this on every calculation.
     */
     function recompute() public {
-        (uint256 Art,,, uint256 line,) = VatLike(vat).ilks(ilk);    // Assume rate == RAY because this is a D3M
+        (uint256 Art, uint256 rate,, uint256 line,) = VatLike(vat).ilks(ilk);
         // Convert the DSR to the SFBR as a yearly APR
         uint256 baseRate = (PotLike(pot).dsr() - RAY) * SECONDS_PER_YEAR * baseRateConversion / RAY;
         
@@ -127,8 +127,8 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
             }
         }
 
-        uint256 _line = line / RAD;
-        uint256 debtRatio = Art > 0 ? (_line > 0 ? Art / _line : type(uint88).max) : 0;
+        uint256 _line = line / WAD;
+        uint256 debtRatio = Art > 0 ? (_line > 0 ? Art * rate / _line : type(uint88).max) : 0;
         if (debtRatio > type(uint88).max) {
             debtRatio = type(uint88).max;
         }

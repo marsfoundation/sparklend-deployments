@@ -12,7 +12,7 @@ contract VatMock {
     uint256 line;
 
     function ilks(bytes32) public view returns (uint256, uint256, uint256, uint256, uint256) {
-        return (Art, 0, 0, line, 0);
+        return (Art, 10 ** 27, 0, line, 0);
     }
 
     function setArt(uint256 _art) external {
