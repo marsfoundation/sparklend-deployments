@@ -11,6 +11,7 @@ import { IERC20 } from "aave-v3-core/contracts/dependencies/openzeppelin/contrac
 import { IERC20Detailed } from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import { Ownable } from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/Ownable.sol";
 import { PoolAddressesProvider } from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
+import { ACLManager } from "aave-v3-core/contracts/protocol/configuration/ACLManager.sol";
 import { Pool } from "aave-v3-core/contracts/protocol/pool/Pool.sol";
 import { PoolConfigurator } from "aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol";
 import { AaveOracle } from 'aave-v3-core/contracts/misc/AaveOracle.sol';
@@ -25,20 +26,20 @@ contract SparkUser is Ownable {
         pool = Pool(_pool);
     }
 
-    function supply(address _token, uint256 _amount) external onlyOwner {
+    function supply(address _token, uint256 _amount) public onlyOwner {
         IERC20(_token).approve(address(pool), _amount);
         pool.supply(_token, _amount, address(this), 0);
     }
 
-    function withdraw(address _token, uint256 _amount, address _to) external onlyOwner {
+    function withdraw(address _token, uint256 _amount, address _to) public onlyOwner {
         pool.withdraw(_token, _amount, _to);
     }
 
-    function borrow(address _token, uint256 _amount) external onlyOwner {
+    function borrow(address _token, uint256 _amount) public onlyOwner {
         pool.borrow(_token, _amount, 2, 0, address(this));
     }
 
-    function repay(address _token, uint256 _amount) external onlyOwner {
+    function repay(address _token, uint256 _amount) public onlyOwner {
         pool.repay(_token, _amount, 2, address(this));
     }
 
@@ -48,6 +49,32 @@ contract SparkUser is Ownable {
 
     function rescueTokens(address _token, address _to, uint256 _amount) external onlyOwner {
         IERC20(_token).transfer(_to, _amount);
+    }
+
+    function openPosition(
+        address ctoken,
+        address btoken,
+        uint256 ctokenAmount,
+        uint256 btokenAmount,
+        uint256 ltv,
+        uint256 liquidationThreshold,
+        uint256 paddingFactor
+    ) external onlyOwner {
+        uint256 depositAmount = ctokenAmount;
+        uint256 borrowAmount = btokenAmount * ltv / 1e4;
+        // Spark allows you to withdraw collateral up to the liquidation threshold
+        uint256 targetDepositAmount = _divup(ctokenAmount * ltv * paddingFactor, (liquidationThreshold * 1e4));
+        require(depositAmount >= targetDepositAmount, "1");
+        IERC20(ctoken).transferFrom(msg.sender, address(this), depositAmount);
+        supply(ctoken, depositAmount);
+        borrow(btoken, borrowAmount);
+        withdraw(ctoken, depositAmount - targetDepositAmount, msg.sender);
+    }
+
+    function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        unchecked {
+            z = x != 0 ? ((x - 1) / y) + 1 : 0;
+        }
     }
 
 }
@@ -82,17 +109,24 @@ contract CreateLiquidations is Script {
     address deployer;
 
     PoolAddressesProvider poolAddressesProvider;
+    ACLManager aclManager;
     Pool pool;
     PoolConfigurator configurator;
     AaveOracle oracle;
 
     address[] tokens;
     address usdc;
+    address dai;
+    address sdai;
     ReserveSettings[] originalSettings;
     EModeSettings[] emodeSettings;
     uint256 i;
     SparkUser[] users;
-    uint256 numUsers;
+    uint256 tokensSquared;
+    bool recursive;
+    bool emode;
+    bool crossMargin;
+    uint256 paddingFactor;
     uint256 valuePerAssetUSD;
     uint256 depositAmountPerAssetUSD;
 
@@ -102,101 +136,125 @@ contract CreateLiquidations is Script {
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
         poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
+        aclManager = ACLManager(poolAddressesProvider.getACLManager());
         usdc = deployedContracts.readAddress(".USDC_token");
+        dai = deployedContracts.readAddress(".DAI_token");
+        sdai = deployedContracts.readAddress(".sDAI_token");
         pool = Pool(poolAddressesProvider.getPool());
         configurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         oracle = AaveOracle(poolAddressesProvider.getPriceOracle());
         tokens = pool.getReservesList();
-        numUsers = vm.envOr("NUM_USERS", (tokens.length - 1) * (tokens.length - 1));
+        tokensSquared = tokens.length * tokens.length;
+        recursive = vm.envOr("RECURSIVE_POSITIONS", false);
+        emode = vm.envOr("EMODE", true);
+        crossMargin = vm.envOr("CROSS_MARGIN", false);
+        paddingFactor = vm.envOr("PADDING_FACTOR", uint256(10200)); // 2% under liquidation threshold is target
+        valuePerAssetUSD = vm.envOr("VALUE_PER_ASSET_USD", uint256(1));
+        depositAmountPerAssetUSD = vm.envOr("DEPOSIT_AMOUNT_PER_ASSET_USD", uint256(10));
 
         deployer = msg.sender;
-        valuePerAssetUSD = 1;
-        depositAmountPerAssetUSD = 10;
 
         vm.startBroadcast();
-        
+
         // Save settings and set everything to ~100% LTV (if it is allowed as collateral)
         for (i = 0; i < tokens.length; i++) {
             originalSettings.push(getReserveSettings(tokens[i]));
             if (originalSettings[i].ltv == 0) continue;
-            configurator.configureReserveAsCollateral(
-                tokens[i],
-                9998,
-                9998,
-                10002
-            );
+
+            // Can only change settings if we are pool admin
+            if (aclManager.isPoolAdmin(deployer)) {
+                configurator.configureReserveAsCollateral(
+                    tokens[i],
+                    9998,
+                    9998,
+                    10002
+                );
+            }
 
             // Make sure we have enough liquidity for each asset
-            if (IERC20(tokens[i]).allowance(deployer, address(pool)) < type(uint256).max) IERC20(tokens[i]).approve(address(pool), type(uint256).max);
-            pool.supply(tokens[i], convertUSDToTokenAmount(tokens[i], depositAmountPerAssetUSD), deployer, 0);
+            address atoken = getAToken(tokens[i]);
+            IERC20 token = IERC20(tokens[i]);
+            uint256 depositAmountPerAsset = convertUSDToTokenAmount(address(token), depositAmountPerAssetUSD, true);
+            if (token.balanceOf(atoken) < depositAmountPerAsset) {
+                uint256 amountToDeposit = depositAmountPerAsset - token.balanceOf(atoken);
+                if (token.allowance(deployer, address(pool)) < amountToDeposit) token.approve(address(pool), amountToDeposit);
+                pool.supply(address(token), depositAmountPerAsset, deployer, 0);
+            }
         }
 
         // Save e-mode settings and set everything to ~100% LTV
         for (i = 1; i <= 1; i++) {
             uint8 category = uint8(i);
             emodeSettings.push(getEModeSettings(category));
-            configurator.setEModeCategory(
-                category,
-                9999,
-                9999,
-                10001,
-                emodeSettings[i - 1].oracle,
-                emodeSettings[i - 1].label
-            );
+
+            if (aclManager.isPoolAdmin(deployer)) {
+                configurator.setEModeCategory(
+                    category,
+                    9999,
+                    9999,
+                    10001,
+                    emodeSettings[i - 1].oracle,
+                    emodeSettings[i - 1].label
+                );
+            }
         }
 
         // Create a bunch of positions that will be underwater with original settings
-        for (i = 0; i < numUsers; i++) {
+        for (i = 0; i < tokensSquared; i++) {
             uint256 cindex = i % tokens.length;
-            if (tokens[cindex] == usdc) continue;    // USDC is not collateral (or borrowable
+            if (tokens[cindex] == usdc) continue;    // USDC is not collateral (or borrowable)
             uint256 bindex = (i / tokens.length) % tokens.length;
+            if (!recursive && cindex == bindex) continue;
             address ctoken = tokens[cindex];
             if (!originalSettings[bindex].borrowingEnabled) {
                 continue;
             }
             address btoken = tokens[bindex];
-            uint256 bfactor = 10200;        // Slightly above the limit in case of oracle price changes
+            if (!recursive && ((btoken == dai && ctoken == sdai) || (btoken == sdai && ctoken == dai))) continue; // Count sDAI/DAI as the same asset
             SparkUser user = new SparkUser(address(pool));
             users.push(user);
             
-            // Deposit collateral
-            uint256 depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
-            uint256 borrowAmount = convertUSDToTokenAmount(btoken, valuePerAssetUSD) * originalSettings[cindex].liquidationThreshold * bfactor / 1e8;
-            if (IERC20(ctoken).balanceOf(deployer) >= depositAmount) {
-                IERC20(ctoken).transfer(address(user), depositAmount);
-            } else {
-                revert("Insufficient balance");
-            }
-            user.supply(ctoken, depositAmount);
-            user.borrow(btoken, borrowAmount);
+            // Make a dangerous position
+            uint256 amountToDeposit = convertUSDToTokenAmount(ctoken, valuePerAssetUSD, true);
+            IERC20(ctoken).approve(address(user), amountToDeposit);
+            user.openPosition(
+                ctoken,
+                btoken,
+                amountToDeposit,
+                convertUSDToTokenAmount(btoken, valuePerAssetUSD, false),
+                getLTV(ctoken),
+                getLiquidationThreshold(ctoken),
+                paddingFactor
+            );
 
             // Add an e-mode user if it exists
             uint8 eModeCategory = originalSettings[cindex].emodeCategory;
-            if (eModeCategory > 0 && eModeCategory == originalSettings[bindex].emodeCategory) {
+            if (emode && eModeCategory > 0 && eModeCategory == originalSettings[bindex].emodeCategory) {
                 SparkUser emodeUser = new SparkUser(address(pool));
                 emodeUser.setUserEMode(eModeCategory);
                 users.push(emodeUser);
 
-                depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
-                borrowAmount = convertUSDToTokenAmount(btoken, valuePerAssetUSD) * emodeSettings[eModeCategory - 1].liquidationThreshold * bfactor / 1e8;
-                if (IERC20(ctoken).balanceOf(deployer) >= depositAmount) {
-                    IERC20(ctoken).transfer(address(emodeUser), depositAmount);
-                } else {
-                    revert("Insufficient balance");
-                }
-                emodeUser.supply(ctoken, depositAmount);
-                emodeUser.borrow(btoken, borrowAmount);
+                IERC20(ctoken).approve(address(emodeUser), amountToDeposit);
+                emodeUser.openPosition(
+                    ctoken,
+                    btoken,
+                    amountToDeposit,
+                    convertUSDToTokenAmount(btoken, valuePerAssetUSD, false),
+                    getLTV(eModeCategory),
+                    getLiquidationThreshold(eModeCategory),
+                    paddingFactor
+                );
             }
 
             // Add a cross collateralization position
-            if (bindex != cindex) {
+            /*if (crossMargin && bindex != cindex) {
                 SparkUser ccUser = new SparkUser(address(pool));
                 users.push(ccUser);
 
                 depositAmount = convertUSDToTokenAmount(ctoken, valuePerAssetUSD);
                 uint256 depositAmount2 = convertUSDToTokenAmount(btoken, valuePerAssetUSD);
-                borrowAmount =  convertUSDToTokenAmount(btoken, valuePerAssetUSD) * originalSettings[cindex].liquidationThreshold * bfactor / 1e8 +
-                                convertUSDToTokenAmount(btoken, valuePerAssetUSD) * originalSettings[bindex].liquidationThreshold * bfactor / 1e8;
+                borrowAmount =  convertUSDToTokenAmount(btoken, valuePerAssetUSD) * getLTV(ctoken) / 1e4 +
+                                convertUSDToTokenAmount(btoken, valuePerAssetUSD) * getLTV(btoken) / 1e4;
                 if (IERC20(ctoken).balanceOf(deployer) >= depositAmount) {
                     IERC20(ctoken).transfer(address(ccUser), depositAmount);
                 } else {
@@ -210,28 +268,30 @@ contract CreateLiquidations is Script {
                 ccUser.supply(ctoken, depositAmount);
                 ccUser.supply(btoken, depositAmount2);
                 ccUser.borrow(btoken, borrowAmount);
-            }
+            }*/
         }
 
-        // Restore original settings
-        for (i = 0; i < originalSettings.length; i++) {
-            if (originalSettings[i].ltv == 0) continue;
-            configurator.configureReserveAsCollateral(
-                originalSettings[i].asset,
-                originalSettings[i].ltv,
-                originalSettings[i].liquidationThreshold,
-                originalSettings[i].liquidationBonus
-            );
-        }
-        for (i = 0; i < emodeSettings.length; i++) {
-            configurator.setEModeCategory(
-                emodeSettings[i].category,
-                emodeSettings[i].ltv,
-                emodeSettings[i].liquidationThreshold,
-                emodeSettings[i].liquidationBonus,
-                emodeSettings[i].oracle,
-                emodeSettings[i].label
-            );
+        if (aclManager.isPoolAdmin(deployer)) {
+            // Restore original settings
+            for (i = 0; i < originalSettings.length; i++) {
+                if (originalSettings[i].ltv == 0) continue;
+                configurator.configureReserveAsCollateral(
+                    originalSettings[i].asset,
+                    originalSettings[i].ltv,
+                    originalSettings[i].liquidationThreshold,
+                    originalSettings[i].liquidationBonus
+                );
+            }
+            for (i = 0; i < emodeSettings.length; i++) {
+                configurator.setEModeCategory(
+                    emodeSettings[i].category,
+                    emodeSettings[i].ltv,
+                    emodeSettings[i].liquidationThreshold,
+                    emodeSettings[i].liquidationBonus,
+                    emodeSettings[i].oracle,
+                    emodeSettings[i].label
+                );
+            }
         }
 
         vm.stopBroadcast();
@@ -265,8 +325,41 @@ contract CreateLiquidations is Script {
         );
     }
 
-    function convertUSDToTokenAmount(address token, uint256 amountUSD) internal view returns (uint256) {
-        return amountUSD * (10 ** IERC20Detailed(token).decimals()) * oracle.BASE_CURRENCY_UNIT() / oracle.getAssetPrice(token);
+    function convertUSDToTokenAmount(address token, uint256 amountUSD, bool roundUp) internal view returns (uint256) {
+        uint256 num = amountUSD * (10 ** IERC20Detailed(token).decimals()) * oracle.BASE_CURRENCY_UNIT();
+        uint256 den = oracle.getAssetPrice(token);
+        return roundUp ? _divup(num, den) : num / den;
+    }
+
+    function getLTV(address asset) internal view returns (uint256) {
+        DataTypes.ReserveData memory data = pool.getReserveData(asset);
+        return ReserveConfiguration.getLtv(data.configuration);
+    }
+
+    function getLiquidationThreshold(address asset) internal view returns (uint256) {
+        DataTypes.ReserveData memory data = pool.getReserveData(asset);
+        return ReserveConfiguration.getLiquidationThreshold(data.configuration);
+    }
+
+    function getLTV(uint8 category) internal view returns (uint256) {
+        DataTypes.EModeCategory memory data = pool.getEModeCategoryData(category);
+        return data.ltv;
+    }
+
+    function getLiquidationThreshold(uint8 category) internal view returns (uint256) {
+        DataTypes.EModeCategory memory data = pool.getEModeCategoryData(category);
+        return data.liquidationThreshold;
+    }
+
+    function getAToken(address asset) internal view returns (address) {
+        DataTypes.ReserveData memory data = pool.getReserveData(asset);
+        return data.aTokenAddress;
+    }
+
+    function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        unchecked {
+            z = x != 0 ? ((x - 1) / y) + 1 : 0;
+        }
     }
 
 }

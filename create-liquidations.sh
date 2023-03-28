@@ -2,12 +2,14 @@
 # Create liquidations for the testnet
 set -e
 
-cast rpc anvil_setBalance $MCD_PAUSE_PROXY 0x10000000000000000 > /dev/null
-cast rpc anvil_impersonateAccount $MCD_PAUSE_PROXY > /dev/null
+export FOUNDRY_ROOT_CHAINID=1
 
-cast send 0xdA135Cd78A086025BcdC87B038a1C462032b510C 'addPoolAdmin(address)' $ETH_FROM --from $MCD_PAUSE_PROXY
+#cast rpc anvil_setBalance $MCD_PAUSE_PROXY 0x10000000000000000 > /dev/null
+#cast rpc anvil_impersonateAccount $MCD_PAUSE_PROXY > /dev/null
 
-cast rpc anvil_stopImpersonatingAccount $MCD_PAUSE_PROXY > /dev/null
+#cast send 0xdA135Cd78A086025BcdC87B038a1C462032b510C 'addPoolAdmin(address)' $ETH_FROM --from $MCD_PAUSE_PROXY
+
+#cast rpc anvil_stopImpersonatingAccount $MCD_PAUSE_PROXY > /dev/null
 
 # Give a bunch of tokens to the deployer account
 
@@ -29,6 +31,6 @@ cast send 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0 'wrap(uint256)' 10000000000
 # WBTC
 cast rpc anvil_setStorageAt 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599 `cast keccak $(cast abi-encode 'a(address,uint256)' $ETH_FROM 0)` 0x0000000000000000000000000000000000000000010000000000000000000000
 
-echo "Creating $NUM_USERS underwater positions..."
+echo "Creating a bunch of positions in danger of liquidation..."
 
 forge script script/CreateLiquidations.s.sol:CreateLiquidations --rpc-url $ETH_RPC_URL --broadcast --sender $ETH_FROM --slow
