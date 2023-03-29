@@ -129,6 +129,7 @@ contract CreateLiquidations is Script {
     uint256 paddingFactor;
     uint256 valuePerAssetUSD;
     uint256 depositAmountPerAssetUSD;
+    uint256 maxUsers;
 
     function run() external {
         config = ScriptTools.readInput("config");
@@ -151,6 +152,7 @@ contract CreateLiquidations is Script {
         paddingFactor = vm.envOr("PADDING_FACTOR", uint256(10200)); // 2% under liquidation threshold is target
         valuePerAssetUSD = vm.envOr("VALUE_PER_ASSET_USD", uint256(1));
         depositAmountPerAssetUSD = vm.envOr("DEPOSIT_AMOUNT_PER_ASSET_USD", uint256(10));
+        maxUsers = vm.envOr("MAX_USERS", uint256(100));
 
         deployer = msg.sender;
 
@@ -177,7 +179,7 @@ contract CreateLiquidations is Script {
             uint256 depositAmountPerAsset = convertUSDToTokenAmount(address(token), depositAmountPerAssetUSD, true);
             if (token.balanceOf(atoken) < depositAmountPerAsset) {
                 uint256 amountToDeposit = depositAmountPerAsset - token.balanceOf(atoken);
-                if (token.allowance(deployer, address(pool)) < amountToDeposit) token.approve(address(pool), amountToDeposit);
+                if (token.allowance(deployer, address(pool)) < amountToDeposit) token.approve(address(pool), type(uint256).max);
                 pool.supply(address(token), depositAmountPerAsset, deployer, 0);
             }
         }
@@ -201,6 +203,7 @@ contract CreateLiquidations is Script {
 
         // Create a bunch of positions that will be underwater with original settings
         for (i = 0; i < tokensSquared; i++) {
+            if (users.length >= maxUsers) break;
             uint256 cindex = i % tokens.length;
             if (tokens[cindex] == usdc) continue;    // USDC is not collateral (or borrowable)
             uint256 bindex = (i / tokens.length) % tokens.length;
