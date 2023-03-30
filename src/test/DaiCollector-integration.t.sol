@@ -103,6 +103,54 @@ contract DaiCollectorIntegrationTest is DssTest {
         assertGe(assets, liabilities, "assets should be greater than or equal to liabilities");
     }
 
+    function test_push_limited_liquidity() public {
+        doUpgrade();
+
+        DataTypes.ReserveData memory data = pool.getReserveData(address(dss.dai));
+
+        dss.dai.approve(address(pool), type(uint256).max);
+
+        // Over-issue DAI liabilities to the daiTreasury
+        uint256 assets = getTotalAssets(address(dss.dai));
+        uint256 liabilities = getTotalLiabilities(address(dss.dai));
+        if (assets >= liabilities) {
+            // Force the assets to become less than the liabilities
+            uint256 performanceBonus = 100_000_000 * WAD;
+            dss.dai.setBalance(address(this), performanceBonus * 4);
+            pool.supply(address(dss.dai), performanceBonus * 4, address(this), 0);
+            pool.borrow(address(dss.dai), performanceBonus * 2, 2, 0, address(this));  // Supply rate should now be above 0% (we are over-allocating)
+
+            // Warp so we gaurantee there is new interest
+            vm.warp(block.timestamp + 365 days);
+            forceUpdateIndicies(address(dss.dai));
+
+            assets = getTotalAssets(address(dss.dai));
+            liabilities = getTotalLiabilities(address(dss.dai));
+            assertLe(assets, liabilities, "assets should be less than or equal to liabilities");
+        }
+        
+        uint256 delta = liabilities - assets;
+        assertGe(delta, 2);
+        IERC20 weth = IERC20(deployedContracts.readAddress(".WETH_token"));
+        address(weth).setBalance(address(this), 1_000_000 * WAD);
+        weth.approve(address(pool), type(uint256).max);
+        pool.supply(address(weth), 1_000_000 * WAD, address(this), 0);       // To collateralize the borrow
+        pool.borrow(address(dss.dai), dss.dai.balanceOf(data.aTokenAddress) - delta/2, 2, 0, address(this));
+        daiTreasury.push();
+        
+        // Assets still less than liabilities
+        assets = getTotalAssets(address(dss.dai));
+        liabilities = getTotalLiabilities(address(dss.dai));
+        assertLt(assets, liabilities, "assets should be less than to liabilities");
+
+        daiTreasury.push();
+        
+        // Closed out discrepency with another run
+        assets = getTotalAssets(address(dss.dai)) + 1;  // In case of rounding error we +1
+        liabilities = getTotalLiabilities(address(dss.dai));
+        assertGe(assets, liabilities, "assets should be greater than or equal to liabilities");
+    }
+
     function getTotalAssets(address asset) internal view returns (uint256) {
         // Assets = DAI Liquidity + Total Debt
         DataTypes.ReserveData memory data = pool.getReserveData(asset);

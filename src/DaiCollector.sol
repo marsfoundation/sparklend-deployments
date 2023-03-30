@@ -109,12 +109,22 @@ contract DaiCollector is VersionedInitializable, ICollector {
         IAToken adai = IAToken(data.aTokenAddress);
         uint256 assets = dai.balanceOf(address(adai)) + IERC20(data.variableDebtTokenAddress).totalSupply() + IERC20(data.stableDebtTokenAddress).totalSupply();
         uint256 liabilities = _divup((adai.scaledTotalSupply() + uint256(data.accruedToTreasury)) * data.liquidityIndex, 10 ** 27);
+        uint256 remainingExcess = 0;
         if (liabilities > assets) {
             // Burn excess liabilities by withdrawing and donating back to the pool
-            pool.withdraw(address(dai), liabilities - assets, address(adai));
+            uint256 excess = liabilities - assets;
+            uint256 poolLiquidity = dai.balanceOf(address(adai));
+            if (poolLiquidity < excess) {
+                remainingExcess = excess - poolLiquidity;
+                excess = poolLiquidity;
+            }
+            pool.withdraw(address(dai), excess, address(adai));
         }
 
         // Transfer anything remaining to the target collector
-        adai.transfer(targetCollector, adai.balanceOf(address(this)));
+        uint256 adaiBalance = adai.balanceOf(address(this));
+        if (adaiBalance > remainingExcess) {
+            adai.transfer(targetCollector, adaiBalance - remainingExcess);
+        }
     }
 }
