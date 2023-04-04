@@ -40,6 +40,7 @@ contract SparkUser is Ownable {
     }
 
     function repay(address _token, uint256 _amount) public onlyOwner {
+        IERC20(_token).approve(address(pool), _amount);
         pool.repay(_token, _amount, 2, address(this));
     }
 
