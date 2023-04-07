@@ -26,6 +26,7 @@ contract MigrationHelperTest is Test {
 
   address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
   address public constant ETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
   address[] public usersSimple;
   address[] public usersWithDebt;
@@ -210,12 +211,16 @@ contract MigrationHelperTest is Test {
     uint256[] memory suppliedBalances
   ) internal {
     for (uint256 i = 0; i < suppliedPositions.length; i++) {
+        if (suppliedPositions[i] == USDC) {
+            suppliedPositions[i] = DAI;
+            suppliedBalances[i] = suppliedBalances[i] * 10**12;
+        }
       (uint256 currentATokenBalance, , , , , , , , ) = v3DataProvider.getUserReserveData(
         suppliedPositions[i],
         user
       );
 
-      assertTrue(currentATokenBalance >= suppliedBalances[i]);
+      assertTrue(currentATokenBalance >= suppliedBalances[i], "supply not migrated");
     }
   }
 
@@ -224,12 +229,16 @@ contract MigrationHelperTest is Test {
     IMigrationHelper.RepayInput[] memory borrowedPositions
   ) internal {
     for (uint256 i = 0; i < borrowedPositions.length; i++) {
+        if (borrowedPositions[i].asset == USDC) {
+            borrowedPositions[i].asset = DAI;
+            borrowedPositions[i].amount = borrowedPositions[i].amount * 10**12;
+        }
       (, , uint256 currentVariableDebt, , , , , , ) = v3DataProvider.getUserReserveData(
         borrowedPositions[i].asset,
         user
       );
 
-      assertTrue(currentVariableDebt >= borrowedPositions[i].amount);
+      assertTrue(currentVariableDebt >= borrowedPositions[i].amount, "borrow not migrated");
     }
   }
 
@@ -373,19 +382,19 @@ contract MigrationHelperTest is Test {
     uint256 ownerPrivateKey = 0xA11CEB;
 
     address owner = vm.addr(ownerPrivateKey);
-    deal(DAI, owner, 10000e18);
+    deal(USDC, owner, 10000e6);
     deal(ETH, owner, 10e18);
 
     vm.startPrank(owner);
 
-    IERC20(DAI).approve(address(migrationHelper.V2_POOL()), type(uint256).max);
+    IERC20(USDC).approve(address(migrationHelper.V2_POOL()), type(uint256).max);
     IERC20(ETH).approve(address(migrationHelper.V2_POOL()), type(uint256).max);
 
-    migrationHelper.V2_POOL().deposit(DAI, 10000 ether, owner, 0);
+    migrationHelper.V2_POOL().deposit(USDC, 10000 * 1e6, owner, 0);
     migrationHelper.V2_POOL().deposit(ETH, 10 ether, owner, 0);
 
     // migrationHelper.V2_POOL().borrow(ETH, 2 ether, 1, 0, owner);
-    migrationHelper.V2_POOL().borrow(ETH, 1 ether, 2, 0, owner);
+    migrationHelper.V2_POOL().borrow(USDC, 1000 * 1e6, 2, 0, owner);
 
     vm.stopPrank();
 
@@ -445,7 +454,33 @@ contract MigrationHelperTest is Test {
       positionsToRepay
     );
 
+    // First want to merge USDC into DAI
+    {
+        bool daiFound = false;
+        uint256 daiIndex = 0;
+        for (uint256 i = 0; i < borrowedAssets.length; i++) {
+            if (borrowedAssets[i] == DAI) {
+                daiIndex = i;
+                daiFound = true;
+                break;
+            }
+        }
+
+        for (uint256 i = 0; i < borrowedAssets.length; i++) {
+            if (borrowedAssets[i] == USDC) {
+                if (daiFound) {
+                    borrowedAmounts[daiIndex] += borrowedAmounts[i] * 1e12;
+                } else {
+                    borrowedAssets[i] = DAI;
+                    borrowedAmounts[i] = borrowedAmounts[i] * 1e12;
+                }
+            }
+        }
+    }
+
     for (uint256 i = 0; i < borrowedAssets.length; i++) {
+        if (borrowedAssets[i] == USDC) continue;
+
       // get v3 variable debt token
       DataTypes.ReserveData memory reserveData = migrationHelper.V3_POOL().getReserveData(
         borrowedAssets[i]

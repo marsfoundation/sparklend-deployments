@@ -13,7 +13,9 @@ import {MigrationHelper} from 'V2-V3-migration-helpers/src/contracts/MigrationHe
 interface PsmLike {
     function gemJoin() external view returns (address);
     function tin() external view returns (uint256);
+    function tout() external view returns (uint256);
     function sellGem(address usr, uint256 gemAmt) external;
+    function buyGem(address usr, uint256 gemAmt) external;
 }
 
 contract SparkMigrationHelper is MigrationHelper {
@@ -32,6 +34,7 @@ contract SparkMigrationHelper is MigrationHelper {
         STETH.safeApprove(address(WSTETH), type(uint256).max);
         WSTETH.safeApprove(address(SPARK_POOL), type(uint256).max);
         USDC.safeApprove(PSM.gemJoin(), type(uint256).max);
+        DAI.safeApprove(address(PSM), type(uint256).max);
   }
 
   /// @inheritdoc MigrationHelper
@@ -60,10 +63,27 @@ contract SparkMigrationHelper is MigrationHelper {
         return (address(WSTETH), wrappedAmount);
     } else if (asset == address(USDC)) {
         PSM.sellGem(address(this), amount);
+        uint256 swappedAmount = amount * 1e12;
 
-        return (address(DAI), DAI.balanceOf(address(this)));
+        return (address(DAI), swappedAmount - swappedAmount * PSM.tin() / 1e18);
     }
 
     return (asset, amount);
+  }
+
+  function _preFlashLoan(address asset, uint256 amount) internal view override returns (address, uint256) {
+    if (asset == address(USDC)) {
+        uint256 daiAmount = amount * 1e12;
+
+        return (address(DAI), daiAmount + daiAmount * PSM.tout() / 1e18);
+    }
+
+    return (asset, amount);
+  }
+
+  function _postFlashLoan(address, uint256, address desiredAsset, uint256 desiredAmount) internal override {
+    if (desiredAsset == address(USDC)) {
+        PSM.buyGem(address(this), desiredAmount);
+    }
   }
 }
