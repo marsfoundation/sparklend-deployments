@@ -31,6 +31,7 @@ contract MigrationHelperTest is Test {
   address[] public usersSimple;
   address[] public usersWithDebt;
   address[] public v2Reserves;
+  address[] public v3Reserves;
 
   mapping(address => uint256) private assetsIndex;
 
@@ -40,6 +41,7 @@ contract MigrationHelperTest is Test {
     v2DataProvider = AaveV2Ethereum.AAVE_PROTOCOL_DATA_PROVIDER;
     v3DataProvider = IAaveProtocolDataProviderV3(0xFc21d6d146E6086B8359705C8b28512a983db0cb);
     v2Reserves = migrationHelper.V2_POOL().getReservesList();
+    v3Reserves = migrationHelper.V3_POOL().getReservesList();
 
     sigUtils = new SigUtils();
 
@@ -69,24 +71,25 @@ contract MigrationHelperTest is Test {
   }
 
   function testCacheATokens() public {
-    for (uint256 i = 0; i < v2Reserves.length; i++) {
+    for (uint256 i = 0; i < v3Reserves.length; i++) {
       DataTypesV2.ReserveData memory reserveData = migrationHelper.V2_POOL().getReserveData(
-        v2Reserves[i]
+        v3Reserves[i]
       );
-      assertEq(address(migrationHelper.aTokens(v2Reserves[i])), reserveData.aTokenAddress);
+      if (reserveData.aTokenAddress == address(0)) continue;
+      assertEq(address(migrationHelper.aTokens(v3Reserves[i])), reserveData.aTokenAddress);
 
       uint256 maxApproval = type(uint256).max;
-      if (v2Reserves[i] == 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984) {
+      if (v3Reserves[i] == 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984) {
         maxApproval = type(uint96).max;
       }
 
-      uint256 allowanceToPoolV2 = IERC20(v2Reserves[i]).allowance(
+      uint256 allowanceToPoolV2 = IERC20(v3Reserves[i]).allowance(
         address(migrationHelper),
         address(migrationHelper.V2_POOL())
       );
       assertEq(allowanceToPoolV2, maxApproval);
 
-      uint256 allowanceToPool = IERC20(v2Reserves[i]).allowance(
+      uint256 allowanceToPool = IERC20(v3Reserves[i]).allowance(
         address(migrationHelper),
         address(migrationHelper.V3_POOL())
       );
