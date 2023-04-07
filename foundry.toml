@@ -4,7 +4,8 @@ out = 'out'
 libs = ['lib']
 remappings = [
     '@aave/core-v3/=lib/aave-v3-core/',
-    '@uniswap/v3-core/=lib/v3-core/'
+    '@uniswap/v3-core/=lib/v3-core/',
+    'solidity-utils/=lib/V2-V3-migration-helpers/lib/solidity-utils/src/'
 ]
 fs_permissions = [
     { access = "read", path = "./script/input/"},
