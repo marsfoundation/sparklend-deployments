@@ -21,3 +21,6 @@
 	path = lib/dss-direct-deposit
 	url = https://github.com/makerdao/dss-direct-deposit
 	branch = v1.0.0
+[submodule "lib/V2-V3-migration-helpers"]
+	path = lib/V2-V3-migration-helpers
+	url = https://github.com/phoenixlabsresearch/V2-V3-migration-helpers
