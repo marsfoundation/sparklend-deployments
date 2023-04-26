@@ -6,6 +6,7 @@ import {IReserveInterestRateStrategy} from 'aave-v3-core/contracts/interfaces/IR
 import {DataTypes} from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
 
 interface VatLike {
+    function live() external view returns (uint256);
     function ilks(bytes32) external view returns (uint256, uint256, uint256, uint256, uint256);
 }
 
@@ -128,7 +129,7 @@ contract DaiInterestRateStrategy is IReserveInterestRateStrategy {
         }
 
         uint256 _line = line / WAD;
-        uint256 debtRatio = Art > 0 ? (_line > 0 ? Art * rate / _line : type(uint88).max) : 0;
+        uint256 debtRatio = Art > 0 ? ((_line > 0 && VatLike(vat).live() == 1) ? Art * rate / _line : type(uint88).max) : 0;
         if (debtRatio > type(uint88).max) {
             debtRatio = type(uint88).max;
         }

@@ -10,6 +10,7 @@ contract VatMock {
 
     uint256 Art;
     uint256 line;
+    uint256 public live = 1;
 
     function ilks(bytes32) public view returns (uint256, uint256, uint256, uint256, uint256) {
         return (Art, 10 ** 27, 0, line, 0);
@@ -21,6 +22,10 @@ contract VatMock {
 
     function setLine(uint256 _line) external {
         line = _line;
+    }
+
+    function cage() external {
+        live = 0;
     }
 
 }
@@ -164,6 +169,15 @@ contract DaiInterestRateStrategyTest is DssTest {
 
         uint256 br = 749999997628498784959732204;   // Pretty much maxRate with some rounding errors
         assertRates(100_000 * WAD, br, br, "Maker wants to go to zero debt - always maxRate. supply = maxRate, borrow = maxRate");
+    }
+
+    function test_calculateInterestRates_vat_caged() public {
+        vat.setArt(500_000 * WAD);
+        vat.cage();
+        interestStrategy.recompute();
+
+        uint256 br = 749999997628498784959732204;   // Pretty much maxRate with some rounding errors
+        assertRates(500_000 * WAD, br, br, "Should be near max rate when vat is caged. supply = maxRate, borrow = maxRate");
     }
 
     function test_calculateInterestRates_fuzz(
