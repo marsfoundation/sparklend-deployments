@@ -17,8 +17,8 @@ contract SavingsDaiOracle is AggregatorInterface {
 
     int256 private constant RAY = 10 ** 27;
 
-    AggregatorInterface internal _daiPriceFeed;
-    PotLike internal _pot;
+    AggregatorInterface internal immutable _daiPriceFeed;
+    PotLike internal immutable _pot;
 
     constructor(AggregatorInterface daiPriceFeed, address pot) {
         _daiPriceFeed = daiPriceFeed;
