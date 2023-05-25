@@ -5,6 +5,8 @@ import 'forge-std/Test.sol';
 import {ProtocolV3_0_1TestBase, InterestStrategyValues, ReserveConfig} from 'aave-helpers/ProtocolV3TestBase.sol';
 import {TestWithExecutor} from 'aave-helpers/GovHelpers.sol';
 import {SparkEthereum_20230525} from './SparkEthereum_20230525.sol';
+import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
+import {IPoolAddressesProvider} from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
 
 contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
     uint256 internal constant RAY = 1e27;
@@ -12,17 +14,17 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
 
     address internal constant MCD_PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
 
-    address internal constant POOL = 0xC13e21B648A5Ee794902342038FF3aDAB66BE987;
-    address internal constant POOL_ADDRESS_PROVIDER = 0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE;
+    IPool internal constant POOL = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
+    IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
 
     address internal constant RETH = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
     address internal constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
 
     function setUp() public {
-        vm.createSelectFork(vm.rpcUrl('mainnet'), 17336776);
+        vm.createSelectFork(getChain('mainnet').rpcUrl, 17336776);
         _selectPayloadExecutor(MCD_PAUSE_PROXY);
 
-        payload = new AaveV3EthNewListings_20230321();
+        payload = new SparkEthereum_20230525();
     }
 
     function testPoolActivation() public {
@@ -70,7 +72,7 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
             reth.interestRateStrategy,
             reth.interestRateStrategy,
             InterestStrategyValues({
-                addressesProvider: POOL_ADDRESS_PROVIDER,
+                addressesProvider: address(POOL_ADDRESS_PROVIDER),
                 optimalUsageRatio: 45 * (RAY / 100),
                 optimalStableToTotalDebtRatio: 0,
                 baseStableBorrowRate: 0,

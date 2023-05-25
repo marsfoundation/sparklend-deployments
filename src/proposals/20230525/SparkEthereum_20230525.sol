@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import {AaveV3PayloadEthereum, IEngine, Rates, EngineFlags} from 'aave-helpers/v3-config-engine/AaveV3PayloadEthereum.sol';
 
 /**
- * @title List rETH on SparkEthereum
+ * @title List rETH on Spark Ethereum
  * @author Phoenix Labs
  * @dev This proposal lists rETH on Spark Ethereum
  * Forum: https://forum.makerdao.com/t/2023-05-24-spark-protocol-updates/20958
@@ -19,7 +19,7 @@ contract SparkEthereum_20230525 is AaveV3PayloadEthereum {
         IEngine.Listing[] memory listings = new IEngine.Listing[](1);
 
         listings[0] = IEngine.Listing({
-            asset: 0xae78736cd615f374d3085123a210448e74fc6393,
+            asset: RETH,
             assetSymbol: 'rETH',
             priceFeed: RETH_PRICE_FEED,
             rateStrategyParams: Rates.RateStrategyParams({

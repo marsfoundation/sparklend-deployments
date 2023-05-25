@@ -10,7 +10,8 @@ remappings = [
 ]
 fs_permissions = [
     { access = "read", path = "./script/input/"},
-    { access = "read-write", path = "./script/output/"}
+    { access = "read-write", path = "./script/output/"},
+    { access = "write", path = "./reports" }
 ]
 solc_version = '0.8.10'
 optimizer = true
