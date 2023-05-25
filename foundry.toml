@@ -4,6 +4,7 @@ out = 'out'
 libs = ['lib']
 remappings = [
     '@aave/core-v3/=lib/aave-v3-core/',
+    'aave-helpers/=lib/aave-helpers/src/',
     '@uniswap/v3-core/=lib/v3-core/',
     'solidity-utils/=lib/V2-V3-migration-helpers/lib/solidity-utils/src/'
 ]
