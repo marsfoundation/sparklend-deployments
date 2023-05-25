@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 
 import "dss-test/DssTest.sol";
 
-import "../DaiInterestRateStrategy.sol";
+import "../src/DaiInterestRateStrategy.sol";
 
 contract VatMock {
 
