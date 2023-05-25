@@ -7,6 +7,8 @@ import {TestWithExecutor} from 'aave-helpers/GovHelpers.sol';
 import {SparkEthereum_20230525} from './SparkEthereum_20230525.sol';
 import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {IPoolAddressesProvider} from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
+import {IDefaultInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol";
+import {DaiInterestRateStrategy} from "../../DaiInterestRateStrategy.sol";
 
 contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
     uint256 internal constant RAY = 1e27;
@@ -99,5 +101,24 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
             'pre-Spark-Ethereum-rETH-Listing',
             'post-Spark-Ethereum-rETH-Listing'
         );
+    }
+
+    function _writeStrategyConfig(string memory strategiesKey, address _strategy) internal override returns (string memory content) {
+        try IDefaultInterestRateStrategy(_strategy).getBaseStableBorrowRate() {
+            // Default IRS
+            content = super._writeStrategyConfig(strategiesKey, _strategy);
+        } catch {
+            // DAI IRS
+            string memory key = vm.toString(_strategy);
+            DaiInterestRateStrategy strategy = DaiInterestRateStrategy(
+                _strategy
+            );
+            string memory object = vm.serializeString(
+                key,
+                'test',
+                '123'
+            );
+            content = vm.serializeString(strategiesKey, key, object);
+        }
     }
 }
