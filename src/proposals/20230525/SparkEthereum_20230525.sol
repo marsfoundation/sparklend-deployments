@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {AaveV3PayloadEthereum, IEngine, Rates, EngineFlags} from 'aave-helpers/v3-config-engine/AaveV3PayloadEthereum.sol';
+import {IEngine, Rates, EngineFlags} from 'aave-helpers/v3-config-engine/AaveV3PayloadEthereum.sol';
+import {SparkPayloadEthereum} from '../../SparkPayloadEthereum.sol';
 
 /**
  * @title List rETH on Spark Ethereum
@@ -10,9 +11,9 @@ import {AaveV3PayloadEthereum, IEngine, Rates, EngineFlags} from 'aave-helpers/v
  * Forum: https://forum.makerdao.com/t/2023-05-24-spark-protocol-updates/20958
  * Vote: TODO
  */
-contract SparkEthereum_20230525 is AaveV3PayloadEthereum {
+contract SparkEthereum_20230525 is SparkPayloadEthereum {
 
-    address public constant RETH = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
+    address public constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
     address public constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
 
     function newListings() public pure override returns (IEngine.Listing[] memory) {

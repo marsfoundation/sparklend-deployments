@@ -19,11 +19,12 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
     IPool internal constant POOL = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
     IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
 
-    address internal constant RETH = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
+    address internal constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
     address internal constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
 
     function setUp() public {
-        vm.createSelectFork(getChain('mainnet').rpcUrl, 17336776);
+        //vm.createSelectFork(getChain('mainnet').rpcUrl, 17336776);
+        vm.createSelectFork(vm.envString('ETH_RPC_URL'));
         _selectPayloadExecutor(MCD_PAUSE_PROXY);
 
         payload = new SparkEthereum_20230525();
@@ -77,7 +78,7 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
                 addressesProvider: address(POOL_ADDRESS_PROVIDER),
                 optimalUsageRatio: 45 * (RAY / 100),
                 optimalStableToTotalDebtRatio: 0,
-                baseStableBorrowRate: 0,
+                baseStableBorrowRate: 7 * (RAY / 100),      // Equal to variableRateSlope1 as we don't use stable rates
                 stableRateSlope1: 0,
                 stableRateSlope2: 0,
                 baseVariableBorrowRate: 0,
@@ -113,10 +114,30 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
             DaiInterestRateStrategy strategy = DaiInterestRateStrategy(
                 _strategy
             );
-            string memory object = vm.serializeString(
+            vm.serializeUint(
                 key,
-                'test',
-                '123'
+                'baseRateConversion',
+                strategy.baseRateConversion()
+            );
+            vm.serializeUint(
+                key,
+                'borrowSpread',
+                strategy.borrowSpread()
+            );
+            vm.serializeUint(
+                key,
+                'supplySpread',
+                strategy.supplySpread()
+            );
+            vm.serializeUint(
+                key,
+                'maxRate',
+                strategy.maxRate()
+            );
+            string memory object = vm.serializeUint(
+                key,
+                'performanceBonus',
+                strategy.performanceBonus()
             );
             content = vm.serializeString(strategiesKey, key, object);
         }

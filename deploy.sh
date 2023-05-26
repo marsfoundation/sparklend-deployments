@@ -18,7 +18,7 @@ else
     export LIBS="--libraries lib/aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:0xF606870D702263235F8BA0bC49cA64Ff3eE8F832 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/BridgeLogic.sol:BridgeLogic:0xB9C222C708E10ef9287a16bdfe7Eed7B2c5b5E7E --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/ConfiguratorLogic.sol:ConfiguratorLogic:0xc7129924D87043D8B12Ae879e161a0d378080f31 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:0x3Ee111c3fb80Ad67F80305Ac0d51B16A357aF7f1 --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/FlashLoanLogic.sol:FlashLoanLogic:0x2C8E811e12B46FF39f17b968fdf9309Ef88751Db --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol:LiquidationLogic:0x28298a3e41c41246080E8BBE09B2E886a180D9fe --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol:PoolLogic:0xCE5f067F3D0AEe076EB6122c8989A48f82f2499a --libraries lib/aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol:SupplyLogic:0x96177A6e8226D0CE86eeB133c5C9e47FD5fAdd13"
 fi
 
-forge script script/DeployAave.s.sol:DeployAave --rpc-url $ETH_RPC_URL --sender $ETH_FROM --broadcast --verify --slow $LIBS
+forge script script/DeployAave.s.sol:DeployAave --rpc-url $ETH_RPC_URL --sender $ETH_FROM --optimizer-runs 100000 --broadcast --verify --slow $LIBS
 
 exit
 
