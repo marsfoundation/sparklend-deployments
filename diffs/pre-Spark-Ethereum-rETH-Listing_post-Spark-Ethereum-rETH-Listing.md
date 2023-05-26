@@ -17,7 +17,7 @@
 | eModeCategory | 1 |
 | oracle | [0x05225Cd708bCa9253789C1374e4337a019e99D56](https://etherscan.io/address/0x05225Cd708bCa9253789C1374e4337a019e99D56) |
 | oracleName | rETH/ETH/USD |
-| oracleLatestAnswer | 195,568,825,988 |
+| oracleLatestAnswer | 196,065,217,621 |
 | usageAsCollateralEnabled | true |
 | ltv | 68.5 % |
 | liquidationThreshold | 79.5 % |
@@ -33,7 +33,7 @@
 | borrowingEnabled | true |
 | stableBorrowRateEnabled | false |
 | isBorrowableInIsolation | false |
-| interestRateStrategy | [0xDD57c0Ba58A8BF08169b9FFdcEea8B2d8E35aeC6](https://etherscan.io/address/0xDD57c0Ba58A8BF08169b9FFdcEea8B2d8E35aeC6) |
+| interestRateStrategy | [0x995c1A1Ee993031B9f3F268dD2B5E2AD7FE2CFdc](https://etherscan.io/address/0x995c1A1Ee993031B9f3F268dD2B5E2AD7FE2CFdc) |
 | optimalUsageRatio | 45 % |
 | maxExcessUsageRatio | 55 % |
 | baseVariableBorrowRate | 0 % |
@@ -61,7 +61,7 @@
         "debtCeiling": 0,
         "decimals": 18,
         "eModeCategory": 1,
-        "interestRateStrategy": "0xDD57c0Ba58A8BF08169b9FFdcEea8B2d8E35aeC6",
+        "interestRateStrategy": "0x995c1A1Ee993031B9f3F268dD2B5E2AD7FE2CFdc",
         "isActive": true,
         "isBorrowableInIsolation": false,
         "isFlashloanable": true,
@@ -72,7 +72,7 @@
         "liquidationThreshold": 7950,
         "ltv": 6850,
         "oracle": "0x05225Cd708bCa9253789C1374e4337a019e99D56",
-        "oracleLatestAnswer": 195568825988,
+        "oracleLatestAnswer": 196065217621,
         "oracleName": "rETH/ETH/USD",
         "reserveFactor": 1500,
         "stableBorrowRateEnabled": false,
@@ -88,7 +88,7 @@
     }
   },
   "strategies": {
-    "0xDD57c0Ba58A8BF08169b9FFdcEea8B2d8E35aeC6": {
+    "0x995c1A1Ee993031B9f3F268dD2B5E2AD7FE2CFdc": {
       "from": null,
       "to": {
         "baseStableBorrowRate": "70000000000000000000000000",

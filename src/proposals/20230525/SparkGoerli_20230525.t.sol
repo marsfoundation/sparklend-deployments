@@ -4,41 +4,41 @@ pragma solidity ^0.8.10;
 import 'forge-std/Test.sol';
 import {ProtocolV3_0_1TestBase, InterestStrategyValues, ReserveConfig} from 'aave-helpers/ProtocolV3TestBase.sol';
 import {TestWithExecutor} from 'aave-helpers/GovHelpers.sol';
-import {SparkEthereum_20230525} from './SparkEthereum_20230525.sol';
+import {SparkGoerli_20230525} from './SparkGoerli_20230525.sol';
 import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {IPoolAddressesProvider} from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
 import {IACLManager} from "aave-v3-core/contracts/interfaces/IACLManager.sol";
 import {IDefaultInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol";
 import {DaiInterestRateStrategy} from "../../DaiInterestRateStrategy.sol";
 
-contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
+contract SparkGoerli_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
     uint256 internal constant RAY = 1e27;
-    SparkEthereum_20230525 public payload;
+    SparkGoerli_20230525 public payload;
 
-    address internal constant PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
-    address internal constant EXECUTOR = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;
+    address internal constant PAUSE_PROXY = 0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121;
+    address internal constant EXECUTOR = 0x4e847915D8a9f2Ab0cDf2FC2FD0A30428F25665d;
 
-    IPool internal constant POOL = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
-    IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
-    IACLManager internal constant ACL_MANAGER = IACLManager(0xdA135Cd78A086025BcdC87B038a1C462032b510C);
+    IPool internal constant POOL = IPool(0x26ca51Af4506DE7a6f0785D20CD776081a05fF6d);
+    IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E);
+    IACLManager internal constant ACL_MANAGER = IACLManager(0xb137E7d16564c81ae2b0C8ee6B55De81dd46ECe5);
 
-    address internal constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
+    address internal constant RETH = 0x62BC478FFC429161115A6E4090f819CE5C50A5d9;
     address internal constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
 
     function setUp() public {
-        vm.createSelectFork(getChain('mainnet').rpcUrl, 17344641);
+        vm.createSelectFork(getChain('goerli').rpcUrl, 9068223);
         
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);
 
         _selectPayloadExecutor(EXECUTOR);
 
-        payload = new SparkEthereum_20230525();
+        payload = new SparkGoerli_20230525();
     }
 
     function testPoolActivation() public {
         createConfigurationSnapshot(
-            'pre-Spark-Ethereum-rETH-Listing',
+            'pre-Spark-Goerli-rETH-Listing',
             POOL
         );
 
@@ -100,13 +100,8 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
         );
 
         createConfigurationSnapshot(
-            'post-Spark-Ethereum-rETH-Listing',
+            'post-Spark-Goerli-rETH-Listing',
             POOL
-        );
-
-        diffReports(
-            'pre-Spark-Ethereum-rETH-Listing',
-            'post-Spark-Ethereum-rETH-Listing'
         );
     }
 

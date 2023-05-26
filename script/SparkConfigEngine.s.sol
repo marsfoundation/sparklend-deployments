@@ -89,7 +89,7 @@ library DeployRatesFactoryLib {
     }
 }
 
-contract DeploySparkConfigEthereum is Script {
+contract DeploySparkConfig is Script {
 
     string constant NAME = "spark-config-engine";
 

@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {SparkPayloadEthereum, IEngine, Rates, EngineFlags} from '../../SparkPayloadEthereum.sol';
+import {SparkPayloadGoerli, IEngine, Rates, EngineFlags} from '../../SparkPayloadGoerli.sol';
 
 /**
- * @title List rETH on Spark Ethereum
+ * @title List rETH on Spark Goerli
  * @author Phoenix Labs
- * @dev This proposal lists rETH on Spark Ethereum
+ * @dev This proposal lists rETH on Spark Goerli
  * Forum: https://forum.makerdao.com/t/2023-05-24-spark-protocol-updates/20958
  * Vote: TODO
  */
-contract SparkEthereum_20230525 is SparkPayloadEthereum {
+contract SparkGoerli_20230525 is SparkPayloadGoerli {
 
-    address public constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
-    address public constant RETH_PRICE_FEED = 0x05225Cd708bCa9253789C1374e4337a019e99D56;
+    address public constant RETH = 0x62BC478FFC429161115A6E4090f819CE5C50A5d9;
+    address public constant RETH_PRICE_FEED = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;   // Just use ETH / USD
 
     function newListings() public pure override returns (IEngine.Listing[] memory) {
         IEngine.Listing[] memory listings = new IEngine.Listing[](1);

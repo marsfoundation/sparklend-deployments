@@ -7,10 +7,10 @@ import 'aave-helpers/v3-config-engine/AaveV3PayloadBase.sol';
  * @dev Base smart contract for a Aave v3.0.1 (compatible with 3.0.0) listing on Ethereum.
  * @author Phoenix Labs
  */
-abstract contract SparkPayloadEthereum is
-  AaveV3PayloadBase(IEngine(0x3254F7cd0565aA67eEdC86c2fB608BE48d5cCd78))
+abstract contract SparkPayloadGoerli is
+  AaveV3PayloadBase(IEngine(0x862B1C4B6d07bc1f6810BD1eA19bb894B2645a92))
 {
   function getPoolContext() public pure override returns (IEngine.PoolContext memory) {
-    return IEngine.PoolContext({networkName: 'Ethereum', networkAbbreviation: 'Eth'});
+    return IEngine.PoolContext({networkName: 'Goerli', networkAbbreviation: 'Gor'});
   }
 }
