@@ -14,7 +14,7 @@ import {SparkPayloadEthereum} from '../../SparkPayloadEthereum.sol';
 contract SparkEthereum_20230525 is SparkPayloadEthereum {
 
     address public constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
-    address public constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
+    address public constant RETH_PRICE_FEED = 0x05225Cd708bCa9253789C1374e4337a019e99D56;
 
     function newListings() public pure override returns (IEngine.Listing[] memory) {
         IEngine.Listing[] memory listings = new IEngine.Listing[](1);

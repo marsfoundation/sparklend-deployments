@@ -15,10 +15,9 @@
 | isSiloed | false |
 | isFlashloanable | true |
 | eModeCategory | 1 |
-| oracle | [0x553303d460EE0afB37EdFf9bE42922D8FF63220e](https://etherscan.io/address/0x553303d460EE0afB37EdFf9bE42922D8FF63220e) |
-| oracleDecimals | 8 |
-| oracleDescription | UNI / USD |
-| oracleLatestAnswer | 4.9904 |
+| oracle | [0x05225Cd708bCa9253789C1374e4337a019e99D56](https://etherscan.io/address/0x05225Cd708bCa9253789C1374e4337a019e99D56) |
+| oracleName | rETH/ETH/USD |
+| oracleLatestAnswer | 195,568,825,988 |
 | usageAsCollateralEnabled | true |
 | ltv | 68.5 % |
 | liquidationThreshold | 79.5 % |
@@ -72,10 +71,9 @@
         "liquidationProtocolFee": 1000,
         "liquidationThreshold": 7950,
         "ltv": 6850,
-        "oracle": "0x553303d460EE0afB37EdFf9bE42922D8FF63220e",
-        "oracleDecimals": 8,
-        "oracleDescription": "UNI / USD",
-        "oracleLatestAnswer": 499040000,
+        "oracle": "0x05225Cd708bCa9253789C1374e4337a019e99D56",
+        "oracleLatestAnswer": 195568825988,
+        "oracleName": "rETH/ETH/USD",
         "reserveFactor": 1500,
         "stableBorrowRateEnabled": false,
         "stableDebtToken": "0xbf13910620722D4D4F8A03962894EB3335Bf4FaE",
