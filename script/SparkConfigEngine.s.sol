@@ -5,6 +5,8 @@ import {IPoolAddressesProvider} from 'aave-v3-core/contracts/intefaces/IPoolAddr
 import {IPool} from 'aave-v3-core/contracts/intefaces/IPool.sol';
 import {IDefaultInterestRateStrategy} from 'aave-v3-core/contracts/intefaces/IDefaultInterestRateStrategy.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {TransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
+import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 import {V3RateStrategyFactory} from 'aave-helpers/v3-config-engine/V3RateStrategyFactory.sol';
 
 library DeployRatesFactoryLib {
@@ -67,25 +69,47 @@ library DeployRatesFactoryLib {
     }
 }
 
-library DeployRatesFactoryEthLib {
-    function deploy() internal returns (address, address[] memory) {
-        return
-            DeployRatesFactoryLib._createAndSetupRatesFactory(
-                AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-                AaveMisc.TRANSPARENT_PROXY_FACTORY_ETHEREUM,
-                AaveMisc.PROXY_ADMIN_ETHEREUM
-            );
-    }
-}
+contract DeploySparkConfigEthereum is Script {
 
-contract DeployRatesFactoryEth {
-    function run() external broadcast {
+    string constant NAME = "spark-config-engine";
+
+    using stdJson for string;
+    using ScriptTools for string;
+
+    string config;
+    string deployedContracts;
+
+    address admin;
+    address deployer;
+
+    IPoolAddressesProvider poolAddressesProvider;
+
+    TransparentProxyFactory transparentProxyFactory;
+    ProxyAdmin proxyAdmin;
+
+    function run() external {
+        config = ScriptTools.readInput(NAME);
+        deployedContracts = ScriptTools.readOutput("spark");
+        poolAddressesProvider = IPoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
+
+        admin = config.readAddress(".admin");
+        deployer = msg.sender;
+
         vm.startBroadcast();
+        transparentProxyFactory = new TransparentProxyFactory();
+        proxyAdmin = transparentProxyFactory.createProxyAdmin(admin);
+
         DeployRatesFactoryLib._createAndSetupRatesFactory(
-            AaveV3Ethereum.POOL_ADDRESSES_PROVIDER,
-            AaveMisc.TRANSPARENT_PROXY_FACTORY_ETHEREUM,
-            AaveMisc.PROXY_ADMIN_ETHEREUM
+            poolAddressesProvider,
+            address(transparentProxyFactory),
+            address(proxyAdmin)
         );
         vm.stopBroadcast();
+
+        ScriptTools.exportContract(NAME, "admin", admin);
+        ScriptTools.exportContract(NAME, "deployer", deployer);
+        ScriptTools.exportContract(NAME, "transparentProxyFactory", address(transparentProxyFactory));
+        ScriptTools.exportContract(NAME, "proxyAdmin", address(proxyAdmin));
     }
+
 }
