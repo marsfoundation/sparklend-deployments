@@ -6,9 +6,10 @@ import {SparkPayloadEthereum, IEngine, Rates, EngineFlags} from '../../SparkPayl
 /**
  * @title List rETH on Spark Ethereum
  * @author Phoenix Labs
- * @dev This proposal lists rETH on Spark Ethereum
+ * @dev This proposal lists rETH + updates DAI interest rate strategy on Spark Ethereum
  * Forum: https://forum.makerdao.com/t/2023-05-24-spark-protocol-updates/20958
- * Vote: TODO
+ * rETH Vote: https://vote.makerdao.com/polling/QmeEV7ph#poll-detail
+ * DAI IRS Vote: https://vote.makerdao.com/polling/QmWodV1J#poll-detail
  */
 contract SparkEthereum_20230525 is SparkPayloadEthereum {
 

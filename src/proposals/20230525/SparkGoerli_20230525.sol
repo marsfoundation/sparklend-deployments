@@ -6,9 +6,10 @@ import {SparkPayloadGoerli, IEngine, Rates, EngineFlags} from '../../SparkPayloa
 /**
  * @title List rETH on Spark Goerli
  * @author Phoenix Labs
- * @dev This proposal lists rETH on Spark Goerli
+ * @dev This proposal lists rETH + updates DAI interest rate strategy on Spark Goerli
  * Forum: https://forum.makerdao.com/t/2023-05-24-spark-protocol-updates/20958
- * Vote: TODO
+ * rETH Vote: https://vote.makerdao.com/polling/QmeEV7ph#poll-detail
+ * DAI IRS Vote: https://vote.makerdao.com/polling/QmWodV1J#poll-detail
  */
 contract SparkGoerli_20230525 is SparkPayloadGoerli {
 
