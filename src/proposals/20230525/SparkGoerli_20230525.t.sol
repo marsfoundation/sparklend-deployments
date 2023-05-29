@@ -2,16 +2,15 @@
 pragma solidity ^0.8.10;
 
 import 'forge-std/Test.sol';
-import {ProtocolV3_0_1TestBase, InterestStrategyValues, ReserveConfig} from 'aave-helpers/ProtocolV3TestBase.sol';
+import {SparkTestBase, InterestStrategyValues, ReserveConfig} from '../../SparkTestBase.sol';
 import {TestWithExecutor} from 'aave-helpers/GovHelpers.sol';
 import {SparkGoerli_20230525} from './SparkGoerli_20230525.sol';
 import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {IPoolAddressesProvider} from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
 import {IACLManager} from "aave-v3-core/contracts/interfaces/IACLManager.sol";
 import {IDefaultInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol";
-import {DaiInterestRateStrategy} from "../../DaiInterestRateStrategy.sol";
 
-contract SparkGoerli_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
+contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
     uint256 internal constant RAY = 1e27;
     SparkGoerli_20230525 public payload;
 
@@ -23,7 +22,12 @@ contract SparkGoerli_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
     IACLManager internal constant ACL_MANAGER = IACLManager(0xb137E7d16564c81ae2b0C8ee6B55De81dd46ECe5);
 
     address internal constant RETH = 0x62BC478FFC429161115A6E4090f819CE5C50A5d9;
-    address internal constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
+
+    address public constant DAI = 0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844;
+    address public constant DAI_INTEREST_RATE_STRATEGY = 0x70659BcA22A2a8BB324A526a8BB919185d3ecEBC;
+    address public constant MCD_VAT = 0xB966002DDAa2Baf48369f5015329750019736031;
+    address public constant MCD_POT = 0x50672F0a14B40051B65958818a7AcA3D54Bd81Af;
+    bytes32 public constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
 
     function setUp() public {
         vm.createSelectFork(getChain('goerli').rpcUrl, 9085778);
@@ -36,7 +40,7 @@ contract SparkGoerli_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
         payload = new SparkGoerli_20230525();
     }
 
-    function testPoolActivation() public {
+    function testSpellExecution() public {
         createConfigurationSnapshot(
             'pre-Spark-Goerli-rETH-Listing',
             POOL
@@ -99,48 +103,26 @@ contract SparkGoerli_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
             payload.RETH_PRICE_FEED()
         );
 
+        // DAI Interest Rate Strategy
+
+        _validateDaiInterestRateStrategy(
+            _findReserveConfigBySymbol(allConfigs, 'DAI').interestRateStrategy,
+            DAI_INTEREST_RATE_STRATEGY,
+            DaiInterestStrategyValues({
+                vat: MCD_VAT,
+                pot: MCD_POT,
+                ilk: SPARK_ILK,
+                baseRateConversion: RAY,
+                borrowSpread: 0,
+                supplySpread: 0,
+                maxRate: 75 * (RAY / 100),
+                performanceBonus: 0
+            })
+        );
+
         createConfigurationSnapshot(
             'post-Spark-Goerli-rETH-Listing',
             POOL
         );
-    }
-
-    function _writeStrategyConfig(string memory strategiesKey, address _strategy) internal override returns (string memory content) {
-        try IDefaultInterestRateStrategy(_strategy).getBaseStableBorrowRate() {
-            // Default IRS
-            content = super._writeStrategyConfig(strategiesKey, _strategy);
-        } catch {
-            // DAI IRS
-            string memory key = vm.toString(_strategy);
-            DaiInterestRateStrategy strategy = DaiInterestRateStrategy(
-                _strategy
-            );
-            vm.serializeUint(
-                key,
-                'baseRateConversion',
-                strategy.baseRateConversion()
-            );
-            vm.serializeUint(
-                key,
-                'borrowSpread',
-                strategy.borrowSpread()
-            );
-            vm.serializeUint(
-                key,
-                'supplySpread',
-                strategy.supplySpread()
-            );
-            vm.serializeUint(
-                key,
-                'maxRate',
-                strategy.maxRate()
-            );
-            string memory object = vm.serializeUint(
-                key,
-                'performanceBonus',
-                strategy.performanceBonus()
-            );
-            content = vm.serializeString(strategiesKey, key, object);
-        }
     }
 }
