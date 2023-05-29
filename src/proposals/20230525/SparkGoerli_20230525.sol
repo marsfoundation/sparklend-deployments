@@ -15,6 +15,9 @@ contract SparkGoerli_20230525 is SparkPayloadGoerli {
     address public constant RETH = 0x62BC478FFC429161115A6E4090f819CE5C50A5d9;
     address public constant RETH_PRICE_FEED = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;   // Just use ETH / USD
 
+    address public constant DAI = 0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844;
+    address public constant DAI_INTEREST_RATE_STRATEGY = 0x70659BcA22A2a8BB324A526a8BB919185d3ecEBC;
+
     function newListings() public pure override returns (IEngine.Listing[] memory) {
         IEngine.Listing[] memory listings = new IEngine.Listing[](1);
 
@@ -50,6 +53,14 @@ contract SparkGoerli_20230525 is SparkPayloadGoerli {
         });
 
         return listings;
+    }
+
+    function _postExecute() internal override {
+        // Update the DAI interest rate strategy
+        LISTING_ENGINE.POOL_CONFIGURATOR().setReserveInterestRateStrategyAddress(
+            DAI,
+            DAI_INTEREST_RATE_STRATEGY
+        );
     }
 
 }

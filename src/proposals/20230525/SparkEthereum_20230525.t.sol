@@ -26,7 +26,7 @@ contract SparkEthereum_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor 
     address internal constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
 
     function setUp() public {
-        vm.createSelectFork(getChain('mainnet').rpcUrl, 17344641);
+        vm.createSelectFork(getChain('mainnet').rpcUrl, 17365302);
         
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);

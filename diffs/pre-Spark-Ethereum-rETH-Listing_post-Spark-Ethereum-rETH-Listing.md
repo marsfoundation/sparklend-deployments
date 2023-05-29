@@ -17,7 +17,7 @@
 | eModeCategory | 1 |
 | oracle | [0x05225Cd708bCa9253789C1374e4337a019e99D56](https://etherscan.io/address/0x05225Cd708bCa9253789C1374e4337a019e99D56) |
 | oracleName | rETH/ETH/USD |
-| oracleLatestAnswer | 196,065,217,621 |
+| oracleLatestAnswer | 203,873,087,547 |
 | usageAsCollateralEnabled | true |
 | ltv | 68.5 % |
 | liquidationThreshold | 79.5 % |
@@ -46,11 +46,27 @@
 | maxExcessStableToTotalDebtRatio | 100 % |
 | interestRate | ![ir](/.assets/b092ae756c2e4a62477e7558d139088069f992d2.svg) |
 
+### Reserves altered
+
+#### DAI ([0x6B175474E89094C44Da98b954EedeAC495271d0F](https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F))
+
+| description | value before | value after |
+| --- | --- | --- |
+| interestRateStrategy | [0x113dc45c524404F91DcbbAbB103506bABC8Df0FE](https://etherscan.io/address/0x113dc45c524404F91DcbbAbB103506bABC8Df0FE) | [0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d](https://etherscan.io/address/0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d) |
+| baseRateConversion | 111.1111111111111111111111111 % | 100 % |
+| interestRate | ![before](/.assets/f5a97b88e9c552c6b53cb889bf8aca2c2208024a.svg) | ![after](/.assets/bc11e5b92e27947ebc500895e90540b95b2b66a2.svg) |
+
 ## Raw diff
 
 ```json
 {
   "reserves": {
+    "0x6B175474E89094C44Da98b954EedeAC495271d0F": {
+      "interestRateStrategy": {
+        "from": "0x113dc45c524404F91DcbbAbB103506bABC8Df0FE",
+        "to": "0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d"
+      }
+    },
     "0xae78736Cd615f374D3085123A210448E74Fc6393": {
       "from": null,
       "to": {
@@ -72,7 +88,7 @@
         "liquidationThreshold": 7950,
         "ltv": 6850,
         "oracle": "0x05225Cd708bCa9253789C1374e4337a019e99D56",
-        "oracleLatestAnswer": 196065217621,
+        "oracleLatestAnswer": 203873087547,
         "oracleName": "rETH/ETH/USD",
         "reserveFactor": 1500,
         "stableBorrowRateEnabled": false,
@@ -101,6 +117,16 @@
         "stableRateSlope2": 0,
         "variableRateSlope1": "70000000000000000000000000",
         "variableRateSlope2": "3000000000000000000000000000"
+      }
+    },
+    "0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d": {
+      "from": null,
+      "to": {
+        "baseRateConversion": "1000000000000000000000000000",
+        "borrowSpread": 0,
+        "maxRate": "750000000000000000000000000",
+        "performanceBonus": 0,
+        "supplySpread": 0
       }
     }
   }

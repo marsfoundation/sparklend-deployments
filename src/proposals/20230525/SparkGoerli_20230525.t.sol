@@ -26,7 +26,7 @@ contract SparkGoerli_20230525Test is ProtocolV3_0_1TestBase, TestWithExecutor {
     address internal constant RETH_PRICE_FEED = 0x553303d460EE0afB37EdFf9bE42922D8FF63220e;
 
     function setUp() public {
-        vm.createSelectFork(getChain('goerli').rpcUrl, 9068223);
+        vm.createSelectFork(getChain('goerli').rpcUrl, 9085778);
         
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);

@@ -15,6 +15,9 @@ contract SparkEthereum_20230525 is SparkPayloadEthereum {
     address public constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
     address public constant RETH_PRICE_FEED = 0x05225Cd708bCa9253789C1374e4337a019e99D56;
 
+    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address public constant DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
+
     function newListings() public pure override returns (IEngine.Listing[] memory) {
         IEngine.Listing[] memory listings = new IEngine.Listing[](1);
 
@@ -50,6 +53,14 @@ contract SparkEthereum_20230525 is SparkPayloadEthereum {
         });
 
         return listings;
+    }
+
+    function _postExecute() internal override {
+        // Update the DAI interest rate strategy
+        LISTING_ENGINE.POOL_CONFIGURATOR().setReserveInterestRateStrategyAddress(
+            DAI,
+            DAI_INTEREST_RATE_STRATEGY
+        );
     }
 
 }
