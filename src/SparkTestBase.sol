@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import 'aave-helpers/ProtocolV3TestBase.sol';
-import {DaiInterestRateStrategy} from "./DaiInterestRateStrategy.sol";
+
+import { DaiInterestRateStrategy } from "./DaiInterestRateStrategy.sol";
 
 contract SparkTestBase is ProtocolV3_0_1TestBase {
 
@@ -24,34 +25,16 @@ contract SparkTestBase is ProtocolV3_0_1TestBase {
         } catch {
             // DAI IRS
             string memory key = vm.toString(_strategy);
-            DaiInterestRateStrategy strategy = DaiInterestRateStrategy(
-                _strategy
-            );
-            vm.serializeUint(
-                key,
-                'baseRateConversion',
-                strategy.baseRateConversion()
-            );
-            vm.serializeUint(
-                key,
-                'borrowSpread',
-                strategy.borrowSpread()
-            );
-            vm.serializeUint(
-                key,
-                'supplySpread',
-                strategy.supplySpread()
-            );
-            vm.serializeUint(
-                key,
-                'maxRate',
-                strategy.maxRate()
-            );
-            string memory object = vm.serializeUint(
-                key,
-                'performanceBonus',
-                strategy.performanceBonus()
-            );
+
+            DaiInterestRateStrategy strategy = DaiInterestRateStrategy(_strategy);
+
+            vm.serializeUint(key, 'baseRateConversion', strategy.baseRateConversion());
+            vm.serializeUint(key, 'borrowSpread',       strategy.borrowSpread());
+            vm.serializeUint(key, 'supplySpread',       strategy.supplySpread());
+            vm.serializeUint(key, 'maxRate',            strategy.maxRate());
+
+            string memory object = vm.serializeUint(key, 'performanceBonus', strategy.performanceBonus());
+
             content = vm.serializeString(strategiesKey, key, object);
         }
     }
