@@ -4,16 +4,19 @@ pragma solidity ^0.8.0;
 import "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
-import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
-import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
-import {IPoolConfigurator} from 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
-import {IAaveOracle} from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
-import {IDefaultInterestRateStrategy} from 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol';
-import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
-import {TransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
-import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+
+import {AaveV3ConfigEngine}    from 'aave-helpers/v3-config-engine/AaveV3ConfigEngine.sol';
 import {V3RateStrategyFactory} from 'aave-helpers/v3-config-engine/V3RateStrategyFactory.sol';
-import {AaveV3ConfigEngine} from 'aave-helpers/v3-config-engine/AaveV3ConfigEngine.sol';
+
+import {IAaveOracle}                  from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
+import {IDefaultInterestRateStrategy} from 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol';
+import {IPoolAddressesProvider}       from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPoolConfigurator}            from 'aave-v3-core/contracts/interfaces/IPoolConfigurator.sol';
+import {IPool}                        from 'aave-v3-core/contracts/interfaces/IPool.sol';
+
+import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
+import {ProxyAdmin}               from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
+import {TransparentProxyFactory}  from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 
 library DeployRatesFactoryLib {
     // TODO check also by param, potentially there could be different contracts, but with exactly same params
@@ -39,7 +42,7 @@ library DeployRatesFactoryLib {
                 }
             }
             if (shouldSkip) continue;
-            
+
             address strategy = pool.getReserveData(listedAssets[i]).interestRateStrategyAddress;
 
             bool found;
@@ -111,11 +114,12 @@ contract DeploySparkConfig is Script {
 
     function run() external {
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
-        config = ScriptTools.readInput(NAME);
-        deployedContracts = ScriptTools.readOutput("spark");
+
+        config                = ScriptTools.readInput(NAME);
+        deployedContracts     = ScriptTools.readOutput("spark");
         poolAddressesProvider = IPoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
 
-        admin = config.readAddress(".admin");
+        admin    = config.readAddress(".admin");
         deployer = msg.sender;
 
         address[] memory reservesToSkip = new address[](1);
@@ -123,7 +127,7 @@ contract DeploySparkConfig is Script {
 
         vm.startBroadcast();
         transparentProxyFactory = new TransparentProxyFactory();
-        proxyAdmin = ProxyAdmin(transparentProxyFactory.createProxyAdmin(admin));
+        proxyAdmin              = ProxyAdmin(transparentProxyFactory.createProxyAdmin(admin));
 
         (ratesFactory,) = DeployRatesFactoryLib._createAndSetupRatesFactory(
             poolAddressesProvider,
@@ -147,12 +151,12 @@ contract DeploySparkConfig is Script {
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(NAME, "admin", admin);
-        ScriptTools.exportContract(NAME, "deployer", deployer);
+        ScriptTools.exportContract(NAME, "admin",                   admin);
+        ScriptTools.exportContract(NAME, "deployer",                deployer);
         ScriptTools.exportContract(NAME, "transparentProxyFactory", address(transparentProxyFactory));
-        ScriptTools.exportContract(NAME, "proxyAdmin", address(proxyAdmin));
-        ScriptTools.exportContract(NAME, "ratesFactory", address(ratesFactory));
-        ScriptTools.exportContract(NAME, "configEngine", address(configEngine));
+        ScriptTools.exportContract(NAME, "proxyAdmin",              address(proxyAdmin));
+        ScriptTools.exportContract(NAME, "ratesFactory",            address(ratesFactory));
+        ScriptTools.exportContract(NAME, "configEngine",            address(configEngine));
     }
 
 }
