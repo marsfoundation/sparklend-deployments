@@ -16,6 +16,8 @@ import { DaiInterestRateStrategy } from "../../DaiInterestRateStrategy.sol";
 
 import { SparkEthereum_20230525 } from './SparkEthereum_20230525.sol';
 
+import { DataTypes } from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
+
 contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
     uint256 internal constant RAY = 1e27;
@@ -41,8 +43,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
         vm.createSelectFork(getChain('mainnet').rpcUrl, 17365302);
 
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
-        vm.prank(PAUSE_PROXY);
-        ACL_MANAGER.addPoolAdmin(EXECUTOR);
+        vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);
 
         _selectPayloadExecutor(EXECUTOR);
 
@@ -103,7 +104,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             })
         );
 
-        _validateAssetSourceOnOracle(POOL_ADDRESS_PROVIDER,RETH, payload.RETH_PRICE_FEED());
+        _validateAssetSourceOnOracle(POOL_ADDRESS_PROVIDER, RETH, payload.RETH_PRICE_FEED());
 
         // DAI Interest Rate Strategy
 
@@ -128,5 +129,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             'pre-Spark-Ethereum-rETH-Listing',
             'post-Spark-Ethereum-rETH-Listing'
         );
+
+        DataTypes.ReserveConfigurationMap memory map = POOL.getConfiguration(RETH);
     }
 }

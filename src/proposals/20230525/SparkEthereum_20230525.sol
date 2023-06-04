@@ -23,9 +23,9 @@ contract SparkEthereum_20230525 is SparkPayloadEthereum {
         IEngine.Listing[] memory listings = new IEngine.Listing[](1);
 
         listings[0] = IEngine.Listing({
-            asset: RETH,
-            assetSymbol: 'rETH',
-            priceFeed: RETH_PRICE_FEED,
+            asset:              RETH,
+            assetSymbol:        'rETH',
+            priceFeed:          RETH_PRICE_FEED,
             rateStrategyParams: Rates.RateStrategyParams({
                 optimalUsageRatio:             _bpsToRay(45_00),
                 baseVariableBorrowRate:        0,
