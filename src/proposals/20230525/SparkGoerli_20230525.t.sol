@@ -243,9 +243,9 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
         assertEq(supplyRate, 0.011053159583008550868558601e27); // 1.11%
         assertEq(borrowRate, 0.011055923171930957297759999e27); // 1.11% (slightly higher)
 
-        /************************/
-        /*** Execute Payload  ***/
-        /************************/
+        /***********************/
+        /*** Execute Payload ***/
+        /***********************/
 
         _executePayload(address(payload));
 
