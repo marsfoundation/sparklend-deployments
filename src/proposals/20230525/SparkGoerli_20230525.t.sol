@@ -70,14 +70,14 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
     bytes32 internal constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
 
     function setUp() public {
-        vm.createSelectFork(getChain('goerli').rpcUrl, 9085778);
+        vm.createSelectFork(getChain('goerli').rpcUrl, 9127318);
 
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);
 
         _selectPayloadExecutor(EXECUTOR);
 
-        payload = new SparkGoerli_20230525();
+        payload = SparkGoerli_20230525(0x3068FA0B6Fc6A5c998988a271501fF7A6892c6Ff);
     }
 
     function testSpellExecution() public {

@@ -37,7 +37,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
     uint256 internal constant THREE_PT_FOUR_NINE = 1000000001087798189708544327;
 
-    SparkEthereum_20230525 internal constant payload = SparkEthereum_20230525(0x41D7c79aE5Ecba7428283F66998DedFD84451e0e);
+    SparkEthereum_20230525 internal payload;
 
     address internal constant PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
     address internal constant EXECUTOR    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;
@@ -77,6 +77,8 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);
 
         _selectPayloadExecutor(EXECUTOR);
+
+        payload = SparkEthereum_20230525(0x41D7c79aE5Ecba7428283F66998DedFD84451e0e);
     }
 
     function testSpellExecution() public {
