@@ -129,7 +129,5 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             'pre-Spark-Ethereum-rETH-Listing',
             'post-Spark-Ethereum-rETH-Listing'
         );
-
-        DataTypes.ReserveConfigurationMap memory map = POOL.getConfiguration(RETH);
     }
 }
