@@ -23,6 +23,8 @@ import { DefaultReserveInterestRateStrategy } from "aave-v3-core/contracts/proto
 import { DaiInterestRateStrategy }                              from '../../DaiInterestRateStrategy.sol';
 import { SparkTestBase, InterestStrategyValues, ReserveConfig } from '../../SparkTestBase.sol';
 
+import { Potlike } from '../Interfaces.sol';
+
 import { SparkEthereum_20230525 } from './SparkEthereum_20230525.sol';
 
 contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
@@ -32,6 +34,8 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
     uint256 public constant WAD  = 1e18;
     uint256 public constant RAY  = 1e27;
     uint256 public constant RBPS = RAY / 10000;
+
+    uint256 internal constant THREE_PT_FOUR_NINE = 1000000001087798189708544327;
 
     SparkEthereum_20230525 public payload;
 
@@ -156,8 +160,6 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             'pre-Spark-Ethereum-rETH-Listing',
             'post-Spark-Ethereum-rETH-Listing'
         );
-
-        DataTypes.ReserveConfigurationMap memory map = POOL.getConfiguration(RETH);
     }
 
     function testSpellExecution_manual_mainnet() public {
@@ -249,6 +251,9 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
         /*** Execute Payload ***/
         /***********************/
 
+        Potlike(MCD_POT).drip();
+        vm.prank(PAUSE_PROXY); Potlike(MCD_POT).file("dsr", THREE_PT_FOUR_NINE);
+
         _executePayload(address(payload));
 
         /*********************/
@@ -305,6 +310,10 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
         assertEq(ORACLE.getSourceOfAsset(RETH), RETH_PRICE_FEED);
 
+        // assertEq(ORACLE.getAssetPrice(RETH), 1);
+
+        // assertApproxEqAbs(ORACLE.getAssetPrice(RETH), 1_900e8, 50e8);  // Within $50 of $1,900 (ETH oracle price)
+
         /*******************************************/
         /*** RETH Onboarding - Interest Strategy ***/
         /*******************************************/
@@ -349,7 +358,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
         daiStrategy.recompute();
 
-        assertEq(daiStrategy.getBaseRate(), 0.009950330854737861567984000e27);  // 0.99%
+        assertEq(daiStrategy.getBaseRate(), 0.034304803710648653896272000e27);  // 0.99%
 
         ( supplyRate,, borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
@@ -363,8 +372,8 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             address(0)
         ));
 
-        assertEq(supplyRate, 0.009950238973089006445198921e27); // 0.99% (slightly lower)
-        assertEq(borrowRate, 0.009950330854737861567984000e27); // 0.99%
+        assertEq(supplyRate, 0.034304486939078481944360326e27); // 0.99% (slightly lower)
+        assertEq(borrowRate, 0.034304803710648653896272000e27); // 0.99%
     }
 
     function assertImplementation(address admin, address proxy, address implementation) internal {

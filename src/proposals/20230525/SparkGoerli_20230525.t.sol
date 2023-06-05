@@ -23,47 +23,51 @@ import { DefaultReserveInterestRateStrategy } from "aave-v3-core/contracts/proto
 import { DaiInterestRateStrategy }                              from '../../DaiInterestRateStrategy.sol';
 import { SparkTestBase, InterestStrategyValues, ReserveConfig } from '../../SparkTestBase.sol';
 
+import { Potlike } from '../Interfaces.sol';
+
 import { SparkGoerli_20230525 } from './SparkGoerli_20230525.sol';
 
 contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
 
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 public constant WAD  = 1e18;
-    uint256 public constant RAY  = 1e27;
-    uint256 public constant RBPS = RAY / 10000;
+    uint256 internal constant WAD  = 1e18;
+    uint256 internal constant RAY  = 1e27;
+    uint256 internal constant RBPS = RAY / 10000;
 
-    SparkGoerli_20230525 public payload;
+    uint256 internal constant THREE_PT_FOUR_NINE = 1000000001087798189708544327;
 
-    address public constant PAUSE_PROXY = 0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121;
-    address public constant EXECUTOR    = 0x4e847915D8a9f2Ab0cDf2FC2FD0A30428F25665d;
+    SparkGoerli_20230525 internal payload;
 
-    IAaveOracle            public constant ORACLE                = IAaveOracle(0x5Cd822d9a4421be687930498ec4B498EB972ad29);
-    IACLManager            public constant ACL_MANAGER           = IACLManager(0xb137E7d16564c81ae2b0C8ee6B55De81dd46ECe5);
-    IPool                  public constant POOL                  = IPool(0x26ca51Af4506DE7a6f0785D20CD776081a05fF6d);
-    IPoolAddressesProvider public constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E);
+    address internal constant PAUSE_PROXY = 0x5DCdbD3cCF9B09EAAD03bc5f50fA2B3d3ACA0121;
+    address internal constant EXECUTOR    = 0x4e847915D8a9f2Ab0cDf2FC2FD0A30428F25665d;
 
-    address public constant A_TOKEN_IMPL                   = 0x35542cbc5730d5e39CF79dDBd8976ac984ca109b;
-    address public constant NEW_DAI_INTEREST_RATE_STRATEGY = 0x70659BcA22A2a8BB324A526a8BB919185d3ecEBC;
-    address public constant OLD_DAI_INTEREST_RATE_STRATEGY = 0x491acea4126E48e9A354b64869AE16b2f27BE333;
-    address public constant POOL_CONFIGURATOR              = 0xe0C7ec61cC47e7c02b9B24F03f75C7BC406CCA98;
-    address public constant STABLE_DEBT_TOKEN_IMPL         = 0x571501be53711c372cE69De51865dD34B87698D5;
-    address public constant VARIABLE_DEBT_TOKEN_IMPL       = 0xb9E6DBFa4De19CCed908BcbFe1d015190678AB5f;
-    address public constant RETH_PRICE_FEED                = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
+    IAaveOracle            internal constant ORACLE                = IAaveOracle(0x5Cd822d9a4421be687930498ec4B498EB972ad29);
+    IACLManager            internal constant ACL_MANAGER           = IACLManager(0xb137E7d16564c81ae2b0C8ee6B55De81dd46ECe5);
+    IPool                  internal constant POOL                  = IPool(0x26ca51Af4506DE7a6f0785D20CD776081a05fF6d);
+    IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E);
 
-    address public constant DAI    = 0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844;
-    address public constant SDAI   = 0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C;
-    address public constant USDC   = 0x6Fb5ef893d44F4f88026430d82d4ef269543cB23;
-    address public constant WETH   = 0x7D5afF7ab67b431cDFA6A94d50d3124cC4AB2611;
-    address public constant WSTETH = 0x6E4F1e8d4c5E5E6e2781FD814EE0744cc16Eb352;
-    address public constant WBTC   = 0x91277b74a9d1Cc30fA0ff4927C287fe55E307D78;
-    address public constant GNO    = 0x86Bc432064d7F933184909975a384C7E4c9d0977;
-    address public constant RETH   = 0x62BC478FFC429161115A6E4090f819CE5C50A5d9;
+    address internal constant A_TOKEN_IMPL                   = 0x35542cbc5730d5e39CF79dDBd8976ac984ca109b;
+    address internal constant NEW_DAI_INTEREST_RATE_STRATEGY = 0x70659BcA22A2a8BB324A526a8BB919185d3ecEBC;
+    address internal constant OLD_DAI_INTEREST_RATE_STRATEGY = 0x491acea4126E48e9A354b64869AE16b2f27BE333;
+    address internal constant POOL_CONFIGURATOR              = 0xe0C7ec61cC47e7c02b9B24F03f75C7BC406CCA98;
+    address internal constant STABLE_DEBT_TOKEN_IMPL         = 0x571501be53711c372cE69De51865dD34B87698D5;
+    address internal constant VARIABLE_DEBT_TOKEN_IMPL       = 0xb9E6DBFa4De19CCed908BcbFe1d015190678AB5f;
+    address internal constant RETH_PRICE_FEED                = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
 
-    address public constant MCD_VAT = 0xB966002DDAa2Baf48369f5015329750019736031;
-    address public constant MCD_POT = 0x50672F0a14B40051B65958818a7AcA3D54Bd81Af;
+    address internal constant DAI    = 0x11fE4B6AE13d2a6055C8D9cF65c55bac32B5d844;
+    address internal constant SDAI   = 0xD8134205b0328F5676aaeFb3B2a0DC15f4029d8C;
+    address internal constant USDC   = 0x6Fb5ef893d44F4f88026430d82d4ef269543cB23;
+    address internal constant WETH   = 0x7D5afF7ab67b431cDFA6A94d50d3124cC4AB2611;
+    address internal constant WSTETH = 0x6E4F1e8d4c5E5E6e2781FD814EE0744cc16Eb352;
+    address internal constant WBTC   = 0x91277b74a9d1Cc30fA0ff4927C287fe55E307D78;
+    address internal constant GNO    = 0x86Bc432064d7F933184909975a384C7E4c9d0977;
+    address internal constant RETH   = 0x62BC478FFC429161115A6E4090f819CE5C50A5d9;
 
-    bytes32 public constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
+    address internal constant MCD_VAT = 0xB966002DDAa2Baf48369f5015329750019736031;
+    address internal constant MCD_POT = 0x50672F0a14B40051B65958818a7AcA3D54Bd81Af;
+
+    bytes32 internal constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
 
     function setUp() public {
         vm.createSelectFork(getChain('goerli').rpcUrl, 9085778);
@@ -158,7 +162,7 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
         );
     }
 
-    function testSpellExecution_manual() public {
+    function testSpellExecution_manual_goerli() public {
 
         /*********************/
         /*** Reserves List ***/
@@ -247,6 +251,9 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
         /*** Execute Payload ***/
         /***********************/
 
+        Potlike(MCD_POT).drip();
+        vm.prank(PAUSE_PROXY); Potlike(MCD_POT).file("dsr", THREE_PT_FOUR_NINE);
+
         _executePayload(address(payload));
 
         /*********************/
@@ -303,6 +310,8 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
 
         assertEq(ORACLE.getSourceOfAsset(RETH), RETH_PRICE_FEED);
 
+        assertApproxEqAbs(ORACLE.getAssetPrice(RETH), 1_900e8, 50e8);  // Within $50 of $1,900 (ETH oracle price)
+
         /*******************************************/
         /*** RETH Onboarding - Interest Strategy ***/
         /*******************************************/
@@ -347,7 +356,7 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
 
         daiStrategy.recompute();
 
-        assertEq(daiStrategy.getBaseRate(), 0.009950330854737861567984000e27);  // ~0.99%
+        assertEq(daiStrategy.getBaseRate(), 0.034304803710648653896272000e27);  // ~3.43%
 
         ( supplyRate,, borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
@@ -361,8 +370,8 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
             address(0)
         ));
 
-        assertEq(supplyRate, 0.009947843624707695781702742e27); // ~0.99% (slightly lower)
-        assertEq(borrowRate, 0.009950330854737861567984000e27); // ~0.99% (slightly higher)
+        assertEq(supplyRate, 0.034296228725634216819876655e27); // ~3.43% (slightly lower)
+        assertEq(borrowRate, 0.034304803710648653896272000e27); // ~3.43%
     }
 
     function assertImplementation(address admin, address proxy, address implementation) internal {
