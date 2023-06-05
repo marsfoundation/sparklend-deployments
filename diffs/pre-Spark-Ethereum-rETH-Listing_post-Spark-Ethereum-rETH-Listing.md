@@ -17,18 +17,18 @@
 | eModeCategory | 1 |
 | oracle | [0x05225Cd708bCa9253789C1374e4337a019e99D56](https://etherscan.io/address/0x05225Cd708bCa9253789C1374e4337a019e99D56) |
 | oracleName | rETH/ETH/USD |
-| oracleLatestAnswer | 203,873,087,547 |
+| oracleLatestAnswer | 200,447,328,478 |
 | usageAsCollateralEnabled | true |
 | ltv | 68.5 % |
 | liquidationThreshold | 79.5 % |
 | liquidationBonus | 7 % |
 | liquidationProtocolFee | 10 % |
 | reserveFactor | 15 % |
-| aToken | [0x7b481aCC9fDADDc9af2cBEA1Ff2342CB1733E50F](https://etherscan.io/address/0x7b481aCC9fDADDc9af2cBEA1Ff2342CB1733E50F) |
+| aToken | [0x9985dF20D7e9103ECBCeb16a84956434B6f06ae8](https://etherscan.io/address/0x9985dF20D7e9103ECBCeb16a84956434B6f06ae8) |
 | aTokenImpl | [0x6175ddEc3B9b38c88157C10A01ed4A3fa8639cC6](https://etherscan.io/address/0x6175ddEc3B9b38c88157C10A01ed4A3fa8639cC6) |
-| variableDebtToken | [0x57a2957651DA467fCD4104D749f2F3684784c25a](https://etherscan.io/address/0x57a2957651DA467fCD4104D749f2F3684784c25a) |
+| variableDebtToken | [0xBa2C8F2eA5B56690bFb8b709438F049e5Dd76B96](https://etherscan.io/address/0xBa2C8F2eA5B56690bFb8b709438F049e5Dd76B96) |
 | variableDebtTokenImpl | [0x86C71796CcDB31c3997F8Ec5C2E3dB3e9e40b985](https://etherscan.io/address/0x86C71796CcDB31c3997F8Ec5C2E3dB3e9e40b985) |
-| stableDebtToken | [0xbf13910620722D4D4F8A03962894EB3335Bf4FaE](https://etherscan.io/address/0xbf13910620722D4D4F8A03962894EB3335Bf4FaE) |
+| stableDebtToken | [0xa9a4037295Ea3a168DC3F65fE69FdA524d52b3e1](https://etherscan.io/address/0xa9a4037295Ea3a168DC3F65fE69FdA524d52b3e1) |
 | stableDebtTokenImpl | [0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E](https://etherscan.io/address/0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E) |
 | borrowingEnabled | true |
 | stableBorrowRateEnabled | false |
@@ -70,7 +70,7 @@
     "0xae78736Cd615f374D3085123A210448E74Fc6393": {
       "from": null,
       "to": {
-        "aToken": "0x7b481aCC9fDADDc9af2cBEA1Ff2342CB1733E50F",
+        "aToken": "0x9985dF20D7e9103ECBCeb16a84956434B6f06ae8",
         "aTokenImpl": "0x6175ddEc3B9b38c88157C10A01ed4A3fa8639cC6",
         "borrowCap": 2400,
         "borrowingEnabled": true,
@@ -88,17 +88,17 @@
         "liquidationThreshold": 7950,
         "ltv": 6850,
         "oracle": "0x05225Cd708bCa9253789C1374e4337a019e99D56",
-        "oracleLatestAnswer": 203873087547,
+        "oracleLatestAnswer": 200447328478,
         "oracleName": "rETH/ETH/USD",
         "reserveFactor": 1500,
         "stableBorrowRateEnabled": false,
-        "stableDebtToken": "0xbf13910620722D4D4F8A03962894EB3335Bf4FaE",
+        "stableDebtToken": "0xa9a4037295Ea3a168DC3F65fE69FdA524d52b3e1",
         "stableDebtTokenImpl": "0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E",
         "supplyCap": 20000,
         "symbol": "rETH",
         "underlying": "0xae78736Cd615f374D3085123A210448E74Fc6393",
         "usageAsCollateralEnabled": true,
-        "variableDebtToken": "0x57a2957651DA467fCD4104D749f2F3684784c25a",
+        "variableDebtToken": "0xBa2C8F2eA5B56690bFb8b709438F049e5Dd76B96",
         "variableDebtTokenImpl": "0x86C71796CcDB31c3997F8Ec5C2E3dB3e9e40b985"
       }
     }
