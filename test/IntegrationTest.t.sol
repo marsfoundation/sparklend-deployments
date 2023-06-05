@@ -126,6 +126,7 @@ contract IntegrationTest is DssTest {
             dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
             usdc = IERC20(dss.chainlog.getAddress("USDC"));
             sdai = IERC20(0x83F20F44975D03b1b09e64809B757c47f942BEeA);
+            // reth =
         } else {
             // Goerli
             weth = IERC20(deployedContracts.readAddress(".WETH_token"));
@@ -230,6 +231,8 @@ contract IntegrationTest is DssTest {
     }
 
     function test_spark_deploy_pool() public {
+        vm.createSelectFork(vm.envString("ETH_RPC_URL"), 17414000);
+
         assertEq(pool.POOL_REVISION(), 1);
         assertEq(address(pool.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
         assertEq(pool.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 0.25e4);
@@ -239,7 +242,7 @@ contract IntegrationTest is DssTest {
         assertEq(pool.MAX_NUMBER_RESERVES(), 128);
         assertImplementation(address(poolAddressesProvider), address(pool), address(poolImpl));
         address[] memory reserves = pool.getReservesList();
-        assertEq(reserves.length, 6);
+        assertEq(reserves.length, 7);
         assertEq(reserves[0], address(dai));
         assertEq(reserves[1], address(sdai));
         assertEq(reserves[2], address(usdc));
@@ -263,7 +266,7 @@ contract IntegrationTest is DssTest {
             assertEq(cfg.getActive(), true);
             assertEq(cfg.getFrozen(), false);
             assertEq(cfg.getPaused(), false);
-            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getBorrowableInIsolation(), true);
             assertEq(cfg.getSiloedBorrowing(), false);
             assertEq(cfg.getBorrowingEnabled(), true);
             assertEq(cfg.getStableRateBorrowingEnabled(), false);

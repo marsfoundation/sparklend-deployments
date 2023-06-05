@@ -310,9 +310,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
         assertEq(ORACLE.getSourceOfAsset(RETH), RETH_PRICE_FEED);
 
-        // assertEq(ORACLE.getAssetPrice(RETH), 1);
-
-        // assertApproxEqAbs(ORACLE.getAssetPrice(RETH), 1_900e8, 50e8);  // Within $50 of $1,900 (ETH oracle price)
+        assertApproxEqAbs(ORACLE.getAssetPrice(RETH), 2_000e8, 50e8);  // Within $50 of $2,000 (ETH oracle price)
 
         /*******************************************/
         /*** RETH Onboarding - Interest Strategy ***/
