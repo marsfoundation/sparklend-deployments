@@ -17,7 +17,7 @@
 | eModeCategory | 1 |
 | oracle | [0x05225Cd708bCa9253789C1374e4337a019e99D56](https://etherscan.io/address/0x05225Cd708bCa9253789C1374e4337a019e99D56) |
 | oracleName | rETH/ETH/USD |
-| oracleLatestAnswer | 200,770,785,806 |
+| oracleLatestAnswer | 200,447,328,478 |
 | usageAsCollateralEnabled | true |
 | ltv | 68.5 % |
 | liquidationThreshold | 79.5 % |
@@ -88,7 +88,7 @@
         "liquidationThreshold": 7950,
         "ltv": 6850,
         "oracle": "0x05225Cd708bCa9253789C1374e4337a019e99D56",
-        "oracleLatestAnswer": 200770785806,
+        "oracleLatestAnswer": 200447328478,
         "oracleName": "rETH/ETH/USD",
         "reserveFactor": 1500,
         "stableBorrowRateEnabled": false,

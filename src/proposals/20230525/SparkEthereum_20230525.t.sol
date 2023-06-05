@@ -31,54 +31,52 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
     using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
-    uint256 public constant WAD  = 1e18;
-    uint256 public constant RAY  = 1e27;
-    uint256 public constant RBPS = RAY / 10000;
+    uint256 internal constant WAD  = 1e18;
+    uint256 internal constant RAY  = 1e27;
+    uint256 internal constant RBPS = RAY / 10000;
 
     uint256 internal constant THREE_PT_FOUR_NINE = 1000000001087798189708544327;
 
-    SparkEthereum_20230525 public payload;
+    SparkEthereum_20230525 internal constant payload = SparkEthereum_20230525(0x41D7c79aE5Ecba7428283F66998DedFD84451e0e);
 
-    address public constant PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
-    address public constant EXECUTOR    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;
+    address internal constant PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
+    address internal constant EXECUTOR    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;
 
-    IAaveOracle            public constant ORACLE                = IAaveOracle(0x8105f69D9C41644c6A0803fDA7D03Aa70996cFD9);
-    IPool                  public constant POOL                  = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
-    IPoolAddressesProvider public constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
-    IACLManager            public constant ACL_MANAGER           = IACLManager(0xdA135Cd78A086025BcdC87B038a1C462032b510C);
+    IAaveOracle            internal constant ORACLE                = IAaveOracle(0x8105f69D9C41644c6A0803fDA7D03Aa70996cFD9);
+    IPool                  internal constant POOL                  = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
+    IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
+    IACLManager            internal constant ACL_MANAGER           = IACLManager(0xdA135Cd78A086025BcdC87B038a1C462032b510C);
 
-    address public constant A_TOKEN_IMPL                   = 0x6175ddEc3B9b38c88157C10A01ed4A3fa8639cC6;
-    address public constant NEW_DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
-    address public constant OLD_DAI_INTEREST_RATE_STRATEGY = 0x113dc45c524404F91DcbbAbB103506bABC8Df0FE;
-    address public constant POOL_CONFIGURATOR              = 0x542DBa469bdE58FAeE189ffB60C6b49CE60E0738;
-    address public constant STABLE_DEBT_TOKEN_IMPL         = 0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E;
-    address public constant VARIABLE_DEBT_TOKEN_IMPL       = 0x86C71796CcDB31c3997F8Ec5C2E3dB3e9e40b985;
-    address public constant RETH_PRICE_FEED                = 0x05225Cd708bCa9253789C1374e4337a019e99D56;
+    address internal constant A_TOKEN_IMPL                   = 0x6175ddEc3B9b38c88157C10A01ed4A3fa8639cC6;
+    address internal constant NEW_DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
+    address internal constant OLD_DAI_INTEREST_RATE_STRATEGY = 0x113dc45c524404F91DcbbAbB103506bABC8Df0FE;
+    address internal constant POOL_CONFIGURATOR              = 0x542DBa469bdE58FAeE189ffB60C6b49CE60E0738;
+    address internal constant STABLE_DEBT_TOKEN_IMPL         = 0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E;
+    address internal constant VARIABLE_DEBT_TOKEN_IMPL       = 0x86C71796CcDB31c3997F8Ec5C2E3dB3e9e40b985;
+    address internal constant RETH_PRICE_FEED                = 0x05225Cd708bCa9253789C1374e4337a019e99D56;
 
-    address public constant DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
-    address public constant MCD_VAT                    = 0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B;
-    address public constant MCD_POT                    = 0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7;
+    address internal constant DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
+    address internal constant MCD_VAT                    = 0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B;
+    address internal constant MCD_POT                    = 0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7;
 
-    address public constant DAI    = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant SDAI   = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
-    address public constant USDC   = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public constant WETH   = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant WSTETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
-    address public constant WBTC   = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-    address public constant GNO    = 0x6810e776880C02933D47DB1b9fc05908e5386b96;
-    address public constant RETH   = 0xae78736Cd615f374D3085123A210448E74Fc6393;
+    address internal constant DAI    = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address internal constant SDAI   = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    address internal constant USDC   = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address internal constant WETH   = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address internal constant WSTETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+    address internal constant WBTC   = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address internal constant GNO    = 0x6810e776880C02933D47DB1b9fc05908e5386b96;
+    address internal constant RETH   = 0xae78736Cd615f374D3085123A210448E74Fc6393;
 
-    bytes32 public constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
+    bytes32 internal constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
 
     function setUp() public {
-        vm.createSelectFork(getChain('mainnet').rpcUrl, 17414270);
+        vm.createSelectFork(getChain('mainnet').rpcUrl, 17414900);
 
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);
 
         _selectPayloadExecutor(EXECUTOR);
-
-        payload = new SparkEthereum_20230525();
     }
 
     function testSpellExecution() public {
@@ -244,8 +242,8 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             address(0)
         ));
 
-        assertEq(supplyRate, 0.011055821081210007161332134e27); // ~1.11%
-        assertEq(borrowRate, 0.011055923171930957297759999e27); // ~1.11% (slightly higher)
+        assertEq(supplyRate, 0.011055821081210007161332134e27);  // ~1.11%
+        assertEq(borrowRate, 0.011055923171930957297759999e27);  // ~1.11% (slightly higher)
 
         /***********************/
         /*** Execute Payload ***/
@@ -310,7 +308,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
         assertEq(ORACLE.getSourceOfAsset(RETH), RETH_PRICE_FEED);
 
-        assertApproxEqAbs(ORACLE.getAssetPrice(RETH), 2_000e8, 50e8);  // Within $50 of $2,000 (ETH oracle price)
+        assertApproxEqAbs(ORACLE.getAssetPrice(RETH), 2_000e8, 50e8);  // Within $50 of $2,000 (rETH oracle price)
 
         /*******************************************/
         /*** RETH Onboarding - Interest Strategy ***/
@@ -356,7 +354,7 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
         daiStrategy.recompute();
 
-        assertEq(daiStrategy.getBaseRate(), 0.034304803710648653896272000e27);  // 0.99%
+        assertEq(daiStrategy.getBaseRate(), 0.034304803710648653896272000e27);  // 3.43%
 
         ( supplyRate,, borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
@@ -370,8 +368,8 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
             address(0)
         ));
 
-        assertEq(supplyRate, 0.034304486939078481944360326e27); // 0.99% (slightly lower)
-        assertEq(borrowRate, 0.034304803710648653896272000e27); // 0.99%
+        assertEq(supplyRate, 0.034304486939078481944360326e27);  // 3.43% (slightly lower)
+        assertEq(borrowRate, 0.034304803710648653896272000e27);  // 3.43%
     }
 
     function assertImplementation(address admin, address proxy, address implementation) internal {
