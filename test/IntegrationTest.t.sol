@@ -126,7 +126,6 @@ contract IntegrationTest is DssTest {
             dai = IERC20(dss.chainlog.getAddress("MCD_DAI"));
             usdc = IERC20(dss.chainlog.getAddress("USDC"));
             sdai = IERC20(0x83F20F44975D03b1b09e64809B757c47f942BEeA);
-            // reth =
         } else {
             // Goerli
             weth = IERC20(deployedContracts.readAddress(".WETH_token"));
