@@ -226,7 +226,7 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
 
         daiStrategy.recompute();
 
-        assertEq(daiStrategy.getBaseRate(), 0.011055923171930957297759999e27);  // 1.11%
+        assertEq(daiStrategy.getBaseRate(), 0.011055923171930957297759999e27);  // ~1.11%
 
         ( uint256 supplyRate,, uint256 borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
@@ -240,8 +240,8 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
             address(0)
         ));
 
-        assertEq(supplyRate, 0.011053159583008550868558601e27); // 1.11%
-        assertEq(borrowRate, 0.011055923171930957297759999e27); // 1.11% (slightly higher)
+        assertEq(supplyRate, 0.011053159583008550868558601e27); // ~1.11%
+        assertEq(borrowRate, 0.011055923171930957297759999e27); // ~1.11% (slightly higher)
 
         /***********************/
         /*** Execute Payload ***/
@@ -347,7 +347,7 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
 
         daiStrategy.recompute();
 
-        assertEq(daiStrategy.getBaseRate(), 0.009950330854737861567984000e27);  // 0.99%
+        assertEq(daiStrategy.getBaseRate(), 0.009950330854737861567984000e27);  // ~0.99%
 
         ( supplyRate,, borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
             0,
@@ -361,8 +361,8 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
             address(0)
         ));
 
-        assertEq(supplyRate, 0.009947843624707695781702742e27); // 0.99%
-        assertEq(borrowRate, 0.009950330854737861567984000e27); // 0.99% (slightly higher)
+        assertEq(supplyRate, 0.009947843624707695781702742e27); // ~0.99% (slightly lower)
+        assertEq(borrowRate, 0.009950330854737861567984000e27); // ~0.99% (slightly higher)
     }
 
     function assertImplementation(address admin, address proxy, address implementation) internal {

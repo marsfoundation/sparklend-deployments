@@ -5,42 +5,69 @@ import 'forge-std/Test.sol';
 
 import { TestWithExecutor } from 'aave-helpers/GovHelpers.sol';
 
-import { IPool }                        from "aave-v3-core/contracts/interfaces/IPool.sol";
-import { IPoolAddressesProvider }       from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
+import {
+    InitializableAdminUpgradeabilityProxy
+} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
+
+import { IAaveOracle }                  from "aave-v3-core/contracts/interfaces/IAaveOracle.sol";
 import { IACLManager }                  from "aave-v3-core/contracts/interfaces/IACLManager.sol";
 import { IDefaultInterestRateStrategy } from "aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol";
+import { IPoolAddressesProvider }       from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
+import { IPool }                        from "aave-v3-core/contracts/interfaces/IPool.sol";
 
+import { ReserveConfiguration } from "aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
+import { DataTypes }            from "aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
+
+import { DefaultReserveInterestRateStrategy } from "aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategy.sol";
+
+import { DaiInterestRateStrategy }                              from '../../DaiInterestRateStrategy.sol';
 import { SparkTestBase, InterestStrategyValues, ReserveConfig } from '../../SparkTestBase.sol';
-
-import { DaiInterestRateStrategy } from "../../DaiInterestRateStrategy.sol";
 
 import { SparkEthereum_20230525 } from './SparkEthereum_20230525.sol';
 
-import { DataTypes } from 'aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol';
-
 contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
-    uint256 internal constant RAY = 1e27;
+    using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+
+    uint256 public constant WAD  = 1e18;
+    uint256 public constant RAY  = 1e27;
+    uint256 public constant RBPS = RAY / 10000;
+
     SparkEthereum_20230525 public payload;
 
-    address internal constant PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
-    address internal constant EXECUTOR    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;
+    address public constant PAUSE_PROXY = 0xBE8E3e3618f7474F8cB1d074A26afFef007E98FB;
+    address public constant EXECUTOR    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;
 
-    IPool                  internal constant POOL                  = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
-    IPoolAddressesProvider internal constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
-    IACLManager            internal constant ACL_MANAGER           = IACLManager(0xdA135Cd78A086025BcdC87B038a1C462032b510C);
+    IAaveOracle            public constant ORACLE                = IAaveOracle(0x8105f69D9C41644c6A0803fDA7D03Aa70996cFD9);
+    IPool                  public constant POOL                  = IPool(0xC13e21B648A5Ee794902342038FF3aDAB66BE987);
+    IPoolAddressesProvider public constant POOL_ADDRESS_PROVIDER = IPoolAddressesProvider(0x02C3eA4e34C0cBd694D2adFa2c690EECbC1793eE);
+    IACLManager            public constant ACL_MANAGER           = IACLManager(0xdA135Cd78A086025BcdC87B038a1C462032b510C);
 
-    address internal constant RETH = 0xae78736Cd615f374D3085123A210448E74Fc6393;
+    address public constant A_TOKEN_IMPL                   = 0x6175ddEc3B9b38c88157C10A01ed4A3fa8639cC6;
+    address public constant NEW_DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
+    address public constant OLD_DAI_INTEREST_RATE_STRATEGY = 0x113dc45c524404F91DcbbAbB103506bABC8Df0FE;
+    address public constant POOL_CONFIGURATOR              = 0x542DBa469bdE58FAeE189ffB60C6b49CE60E0738;
+    address public constant STABLE_DEBT_TOKEN_IMPL         = 0x026a5B6114431d8F3eF2fA0E1B2EDdDccA9c540E;
+    address public constant VARIABLE_DEBT_TOKEN_IMPL       = 0x86C71796CcDB31c3997F8Ec5C2E3dB3e9e40b985;
+    address public constant RETH_PRICE_FEED                = 0x05225Cd708bCa9253789C1374e4337a019e99D56;
 
-    address public constant DAI                        = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address public constant DAI_INTEREST_RATE_STRATEGY = 0x9f9782880dd952F067Cad97B8503b0A3ac0fb21d;
     address public constant MCD_VAT                    = 0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B;
     address public constant MCD_POT                    = 0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7;
 
+    address public constant DAI    = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address public constant SDAI   = 0x83F20F44975D03b1b09e64809B757c47f942BEeA;
+    address public constant USDC   = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public constant WETH   = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant WSTETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
+    address public constant WBTC   = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+    address public constant GNO    = 0x6810e776880C02933D47DB1b9fc05908e5386b96;
+    address public constant RETH   = 0xae78736Cd615f374D3085123A210448E74Fc6393;
+
     bytes32 public constant SPARK_ILK = 0x4449524543542d535041524b2d44414900000000000000000000000000000000;
 
     function setUp() public {
-        vm.createSelectFork(getChain('mainnet').rpcUrl, 17365302);
+        vm.createSelectFork(getChain('mainnet').rpcUrl, 17414270);
 
         // This needs to be done in Maker spell, but grant the subdao proxy admin access on the pool
         vm.prank(PAUSE_PROXY); ACL_MANAGER.addPoolAdmin(EXECUTOR);
@@ -132,4 +159,217 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
 
         DataTypes.ReserveConfigurationMap memory map = POOL.getConfiguration(RETH);
     }
+
+    function testSpellExecution_manual_mainnet() public {
+
+        /*********************/
+        /*** Reserves List ***/
+        /*********************/
+
+        address[] memory reserves = POOL.getReservesList();
+
+        assertEq(reserves.length, 7);
+
+        assertEq(reserves[0], DAI);
+        assertEq(reserves[1], SDAI);
+        assertEq(reserves[2], USDC);
+        assertEq(reserves[3], WETH);
+        assertEq(reserves[4], WSTETH);
+        assertEq(reserves[5], WBTC);
+        assertEq(reserves[6], GNO);
+
+        /**********************************************************/
+        /*** RETH Onboarding - Reserve Configuration and Oracle ***/
+        /**********************************************************/
+
+        DataTypes.ReserveData memory data = POOL.getReserveData(RETH);
+
+        assertEq(data.aTokenAddress,               address(0));
+        assertEq(data.stableDebtTokenAddress,      address(0));
+        assertEq(data.variableDebtTokenAddress,    address(0));
+        assertEq(data.interestRateStrategyAddress, address(0));  // No assertions possible on strategy since it's not deployed
+
+        assertEq(data.liquidityIndex,            0);
+        assertEq(data.currentLiquidityRate,      0);
+        assertEq(data.variableBorrowIndex,       0);
+        assertEq(data.currentVariableBorrowRate, 0);
+        assertEq(data.currentStableBorrowRate,   0);
+        assertEq(data.lastUpdateTimestamp,       0);
+        assertEq(data.id,                        0);
+        assertEq(data.accruedToTreasury,         0);
+        assertEq(data.unbacked,                  0);
+        assertEq(data.isolationModeTotalDebt,    0);
+
+        DataTypes.ReserveConfigurationMap memory cfg = data.configuration;
+
+        assertEq(cfg.data, 0);  // Entire map is empty
+
+        assertEq(ORACLE.getSourceOfAsset(RETH), address(0));
+
+        /*****************************/
+        /*** DAI Interest Strategy ***/
+        /*****************************/
+
+        data = POOL.getReserveData(DAI);
+
+        assertEq(data.interestRateStrategyAddress, OLD_DAI_INTEREST_RATE_STRATEGY);
+
+        DaiInterestRateStrategy daiStrategy = DaiInterestRateStrategy(data.interestRateStrategyAddress);
+
+        assertEq(daiStrategy.vat(), MCD_VAT);
+        assertEq(daiStrategy.pot(), MCD_POT);
+        assertEq(daiStrategy.ilk(), SPARK_ILK);
+
+        assertEq(daiStrategy.baseRateConversion(), RAY * 10 / 9);
+        assertEq(daiStrategy.borrowSpread(),       0);
+        assertEq(daiStrategy.supplySpread(),       0);
+        assertEq(daiStrategy.maxRate(),            75_00 * RBPS);
+        assertEq(daiStrategy.performanceBonus(),   0);
+
+        daiStrategy.recompute();
+
+        assertEq(daiStrategy.getBaseRate(), 0.011055923171930957297759999e27);  // ~1.11%
+
+        ( uint256 supplyRate,, uint256 borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
+            0,
+            0,
+            0,
+            0,
+            1_000_000_000 * WAD,
+            0,
+            0,
+            DAI,
+            address(0)
+        ));
+
+        assertEq(supplyRate, 0.011055821081210007161332134e27); // ~1.11%
+        assertEq(borrowRate, 0.011055923171930957297759999e27); // ~1.11% (slightly higher)
+
+        /***********************/
+        /*** Execute Payload ***/
+        /***********************/
+
+        _executePayload(address(payload));
+
+        /*********************/
+        /*** Reserves List ***/
+        /*********************/
+
+        reserves = POOL.getReservesList();
+
+        assertEq(reserves.length, 8);
+
+        assertEq(reserves[0], DAI);
+        assertEq(reserves[1], SDAI);
+        assertEq(reserves[2], USDC);
+        assertEq(reserves[3], WETH);
+        assertEq(reserves[4], WSTETH);
+        assertEq(reserves[5], WBTC);
+        assertEq(reserves[6], GNO);
+        assertEq(reserves[7], RETH);
+
+        /**********************************************************/
+        /*** RETH Onboarding - Reserve Configuration and Oracle ***/
+        /**********************************************************/
+
+        data = POOL.getReserveData(RETH);
+
+        assertImplementation(POOL_CONFIGURATOR, data.aTokenAddress,            A_TOKEN_IMPL);
+        assertImplementation(POOL_CONFIGURATOR, data.stableDebtTokenAddress,   STABLE_DEBT_TOKEN_IMPL);
+        assertImplementation(POOL_CONFIGURATOR, data.variableDebtTokenAddress, VARIABLE_DEBT_TOKEN_IMPL);
+
+        cfg = data.configuration;
+
+        assertEq(cfg.getLtv(),                  68_50);
+        assertEq(cfg.getLiquidationThreshold(), 79_50);
+        assertEq(cfg.getLiquidationBonus(),     107_00);
+        assertEq(cfg.getDecimals(),             18);
+
+        assertEq(cfg.getActive(), true);
+        assertEq(cfg.getFrozen(), false);
+        assertEq(cfg.getPaused(), false);
+
+        assertEq(cfg.getBorrowableInIsolation(),      false);
+        assertEq(cfg.getSiloedBorrowing(),            false);
+        assertEq(cfg.getBorrowingEnabled(),           true);
+        assertEq(cfg.getStableRateBorrowingEnabled(), false);
+
+        assertEq(cfg.getReserveFactor(),          15_00);
+        assertEq(cfg.getBorrowCap(),              2_400);
+        assertEq(cfg.getSupplyCap(),              20_000);
+        assertEq(cfg.getDebtCeiling(),            0);
+        assertEq(cfg.getLiquidationProtocolFee(), 10_00);
+        assertEq(cfg.getUnbackedMintCap(),        0);
+        assertEq(cfg.getEModeCategory(),          1);
+        assertEq(cfg.getFlashLoanEnabled(),       true);
+
+        assertEq(ORACLE.getSourceOfAsset(RETH), RETH_PRICE_FEED);
+
+        /*******************************************/
+        /*** RETH Onboarding - Interest Strategy ***/
+        /*******************************************/
+
+        DefaultReserveInterestRateStrategy st = DefaultReserveInterestRateStrategy(data.interestRateStrategyAddress);
+
+        assertEq(address(st.ADDRESSES_PROVIDER()), address(POOL_ADDRESS_PROVIDER));
+
+        assertEq(st.OPTIMAL_USAGE_RATIO(),                   45 * RAY / 100);
+        assertEq(st.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(),    0);
+        assertEq(st.MAX_EXCESS_USAGE_RATIO(),                55 * RAY / 100);
+        assertEq(st.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), RAY);
+
+        assertEq(st.getVariableRateSlope1(),     7   * RAY / 100);
+        assertEq(st.getVariableRateSlope2(),     300 * RAY / 100);
+        assertEq(st.getStableRateSlope1(),       0);
+        assertEq(st.getStableRateSlope2(),       0);
+        assertEq(st.getStableRateExcessOffset(), 0);
+        assertEq(st.getBaseStableBorrowRate(),   7 * RAY / 100);
+        assertEq(st.getBaseVariableBorrowRate(), 0);
+        assertEq(st.getMaxVariableBorrowRate(),  307 * RAY / 100);
+
+        /*****************************/
+        /*** DAI Interest Strategy ***/
+        /*****************************/
+
+        data = POOL.getReserveData(DAI);
+
+        assertEq(data.interestRateStrategyAddress, NEW_DAI_INTEREST_RATE_STRATEGY);
+
+        daiStrategy = DaiInterestRateStrategy(data.interestRateStrategyAddress);
+
+        assertEq(daiStrategy.vat(), MCD_VAT);
+        assertEq(daiStrategy.pot(), MCD_POT);
+        assertEq(daiStrategy.ilk(), SPARK_ILK);
+
+        assertEq(daiStrategy.baseRateConversion(), RAY);
+        assertEq(daiStrategy.borrowSpread(),       0);
+        assertEq(daiStrategy.supplySpread(),       0);
+        assertEq(daiStrategy.maxRate(),            75_00 * RBPS);
+        assertEq(daiStrategy.performanceBonus(),   0);
+
+        daiStrategy.recompute();
+
+        assertEq(daiStrategy.getBaseRate(), 0.009950330854737861567984000e27);  // 0.99%
+
+        ( supplyRate,, borrowRate ) = daiStrategy.calculateInterestRates(DataTypes.CalculateInterestRatesParams(
+            0,
+            0,
+            0,
+            0,
+            1_000_000_000 * WAD,
+            0,
+            0,
+            DAI,
+            address(0)
+        ));
+
+        assertEq(supplyRate, 0.009950238973089006445198921e27); // 0.99% (slightly lower)
+        assertEq(borrowRate, 0.009950330854737861567984000e27); // 0.99%
+    }
+
+    function assertImplementation(address admin, address proxy, address implementation) internal {
+        vm.prank(admin);
+        assertEq(InitializableAdminUpgradeabilityProxy(payable(proxy)).implementation(), implementation);
+    }
+
 }
