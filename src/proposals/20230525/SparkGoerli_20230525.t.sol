@@ -23,7 +23,7 @@ import { DefaultReserveInterestRateStrategy } from "aave-v3-core/contracts/proto
 import { DaiInterestRateStrategy }                              from '../../DaiInterestRateStrategy.sol';
 import { SparkTestBase, InterestStrategyValues, ReserveConfig } from '../../SparkTestBase.sol';
 
-import { Potlike } from '../Interfaces.sol';
+import { PotAbstract } from 'dss-interfaces/Interfaces.sol';
 
 import { SparkGoerli_20230525 } from './SparkGoerli_20230525.sol';
 
@@ -251,8 +251,8 @@ contract SparkGoerli_20230525Test is SparkTestBase, TestWithExecutor {
         /*** Execute Payload ***/
         /***********************/
 
-        Potlike(MCD_POT).drip();
-        vm.prank(PAUSE_PROXY); Potlike(MCD_POT).file("dsr", THREE_PT_FOUR_NINE);
+        PotAbstract(MCD_POT).drip();
+        vm.prank(PAUSE_PROXY); PotAbstract(MCD_POT).file("dsr", THREE_PT_FOUR_NINE);
 
         _executePayload(address(payload));
 
