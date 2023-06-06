@@ -9,8 +9,6 @@
     "variableDebtTokenSymbolPrefix": "variableDebt",
     "stableDebtTokenNamePrefix": "Spark Stable Debt ",
     "stableDebtTokenSymbolPrefix": "stableDebt",
-    "makerFaucet": "0x0000000000000000000000000000000000000000",
-    "usdcPsm": "0x0000000000000000000000000000000000000000",
     "emodeCategories": [
         {
             "categoryId": 1,
