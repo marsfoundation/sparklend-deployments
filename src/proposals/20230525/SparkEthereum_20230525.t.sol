@@ -12,6 +12,7 @@ import {
 import { IAaveOracle }                  from "aave-v3-core/contracts/interfaces/IAaveOracle.sol";
 import { IACLManager }                  from "aave-v3-core/contracts/interfaces/IACLManager.sol";
 import { IDefaultInterestRateStrategy } from "aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol";
+import { IERC20Detailed }               from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol";
 import { IPoolAddressesProvider }       from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
 import { IPool }                        from "aave-v3-core/contracts/interfaces/IPool.sol";
 
@@ -282,6 +283,13 @@ contract SparkEthereum_20230525Test is SparkTestBase, TestWithExecutor {
         assertImplementation(POOL_CONFIGURATOR, data.aTokenAddress,            A_TOKEN_IMPL);
         assertImplementation(POOL_CONFIGURATOR, data.stableDebtTokenAddress,   STABLE_DEBT_TOKEN_IMPL);
         assertImplementation(POOL_CONFIGURATOR, data.variableDebtTokenAddress, VARIABLE_DEBT_TOKEN_IMPL);
+
+        assertEq(IERC20Detailed(data.aTokenAddress).symbol(), 'sprETH');
+        assertEq(IERC20Detailed(data.aTokenAddress).name(), 'Spark rETH');
+        assertEq(IERC20Detailed(data.stableDebtTokenAddress).symbol(), 'stableDebtrETH');
+        assertEq(IERC20Detailed(data.stableDebtTokenAddress).name(), 'Spark Stable Debt rETH');
+        assertEq(IERC20Detailed(data.variableDebtTokenAddress).symbol(), 'variableDebtrETH');
+        assertEq(IERC20Detailed(data.variableDebtTokenAddress).name(), 'Spark Variable Debt rETH');
 
         cfg = data.configuration;
 
