@@ -2,6 +2,10 @@
 
 This is the respository for Spark Lend deploy scripts and custom code. Primarily this repository acts as an orchestration toolkit for deploying and managing Spark Lend instances across many chains. Apart from the custom code below everything is combined from third party vendors.
 
+## Get Started
+
+Run tests: `forge test`
+
 ## Custom Code
 
 ### SavingsDaiOracle
