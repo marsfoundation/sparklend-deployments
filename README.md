@@ -2,9 +2,11 @@
 
 This is the respository for Spark Lend deploy scripts and custom code. Primarily this repository acts as an orchestration toolkit for deploying and managing Spark Lend instances across many chains. Apart from the custom code below everything is combined from third party vendors.
 
-## Get Started
+## Usage
 
-Run tests: `forge test`
+Run tests: `make test`
+Deploy Spark Lend: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`
+Deploy Config Engine: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`
 
 ## Custom Code
 
