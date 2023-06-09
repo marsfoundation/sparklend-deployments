@@ -24,3 +24,15 @@
 [submodule "lib/V2-V3-migration-helpers"]
 	path = lib/V2-V3-migration-helpers
 	url = https://github.com/phoenixlabsresearch/V2-V3-migration-helpers
+[submodule "lib/aave-address-book"]
+	path = lib/aave-address-book
+	url = https://github.com/bgd-labs/aave-address-book
+[submodule "lib/aave-helpers"]
+	path = lib/aave-helpers
+	url = https://github.com/marsfoundation/aave-helpers
+[submodule "lib/solidity-utils"]
+	path = lib/solidity-utils
+	url = https://github.com/bgd-labs/solidity-utils
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

@@ -14,7 +14,7 @@ import {IERC20WithATokenCompatibility} from 'V2-V3-migration-helpers/tests/helpe
 import {DataTypes as DataTypesV2, IAaveProtocolDataProvider} from 'aave-address-book/AaveV2.sol';
 import {DataTypes, IAaveProtocolDataProvider as IAaveProtocolDataProviderV3} from 'aave-address-book/AaveV3.sol';
 
-import {SparkMigrationHelper, IERC20WithPermit} from '../SparkMigrationHelper.sol';
+import {SparkMigrationHelper, IERC20WithPermit} from '../src/SparkMigrationHelper.sol';
 
 import {SigUtils} from 'V2-V3-migration-helpers/tests/helpers/SigUtils.sol';
 
@@ -36,6 +36,8 @@ contract MigrationHelperTest is Test {
   mapping(address => uint256) private assetsIndex;
 
   function setUp() public {
+    vm.createSelectFork(vm.envString("ETH_RPC_URL"));
+
     migrationHelper = new SparkMigrationHelper();
 
     v2DataProvider = AaveV2Ethereum.AAVE_PROTOCOL_DATA_PROVIDER;
