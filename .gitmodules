@@ -6,9 +6,6 @@
 	path = lib/aave-v3-periphery
 	url = https://github.com/aave/aave-v3-periphery
 	branch = v3.0.1
-[submodule "dependencies/dss-direct-deposit"]
-	path = dependencies/dss-direct-deposit
-	url = https://github.com/makerdao/dss-direct-deposit
 [submodule "lib/V2-V3-migration-helpers"]
 	path = lib/V2-V3-migration-helpers
 	url = https://github.com/phoenixlabsresearch/V2-V3-migration-helpers
