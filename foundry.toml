@@ -4,15 +4,16 @@ out = 'out'
 libs = ['lib']
 remappings = [
     '@aave/core-v3/=lib/aave-v3-core/',
+    'aave-helpers/=lib/aave-helpers/src/',
     '@uniswap/v3-core/=lib/v3-core/',
     'solidity-utils/=lib/V2-V3-migration-helpers/lib/solidity-utils/src/'
 ]
 fs_permissions = [
     { access = "read", path = "./script/input/"},
-    { access = "read-write", path = "./script/output/"}
+    { access = "read-write", path = "./script/output/"},
+    { access = "write", path = "./reports" }
 ]
 solc_version = '0.8.10'
 optimizer = true
-optimizer_runs = 100000
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
