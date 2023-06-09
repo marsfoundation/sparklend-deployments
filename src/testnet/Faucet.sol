@@ -1,5 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-
+// SPDX-License-Identifier: AGPL
 pragma solidity ^0.8.0;
 
 interface PsmLike {
