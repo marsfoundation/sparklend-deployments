@@ -43,13 +43,7 @@ import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvider.sol";
 import {IEACAggregatorProxy} from "aave-v3-periphery/misc/interfaces/IEACAggregatorProxy.sol";
 
-import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.sol";
-import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
-import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
-
-import {Faucet} from "../src/testnet/Faucet.sol";
 import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
-import {SavingsDaiOracle} from "../src/SavingsDaiOracle.sol";
 
 struct ReserveConfig {
     string name;
@@ -81,18 +75,20 @@ struct EModeConfig {
     string label;
 }
 
-contract DeployAave is Script {
+contract DeploySpark is Script {
 
-    string constant NAME = "aave";
+    string constant NAME = "spark";
 
     using stdJson for string;
     using ScriptTools for string;
 
-    uint256 constant WAD = 10 ** 18;
     uint256 constant RAY = 10 ** 27;
 
     string config;
     DssInstance dss;
+
+    address admin;
+    address deployer;
 
     PoolAddressesProviderRegistry registry;
     PoolAddressesProvider poolAddressesProvider;
@@ -108,8 +104,6 @@ contract DeployAave is Script {
 
     Collector treasury;
     address treasuryImpl;
-    Collector daiTreasury;
-    address daiTreasuryImpl;
     CollectorController treasuryController;
     RewardsController incentives;
     EmissionManager emissionManager;
@@ -117,105 +111,25 @@ contract DeployAave is Script {
 
     address weth;
     address wethOracle;
-    address savingsDai;
-    address daiOracle;
     UiPoolDataProviderV3 uiPoolDataProvider;
     UiIncentiveDataProviderV3 uiIncentiveDataProvider;
     WrappedTokenGatewayV3 wethGateway;
     WalletBalanceProvider walletBalanceProvider;
-    Faucet faucet;
 
     ConfiguratorInputTypes.InitReserveInput[] reserves;
     address[] assets;
     address[] assetOracleSources;
     DataTypes.ReserveData reserveData;
 
-    function parseReserves() internal returns (ReserveConfig[] memory) {
-        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".reserves");
-        ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
-        for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
-            _reserves[i] = ReserveConfig({
-                name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
-                token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
-                decimals: config.readUint(string(string.concat(bytes(base), bytes(".decimals")))),
-                borrowEnabled: config.readUint(string(string.concat(bytes(base), bytes(".borrow")))),
-                irOptimalUsageRatio: config.readUint(string(string.concat(bytes(base), bytes(".irOptimalUsageRatio")))),
-                irBaseVariableBorrowRate: config.readUint(string(string.concat(bytes(base), bytes(".irBaseVariableBorrowRate")))),
-                irVariableRateSlope1: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope1")))),
-                irVariableRateSlope2: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope2")))),
-                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
-                oracleMockPrice: config.readUint(string(string.concat(bytes(base), bytes(".oracleMockPrice")))),
-                ltv: config.readUint(string(string.concat(bytes(base), bytes(".ltv")))),
-                liquidationThreshold: config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold")))),
-                liquidationBonus: config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus")))),
-                reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
-                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
-                supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
-                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap")))),
-                liquidationProtocolFee: config.readUint(string(string.concat(bytes(base), bytes(".liquidationProtocolFee"))))
-            });
-        }
-        return _reserves;
-    }
-
-    function setupEModeCategories() internal {
-        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".emodeCategories");
-        for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".emodeCategories["), bytes(Strings.toString(i)), "]"));
-            poolConfigurator.setEModeCategory({
-                categoryId: uint8(config.readUint(string(string.concat(bytes(base), bytes(".categoryId"))))),
-                ltv: uint16(config.readUint(string(string.concat(bytes(base), bytes(".ltv"))))),
-                liquidationThreshold: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold"))))),
-                liquidationBonus: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus"))))),
-                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
-                label: config.readString(string(string.concat(bytes(base), bytes(".label"))))
-            });
-        }
-    }
-
-    function makeReserve(
-        IERC20Detailed token,
-        IReserveInterestRateStrategy strategy
-    ) internal view returns (ConfiguratorInputTypes.InitReserveInput memory) {
-        ConfiguratorInputTypes.InitReserveInput memory input;
-        input.aTokenImpl = address(aTokenImpl);
-        input.stableDebtTokenImpl = address(stableDebtTokenImpl);
-        input.variableDebtTokenImpl = address(variableDebtTokenImpl);
-        input.underlyingAssetDecimals = token.decimals();
-        input.interestRateStrategyAddress = address(strategy);
-        input.underlyingAsset = address(token);
-        input.treasury = token.symbol().eq("DAI") ? address(daiTreasury) : address(treasury);
-        input.incentivesController = address(0);
-        input.aTokenName = string(string.concat("Spark ", bytes(token.symbol())));
-        input.aTokenSymbol = string(string.concat("sp", bytes(token.symbol())));
-        input.variableDebtTokenName = string(string.concat("Spark Variable Debt ", bytes(token.symbol())));
-        input.variableDebtTokenSymbol = string(string.concat("variableDebt", bytes(token.symbol())));
-        input.stableDebtTokenName = string(string.concat("Spark Stable Debt ", bytes(token.symbol())));
-        input.stableDebtTokenSymbol = string(string.concat("stableDebt", bytes(token.symbol())));
-        input.params = "";
-        return input;
-    }
-
-    function createCollector(address admin) internal returns (Collector collector, address impl) {
-        InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
-        collector = Collector(address(proxy));
-        impl = address(collectorImpl);
-        proxy.initialize(
-            address(collectorImpl),
-            admin,
-            abi.encodeWithSignature("initialize(address)", address(treasuryController))
-        );
-    }
-
     function run() external {
+        //vm.createSelectFork(vm.envString("ETH_RPC_URL"));     // Multi-chain not supported in Foundry yet (use CLI arg for now)
+        vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
+
         config = ScriptTools.loadConfig("config");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
 
-        address admin = config.readAddress(".admin", "SPARKLEND_ADMIN");
-        address deployer = msg.sender;
+        admin = config.readAddress(".admin");
+        deployer = msg.sender;
 
         vm.startBroadcast();
         registry = new PoolAddressesProviderRegistry(deployer);
@@ -248,7 +162,6 @@ contract DeployAave is Script {
         collectorImpl = new Collector();
         collectorImpl.initialize(address(0));
         (treasury, treasuryImpl) = createCollector(admin);
-        (daiTreasury, daiTreasuryImpl) = createCollector(admin);
 
         InitializableAdminUpgradeabilityProxy incentivesProxy = new InitializableAdminUpgradeabilityProxy();
         incentives = RewardsController(address(incentivesProxy));
@@ -267,34 +180,9 @@ contract DeployAave is Script {
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
 
-            if (block.chainid == 5) {
-                if (cfg.token == address(0)) {
-                    if (cfg.name.eq("WETH")) {
-                        cfg.token = address(new WETH9Mocked());
-                    } else {
-                        cfg.token = address(new MintableERC20(cfg.name, cfg.name, uint8(cfg.decimals)));
-                    }
-                }
-            }
-            if (cfg.oracle == address(0)) {
-                if (cfg.name.eq("sDAI")) {
-                    cfg.oracle = address(new SavingsDaiOracle(AggregatorInterface(daiOracle), address(dss.pot)));
-                } else {
-                    cfg.oracle = address(new MockAggregator(int256(cfg.oracleMockPrice * 10 ** 8)));
-                }
-            }
-
             if (cfg.name.eq("WETH")) {
                 weth = cfg.token;
                 wethOracle = cfg.oracle;
-            }
-
-            if (cfg.name.eq("sDAI")) {
-                savingsDai = cfg.token;
-            }
-
-            if (cfg.name.eq("DAI")) {
-                daiOracle = cfg.oracle;
             }
 
             require(IERC20Detailed(address(cfg.token)).symbol().eq(cfg.name), "Token name doesn't match symbol");
@@ -306,11 +194,11 @@ contract DeployAave is Script {
                         address(dss.vat),
                         address(dss.pot),
                         config.readString(".ilk").stringToBytes32(),
-                        100 * RAY / 90,  // 1 / 90%
+                        RAY,
                         0,
                         0,
                         75 * RAY / 100,  // 75%
-                        100_000_000 * WAD
+                        0
                     )) :
                     IReserveInterestRateStrategy(new DefaultReserveInterestRateStrategy(
                         poolAddressesProvider,
@@ -369,12 +257,6 @@ contract DeployAave is Script {
             if (cfg.borrowCap != 0) poolConfigurator.setBorrowCap(address(cfg.token), cfg.borrowCap);
             if (cfg.liquidationProtocolFee != 0) poolConfigurator.setLiquidationProtocolFee(address(cfg.token), cfg.liquidationProtocolFee);
         }
-        
-        // Deploy a faucet if this is a testnet
-        address makerFaucet = config.readAddress(".makerFaucet");
-        if (makerFaucet != address(0)) {
-            faucet = new Faucet(makerFaucet, config.readAddress(".usdcPsm"), savingsDai);
-        }
 
         // Change all ownership to admin
         aclManager.addEmergencyAdmin(admin);
@@ -405,8 +287,6 @@ contract DeployAave is Script {
         ScriptTools.exportContract(NAME, "variableDebtTokenImpl", address(variableDebtTokenImpl));
         ScriptTools.exportContract(NAME, "treasury", address(treasury));
         ScriptTools.exportContract(NAME, "treasuryImpl", address(treasuryImpl));
-        ScriptTools.exportContract(NAME, "daiTreasury", address(daiTreasury));
-        ScriptTools.exportContract(NAME, "daiTreasuryImpl", address(daiTreasuryImpl));
         ScriptTools.exportContract(NAME, "treasuryController", address(treasuryController));
         ScriptTools.exportContract(NAME, "incentives", address(incentives));
         ScriptTools.exportContract(NAME, "incentivesImpl", address(rewardsController));
@@ -415,7 +295,6 @@ contract DeployAave is Script {
         ScriptTools.exportContract(NAME, "uiIncentiveDataProvider", address(uiIncentiveDataProvider));
         ScriptTools.exportContract(NAME, "wethGateway", address(wethGateway));
         ScriptTools.exportContract(NAME, "walletBalanceProvider", address(walletBalanceProvider));
-        if (address(faucet) != address(0)) ScriptTools.exportContract(NAME, "faucet", address(faucet));
         for (uint256 i = 0; i < assets.length; i++) {
             reserveData = pool.getReserveData(assets[i]);
             ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_token")), reserveConfigs[i].token);
@@ -425,6 +304,86 @@ contract DeployAave is Script {
             ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_variableDebtToken")), address(reserveData.variableDebtTokenAddress));
             ScriptTools.exportContract(NAME, string(abi.encodePacked(reserveConfigs[i].name, "_interestRateStrategy")), address(reserveData.interestRateStrategyAddress));
         }
+    }
+
+    function parseReserves() internal returns (ReserveConfig[] memory) {
+        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
+        bytes[] memory a = config.readBytesArray(".reserves");
+        ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
+        for (uint256 i = 0; i < a.length; i++) {
+            string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
+            _reserves[i] = ReserveConfig({
+                name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
+                token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
+                decimals: config.readUint(string(string.concat(bytes(base), bytes(".decimals")))),
+                borrowEnabled: config.readUint(string(string.concat(bytes(base), bytes(".borrow")))),
+                irOptimalUsageRatio: config.readUint(string(string.concat(bytes(base), bytes(".irOptimalUsageRatio")))),
+                irBaseVariableBorrowRate: config.readUint(string(string.concat(bytes(base), bytes(".irBaseVariableBorrowRate")))),
+                irVariableRateSlope1: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope1")))),
+                irVariableRateSlope2: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope2")))),
+                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
+                oracleMockPrice: config.readUint(string(string.concat(bytes(base), bytes(".oracleMockPrice")))),
+                ltv: config.readUint(string(string.concat(bytes(base), bytes(".ltv")))),
+                liquidationThreshold: config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold")))),
+                liquidationBonus: config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus")))),
+                reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
+                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
+                supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
+                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap")))),
+                liquidationProtocolFee: config.readUint(string(string.concat(bytes(base), bytes(".liquidationProtocolFee"))))
+            });
+        }
+        return _reserves;
+    }
+
+    function setupEModeCategories() internal {
+        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
+        bytes[] memory a = config.readBytesArray(".emodeCategories");
+        for (uint256 i = 0; i < a.length; i++) {
+            string memory base = string(string.concat(bytes(".emodeCategories["), bytes(Strings.toString(i)), "]"));
+            poolConfigurator.setEModeCategory({
+                categoryId: uint8(config.readUint(string(string.concat(bytes(base), bytes(".categoryId"))))),
+                ltv: uint16(config.readUint(string(string.concat(bytes(base), bytes(".ltv"))))),
+                liquidationThreshold: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold"))))),
+                liquidationBonus: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus"))))),
+                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
+                label: config.readString(string(string.concat(bytes(base), bytes(".label"))))
+            });
+        }
+    }
+
+    function makeReserve(
+        IERC20Detailed token,
+        IReserveInterestRateStrategy strategy
+    ) internal view returns (ConfiguratorInputTypes.InitReserveInput memory) {
+        ConfiguratorInputTypes.InitReserveInput memory input;
+        input.aTokenImpl = address(aTokenImpl);
+        input.stableDebtTokenImpl = address(stableDebtTokenImpl);
+        input.variableDebtTokenImpl = address(variableDebtTokenImpl);
+        input.underlyingAssetDecimals = token.decimals();
+        input.interestRateStrategyAddress = address(strategy);
+        input.underlyingAsset = address(token);
+        input.treasury = address(treasury);
+        input.incentivesController = address(0);
+        input.aTokenName = string(string.concat("Spark ", bytes(token.symbol())));
+        input.aTokenSymbol = string(string.concat("sp", bytes(token.symbol())));
+        input.variableDebtTokenName = string(string.concat("Spark Variable Debt ", bytes(token.symbol())));
+        input.variableDebtTokenSymbol = string(string.concat("variableDebt", bytes(token.symbol())));
+        input.stableDebtTokenName = string(string.concat("Spark Stable Debt ", bytes(token.symbol())));
+        input.stableDebtTokenSymbol = string(string.concat("stableDebt", bytes(token.symbol())));
+        input.params = "";
+        return input;
+    }
+
+    function createCollector(address admin) internal returns (Collector collector, address impl) {
+        InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
+        collector = Collector(address(proxy));
+        impl = address(collectorImpl);
+        proxy.initialize(
+            address(collectorImpl),
+            admin,
+            abi.encodeWithSignature("initialize(address)", address(treasuryController))
+        );
     }
 
 }
