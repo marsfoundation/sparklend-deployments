@@ -4,17 +4,9 @@ pragma solidity 0.8.10;
 
 import "dss-test/DssTest.sol";
 import {stdJson} from "forge-std/StdJson.sol";
-
-import "forge-std/Script.sol";
-import {stdJson} from "forge-std/StdJson.sol";
-import { MCD, DssInstance } from "dss-test/MCD.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {IERC20Detailed} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {Strings} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/Strings.sol';
-import {IERC20} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {InitializableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
-import {AggregatorInterface} from 'aave-v3-core/contracts/dependencies/chainlink/AggregatorInterface.sol';
 
 import {PoolAddressesProviderRegistry} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol";
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
@@ -28,11 +20,7 @@ import {AToken} from "aave-v3-core/contracts/protocol/tokenization/AToken.sol";
 import {StableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/StableDebtToken.sol";
 import {VariableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol";
 
-import {ConfiguratorInputTypes} from "aave-v3-core/contracts/protocol/libraries/types/ConfiguratorInputTypes.sol";
-import {DataTypes} from "aave-v3-core/contracts/protocol/libraries/types/DataTypes.sol";
-import {IReserveInterestRateStrategy} from "aave-v3-core/contracts/interfaces/IReserveInterestRateStrategy.sol";
 import {IAaveIncentivesController} from "aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol";
-import {DefaultReserveInterestRateStrategy} from "aave-v3-core/contracts/protocol/pool/DefaultReserveInterestRateStrategy.sol";
 
 import {Collector} from "aave-v3-periphery/treasury/Collector.sol";
 import {CollectorController} from "aave-v3-periphery/treasury/CollectorController.sol";
