@@ -6,24 +6,9 @@
 	path = lib/aave-v3-periphery
 	url = https://github.com/aave/aave-v3-periphery
 	branch = v3.0.1
-[submodule "dependencies/dss-direct-deposit"]
-	path = dependencies/dss-direct-deposit
-	url = https://github.com/makerdao/dss-direct-deposit
-[submodule "lib/v3-periphery"]
-	path = lib/v3-periphery
-	url = https://github.com/uniswap/v3-periphery
-	branch = v1.3.0
-[submodule "lib/v3-core"]
-	path = lib/v3-core
-	url = https://github.com/uniswap/v3-core
-	branch = v1.0.0
-[submodule "lib/dss-direct-deposit"]
-	path = lib/dss-direct-deposit
-	url = https://github.com/makerdao/dss-direct-deposit
-	branch = v1.0.0
 [submodule "lib/V2-V3-migration-helpers"]
 	path = lib/V2-V3-migration-helpers
-	url = https://github.com/phoenixlabsresearch/V2-V3-migration-helpers
+	url = https://github.com/marsfoundation/V2-V3-migration-helpers
 [submodule "lib/aave-address-book"]
 	path = lib/aave-address-book
 	url = https://github.com/bgd-labs/aave-address-book
@@ -36,3 +21,6 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "lib/dss-test"]
+	path = lib/dss-test
+	url = https://github.com/makerdao/dss-test
