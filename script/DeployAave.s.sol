@@ -130,7 +130,7 @@ contract DeployAave is Script {
     address[] assetOracleSources;
     DataTypes.ReserveData reserveData;
 
-    function parseReserves() internal view returns (ReserveConfig[] memory) {
+    function parseReserves() internal returns (ReserveConfig[] memory) {
         // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
         bytes[] memory a = config.readBytesArray(".reserves");
         ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);

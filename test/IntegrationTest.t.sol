@@ -50,40 +50,13 @@ import {MintableERC20} from "aave-v3-core/contracts/mocks/tokens/MintableERC20.s
 import {WETH9Mocked} from "aave-v3-core/contracts/mocks/tokens/WETH9Mocked.sol";
 import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
-import {DaiInterestRateStrategy} from "../DaiInterestRateStrategy.sol";
-import {SavingsDaiOracle} from "../SavingsDaiOracle.sol";
+import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
+import {SavingsDaiOracle} from "../src/SavingsDaiOracle.sol";
 
 import {ReserveConfiguration} from "aave-v3-core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol";
 
 interface stETHLike {
     function getTotalShares() external view returns (uint256);
-}
-
-interface D3MHubLike {
-    function exec(bytes32) external;
-}
-
-contract User {
-
-    Pool public pool;
-
-    constructor(Pool _pool) {
-        pool = _pool;
-    }
-
-    function supply(IERC20 asset, uint256 amount) external {
-        asset.approve(address(pool), amount);
-        pool.supply(address(asset), amount, address(this), 0);
-    }
-
-    function borrow(IERC20 asset, uint256 amount) external {
-        pool.borrow(address(asset), amount, 2, 0, address(this));
-    }
-
-    function setEMode(uint8 categoryId) external {
-        pool.setUserEMode(categoryId);
-    }
-
 }
 
 contract IntegrationTest is DssTest {
@@ -125,10 +98,8 @@ contract IntegrationTest is DssTest {
     WrappedTokenGatewayV3 wethGateway;
     WalletBalanceProvider walletBalanceProvider;
 
-    User[] users;
     address[] assets;
 
-    D3MHubLike hub;
     IERC20 weth;
     IERC20 wsteth;
     IERC20 wbtc;
@@ -137,6 +108,9 @@ contract IntegrationTest is DssTest {
     IERC20 sdai;
 
     function setUp() public {
+        vm.createSelectFork(vm.envString("ETH_RPC_URL"));
+        vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
+
         config = ScriptTools.readInput("config");
         deployedContracts = ScriptTools.readOutput("spark");
         dss = MCD.loadFromChainlog(config.readAddress(".chainlog"));
@@ -144,7 +118,6 @@ contract IntegrationTest is DssTest {
         admin = config.readAddress(".admin");
         deployer = deployedContracts.readAddress(".deployer");
 
-        //hub = D3MHubLike(dss.chainlog.getAddress("DIRECT_HUB"));
         if (block.chainid == 1) {
             // Mainnet
             weth = IERC20(dss.chainlog.getAddress("ETH"));
@@ -193,23 +166,6 @@ contract IntegrationTest is DssTest {
         walletBalanceProvider = WalletBalanceProvider(payable(deployedContracts.readAddress(".walletBalanceProvider")));
 
         assets = pool.getReservesList();
-
-        users.push(new User(pool));
-        users.push(new User(pool));
-        users.push(new User(pool));
-
-        // Mint $100k worth of tokens for each user
-        uint256 valuePerAsset = 100_000;
-        for (uint256 i = 0; i < assets.length; i++) {
-            address asset = assets[i];
-            uint256 numTokens = valuePerAsset * (10 ** IERC20Detailed(asset).decimals()) * aaveOracle.BASE_CURRENCY_UNIT() / aaveOracle.getAssetPrice(asset);
-            for (uint256 o = 0; o < users.length; o++) {
-                asset.setBalance(address(users[o]), numTokens);
-            }
-
-            // Have the third user seed all pools
-            users[2].supply(IERC20(asset), numTokens);
-        }
     }
 
     function getLTV(address asset) internal view returns (uint256) {
@@ -274,6 +230,8 @@ contract IntegrationTest is DssTest {
     }
 
     function test_spark_deploy_pool() public {
+        vm.createSelectFork(vm.envString("ETH_RPC_URL"), 17414000);
+
         assertEq(pool.POOL_REVISION(), 1);
         assertEq(address(pool.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
         assertEq(pool.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 0.25e4);
@@ -283,7 +241,7 @@ contract IntegrationTest is DssTest {
         assertEq(pool.MAX_NUMBER_RESERVES(), 128);
         assertImplementation(address(poolAddressesProvider), address(pool), address(poolImpl));
         address[] memory reserves = pool.getReservesList();
-        assertEq(reserves.length, 6);
+        assertEq(reserves.length, 7);
         assertEq(reserves[0], address(dai));
         assertEq(reserves[1], address(sdai));
         assertEq(reserves[2], address(usdc));
@@ -307,11 +265,11 @@ contract IntegrationTest is DssTest {
             assertEq(cfg.getActive(), true);
             assertEq(cfg.getFrozen(), false);
             assertEq(cfg.getPaused(), false);
-            assertEq(cfg.getBorrowableInIsolation(), false);
+            assertEq(cfg.getBorrowableInIsolation(), true);
             assertEq(cfg.getSiloedBorrowing(), false);
             assertEq(cfg.getBorrowingEnabled(), true);
             assertEq(cfg.getStableRateBorrowingEnabled(), false);
-            assertEq(cfg.getReserveFactor(), 10000);
+            assertEq(cfg.getReserveFactor(), 0);
             assertEq(cfg.getBorrowCap(), 0);
             assertEq(cfg.getSupplyCap(), 0);
             assertEq(cfg.getDebtCeiling(), 0);
@@ -519,7 +477,7 @@ contract IntegrationTest is DssTest {
             assertEq(cfg.getLiquidationBonus(), 10625);
             assertEq(cfg.getDecimals(), 8);
             assertEq(cfg.getActive(), true);
-            assertEq(cfg.getFrozen(), false);
+            assertEq(cfg.getFrozen(), true);
             assertEq(cfg.getPaused(), false);
             assertEq(cfg.getBorrowableInIsolation(), false);
             assertEq(cfg.getSiloedBorrowing(), false);
@@ -650,37 +608,5 @@ contract IntegrationTest is DssTest {
         vm.expectRevert("Contract instance has already been initialized");
         variableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "VARIABLE_DEBT_TOKEN_IMPL", "VARIABLE_DEBT_TOKEN_IMPL", "");
     }
-
-    /*function test_d3m() public {
-        IERC20 adai = getAToken(address(dai));
-        uint256 prevAmount = dai.balanceOf(address(adai));
-
-        hub.exec("DIRECT-SPARK-DAI");
-
-        assertEq(dai.balanceOf(address(adai)), prevAmount + 300_000_000 * 10 ** 18);
-    }
-
-    function test_borrow() public {
-        User user = users[0];
-        IERC20 supplyAsset = weth;
-        IERC20 borrowAsset = dai;
-        uint256 collateralAmount = supplyAsset.balanceOf(address(user));
-
-        user.supply(supplyAsset, collateralAmount);
-        user.borrow(borrowAsset, collateralAmount * getLTV(address(borrowAsset)) / 1e4 * aaveOracle.getAssetPrice(address(supplyAsset)) / aaveOracle.getAssetPrice(address(borrowAsset)));
-    }
-
-    function test_emode() public {
-        User user = users[0];
-        user.setEMode(1);
-        user.supply(wsteth, 10 ether);
-        user.borrow(weth, 8.5 ether);   // Should be able to borrow up to 85%
-    }
-
-    function _divup(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        unchecked {
-            z = x != 0 ? ((x - 1) / y) + 1 : 0;
-        }
-    }*/
 
 }
