@@ -46,33 +46,35 @@ import {IEACAggregatorProxy} from "aave-v3-periphery/misc/interfaces/IEACAggrega
 import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
 
 struct ReserveConfig {
-    string name;
-    address token;
+    // Needs to be in alphabetical order to parse correctly
+    bool borrow;
+    uint256 borrowCap;
     uint256 decimals;
-    uint256 borrowEnabled;
-    uint256 irOptimalUsageRatio;
+    uint256 eModeCategory;
     uint256 irBaseVariableBorrowRate;
+    uint256 irOptimalUsageRatio;
     uint256 irVariableRateSlope1;
     uint256 irVariableRateSlope2;
+    uint256 liquidationBonus;
+    uint256 liquidationProtocolFee;
+    uint256 liquidationThreshold;
+    uint256 ltv;
+    string name;
     address oracle;
     uint256 oracleMockPrice;
-    uint256 ltv;
-    uint256 liquidationThreshold;
-    uint256 liquidationBonus;
     uint256 reserveFactor;
-    uint256 eModeCategory;
     uint256 supplyCap;
-    uint256 borrowCap;
-    uint256 liquidationProtocolFee;
+    address token;
 }
 
 struct EModeConfig {
+    // Needs to be in alphabetical order to parse correctly
     uint256 categoryId;
-    uint256 ltv;
-    uint256 liquidationThreshold;
-    uint256 liquidationBonus;
-    address oracle;
     string label;
+    uint256 liquidationBonus;
+    uint256 liquidationThreshold;
+    uint256 ltv;
+    address oracle;
 }
 
 contract DeploySpark is Script {
@@ -243,7 +245,7 @@ contract DeploySpark is Script {
         for (uint256 i = 0; i < reserveConfigs.length; i++) {
             ReserveConfig memory cfg = reserveConfigs[i];
 
-            poolConfigurator.setReserveBorrowing(address(cfg.token), cfg.borrowEnabled == 1);
+            poolConfigurator.setReserveBorrowing(address(cfg.token), cfg.borrow);
             poolConfigurator.configureReserveAsCollateral({
                 asset: address(cfg.token), 
                 ltv: cfg.ltv,
@@ -306,48 +308,21 @@ contract DeploySpark is Script {
         }
     }
 
-    function parseReserves() internal returns (ReserveConfig[] memory) {
-        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".reserves");
-        ReserveConfig[] memory _reserves = new ReserveConfig[](a.length);
-        for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".reserves["), bytes(Strings.toString(i)), "]"));
-            _reserves[i] = ReserveConfig({
-                name: config.readString(string(string.concat(bytes(base), bytes(".name")))),
-                token: config.readAddress(string(string.concat(bytes(base), bytes(".token")))),
-                decimals: config.readUint(string(string.concat(bytes(base), bytes(".decimals")))),
-                borrowEnabled: config.readUint(string(string.concat(bytes(base), bytes(".borrow")))),
-                irOptimalUsageRatio: config.readUint(string(string.concat(bytes(base), bytes(".irOptimalUsageRatio")))),
-                irBaseVariableBorrowRate: config.readUint(string(string.concat(bytes(base), bytes(".irBaseVariableBorrowRate")))),
-                irVariableRateSlope1: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope1")))),
-                irVariableRateSlope2: config.readUint(string(string.concat(bytes(base), bytes(".irVariableRateSlope2")))),
-                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
-                oracleMockPrice: config.readUint(string(string.concat(bytes(base), bytes(".oracleMockPrice")))),
-                ltv: config.readUint(string(string.concat(bytes(base), bytes(".ltv")))),
-                liquidationThreshold: config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold")))),
-                liquidationBonus: config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus")))),
-                reserveFactor: config.readUint(string(string.concat(bytes(base), bytes(".reserveFactor")))),
-                eModeCategory: config.readUint(string(string.concat(bytes(base), bytes(".eModeCategory")))),
-                supplyCap: config.readUint(string(string.concat(bytes(base), bytes(".supplyCap")))),
-                borrowCap: config.readUint(string(string.concat(bytes(base), bytes(".borrowCap")))),
-                liquidationProtocolFee: config.readUint(string(string.concat(bytes(base), bytes(".liquidationProtocolFee"))))
-            });
-        }
-        return _reserves;
+    function parseReserves() internal view returns (ReserveConfig[] memory) {
+        return abi.decode(vm.parseJson(config, ".reserves"), (ReserveConfig[]));
     }
 
     function setupEModeCategories() internal {
-        // JSON parsing is a bit janky and I don't know why, so I'm doing this more manually
-        bytes[] memory a = config.readBytesArray(".emodeCategories");
-        for (uint256 i = 0; i < a.length; i++) {
-            string memory base = string(string.concat(bytes(".emodeCategories["), bytes(Strings.toString(i)), "]"));
+        EModeConfig[] memory emodes = abi.decode(vm.parseJson(config, ".emodeCategories"), (EModeConfig[]));
+        for (uint256 i = 0; i < emodes.length; i++) {
+            EModeConfig memory emode = emodes[i];
             poolConfigurator.setEModeCategory({
-                categoryId: uint8(config.readUint(string(string.concat(bytes(base), bytes(".categoryId"))))),
-                ltv: uint16(config.readUint(string(string.concat(bytes(base), bytes(".ltv"))))),
-                liquidationThreshold: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationThreshold"))))),
-                liquidationBonus: uint16(config.readUint(string(string.concat(bytes(base), bytes(".liquidationBonus"))))),
-                oracle: config.readAddress(string(string.concat(bytes(base), bytes(".oracle")))),
-                label: config.readString(string(string.concat(bytes(base), bytes(".label"))))
+                categoryId: uint8(emode.categoryId),
+                ltv: uint16(emode.ltv),
+                liquidationThreshold: uint16(emode.liquidationThreshold),
+                liquidationBonus: uint16(emode.liquidationBonus),
+                oracle: emode.oracle,
+                label: emode.label
             });
         }
     }
