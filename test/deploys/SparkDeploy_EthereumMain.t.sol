@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import "../SparkDeployBase.t.sol";
 
-// THIS IS AN EXAMPLE
-abstract contract SparkDeploy_EthereumMain is SparkDeployBase {
+// A forked mainnet on Tenderly to test
+contract SparkDeploy_ExampleFork is SparkDeployBase {
 
     function setupFork() internal override {
-        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
+        vm.createSelectFork("https://rpc.tenderly.co/fork/a05f0dea-a373-4caf-8cd9-fde3cbb6fcf1");
     }
 
     function getMarketId() internal override pure returns (string memory) {
-        return "test";
+        return "example";
     }
 
 }
