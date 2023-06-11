@@ -35,14 +35,13 @@ import {IEACAggregatorProxy} from "aave-v3-periphery/misc/interfaces/IEACAggrega
 
 contract DeploySpark is Script {
 
-    string constant NAME = "spark";
-
     using stdJson for string;
     using ScriptTools for string;
 
     uint256 constant RAY = 10 ** 27;
 
     string config;
+    string instanceId;
 
     address admin;
     address deployer;
@@ -73,6 +72,7 @@ contract DeploySpark is Script {
 
     function run() external {
         //vm.createSelectFork(vm.envString("ETH_RPC_URL"));     // Multi-chain not supported in Foundry yet (use CLI arg for now)
+        instanceId = vm.envOr("INSTANCE_ID", string("primary"));
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
         config = ScriptTools.loadConfig("config");
@@ -157,30 +157,30 @@ contract DeploySpark is Script {
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(NAME, "admin", admin);
-        ScriptTools.exportContract(NAME, "deployer", deployer);
-        ScriptTools.exportContract(NAME, "poolAddressesProviderRegistry", address(registry));
-        ScriptTools.exportContract(NAME, "poolAddressesProvider", address(poolAddressesProvider));
-        ScriptTools.exportContract(NAME, "protocolDataProvider", address(protocolDataProvider));
-        ScriptTools.exportContract(NAME, "poolConfigurator", address(poolConfigurator));
-        ScriptTools.exportContract(NAME, "poolConfiguratorImpl", address(_poolConfigurator));
-        ScriptTools.exportContract(NAME, "pool", address(pool));
-        ScriptTools.exportContract(NAME, "poolImpl", address(_pool));
-        ScriptTools.exportContract(NAME, "aclManager", address(aclManager));
-        ScriptTools.exportContract(NAME, "aaveOracle", address(aaveOracle));
-        ScriptTools.exportContract(NAME, "aTokenImpl", address(aTokenImpl));
-        ScriptTools.exportContract(NAME, "stableDebtTokenImpl", address(stableDebtTokenImpl));
-        ScriptTools.exportContract(NAME, "variableDebtTokenImpl", address(variableDebtTokenImpl));
-        ScriptTools.exportContract(NAME, "treasury", address(treasury));
-        ScriptTools.exportContract(NAME, "treasuryImpl", address(treasuryImpl));
-        ScriptTools.exportContract(NAME, "treasuryController", address(treasuryController));
-        ScriptTools.exportContract(NAME, "incentives", address(incentives));
-        ScriptTools.exportContract(NAME, "incentivesImpl", address(rewardsController));
-        ScriptTools.exportContract(NAME, "emissionManager", address(emissionManager));
-        ScriptTools.exportContract(NAME, "uiPoolDataProvider", address(uiPoolDataProvider));
-        ScriptTools.exportContract(NAME, "uiIncentiveDataProvider", address(uiIncentiveDataProvider));
-        ScriptTools.exportContract(NAME, "wethGateway", address(wethGateway));
-        ScriptTools.exportContract(NAME, "walletBalanceProvider", address(walletBalanceProvider));
+        ScriptTools.exportContract(instanceId, "admin", admin);
+        ScriptTools.exportContract(instanceId, "deployer", deployer);
+        ScriptTools.exportContract(instanceId, "poolAddressesProviderRegistry", address(registry));
+        ScriptTools.exportContract(instanceId, "poolAddressesProvider", address(poolAddressesProvider));
+        ScriptTools.exportContract(instanceId, "protocolDataProvider", address(protocolDataProvider));
+        ScriptTools.exportContract(instanceId, "poolConfigurator", address(poolConfigurator));
+        ScriptTools.exportContract(instanceId, "poolConfiguratorImpl", address(_poolConfigurator));
+        ScriptTools.exportContract(instanceId, "pool", address(pool));
+        ScriptTools.exportContract(instanceId, "poolImpl", address(_pool));
+        ScriptTools.exportContract(instanceId, "aclManager", address(aclManager));
+        ScriptTools.exportContract(instanceId, "aaveOracle", address(aaveOracle));
+        ScriptTools.exportContract(instanceId, "aTokenImpl", address(aTokenImpl));
+        ScriptTools.exportContract(instanceId, "stableDebtTokenImpl", address(stableDebtTokenImpl));
+        ScriptTools.exportContract(instanceId, "variableDebtTokenImpl", address(variableDebtTokenImpl));
+        ScriptTools.exportContract(instanceId, "treasury", address(treasury));
+        ScriptTools.exportContract(instanceId, "treasuryImpl", address(treasuryImpl));
+        ScriptTools.exportContract(instanceId, "treasuryController", address(treasuryController));
+        ScriptTools.exportContract(instanceId, "incentives", address(incentives));
+        ScriptTools.exportContract(instanceId, "incentivesImpl", address(rewardsController));
+        ScriptTools.exportContract(instanceId, "emissionManager", address(emissionManager));
+        ScriptTools.exportContract(instanceId, "uiPoolDataProvider", address(uiPoolDataProvider));
+        ScriptTools.exportContract(instanceId, "uiIncentiveDataProvider", address(uiIncentiveDataProvider));
+        ScriptTools.exportContract(instanceId, "wethGateway", address(wethGateway));
+        ScriptTools.exportContract(instanceId, "walletBalanceProvider", address(walletBalanceProvider));
     }
 
     function createCollector(address _admin) internal returns (Collector collector, address impl) {

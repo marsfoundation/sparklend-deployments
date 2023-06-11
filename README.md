@@ -7,6 +7,8 @@ This is the respository for Spark Lend deploy scripts and custom code. Primarily
 Run tests: `make test`  
 Deploy Spark Lend: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
 Deploy Config Engine: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
+Deploy Spark Lend (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
+Deploy Config Engine (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
 
 ## Custom Code
 
