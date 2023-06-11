@@ -37,6 +37,7 @@ abstract contract SparkDeployBase is Test {
     using stdJson for string;
 
     string config;
+    string instanceId;
     string deployedContracts;
 
     address admin;
@@ -66,14 +67,15 @@ abstract contract SparkDeployBase is Test {
     WalletBalanceProvider walletBalanceProvider;
 
     function setupFork() internal virtual;
-    function getMarketId() internal virtual view returns (string memory);
+    function getInstanceId() internal virtual view returns (string memory);
 
     function setUp() public {
         setupFork();
+        instanceId = getInstanceId();
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config = ScriptTools.readInput("config");
-        deployedContracts = ScriptTools.readOutput(getMarketId());
+        config = ScriptTools.readInput(instanceId);
+        deployedContracts = ScriptTools.readOutput(instanceId);
 
         admin = config.readAddress(".admin");
         deployer = deployedContracts.readAddress(".deployer");

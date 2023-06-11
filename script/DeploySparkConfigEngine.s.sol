@@ -92,14 +92,14 @@ library DeployRatesFactoryLib {
     }
 }
 
-contract DeploySparkConfig is Script {
-
-    string constant NAME = "spark-config-engine";
+contract DeploySparkConfigEngine is Script {
 
     using stdJson for string;
     using ScriptTools for string;
 
     string config;
+    string instanceId;
+    string name;
     string deployedContracts;
 
     address admin;
@@ -113,17 +113,19 @@ contract DeploySparkConfig is Script {
     AaveV3ConfigEngine configEngine;
 
     function run() external {
+        instanceId = vm.envOr("INSTANCE_ID", string("primary"));
+        name = string(abi.encodePacked(instanceId, "-sce"));
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config                = ScriptTools.readInput(NAME);
-        deployedContracts     = ScriptTools.readOutput("spark");
+        config                = ScriptTools.readInput(name);
+        deployedContracts     = ScriptTools.readOutput(instanceId);
         poolAddressesProvider = IPoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
 
         admin    = config.readAddress(".admin");
         deployer = msg.sender;
 
         address[] memory reservesToSkip = new address[](1);
-        reservesToSkip[0] = deployedContracts.readAddress(".DAI_token");
+        reservesToSkip[0] = config.readAddress(".daiToken");
 
         vm.startBroadcast();
         transparentProxyFactory = new TransparentProxyFactory();
@@ -151,12 +153,12 @@ contract DeploySparkConfig is Script {
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(NAME, "admin",                   admin);
-        ScriptTools.exportContract(NAME, "deployer",                deployer);
-        ScriptTools.exportContract(NAME, "transparentProxyFactory", address(transparentProxyFactory));
-        ScriptTools.exportContract(NAME, "proxyAdmin",              address(proxyAdmin));
-        ScriptTools.exportContract(NAME, "ratesFactory",            address(ratesFactory));
-        ScriptTools.exportContract(NAME, "configEngine",            address(configEngine));
+        ScriptTools.exportContract(name, "admin",                   admin);
+        ScriptTools.exportContract(name, "deployer",                deployer);
+        ScriptTools.exportContract(name, "transparentProxyFactory", address(transparentProxyFactory));
+        ScriptTools.exportContract(name, "proxyAdmin",              address(proxyAdmin));
+        ScriptTools.exportContract(name, "ratesFactory",            address(ratesFactory));
+        ScriptTools.exportContract(name, "configEngine",            address(configEngine));
     }
 
 }

@@ -10,7 +10,7 @@ contract SparkDeploy_ExampleFork is SparkDeployBase {
         vm.createSelectFork("https://rpc.tenderly.co/fork/a05f0dea-a373-4caf-8cd9-fde3cbb6fcf1", 17456647);
     }
 
-    function getMarketId() internal override pure returns (string memory) {
+    function getInstanceId() internal override pure returns (string memory) {
         return "example";
     }
 
