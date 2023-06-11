@@ -99,7 +99,7 @@ contract DeploySparkConfigEngine is Script {
 
     string config;
     string instanceId;
-    string name;
+    string outputName;
     string deployedContracts;
 
     address admin;
@@ -114,10 +114,10 @@ contract DeploySparkConfigEngine is Script {
 
     function run() external {
         instanceId = vm.envOr("INSTANCE_ID", string("primary"));
-        name = string(abi.encodePacked(instanceId, "-sce"));
+        outputName = string(abi.encodePacked(instanceId, "-sce"));
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config                = ScriptTools.readInput(name);
+        config                = ScriptTools.readInput(instanceId);
         deployedContracts     = ScriptTools.readOutput(instanceId);
         poolAddressesProvider = IPoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
 
@@ -153,12 +153,12 @@ contract DeploySparkConfigEngine is Script {
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(name, "admin",                   admin);
-        ScriptTools.exportContract(name, "deployer",                deployer);
-        ScriptTools.exportContract(name, "transparentProxyFactory", address(transparentProxyFactory));
-        ScriptTools.exportContract(name, "proxyAdmin",              address(proxyAdmin));
-        ScriptTools.exportContract(name, "ratesFactory",            address(ratesFactory));
-        ScriptTools.exportContract(name, "configEngine",            address(configEngine));
+        ScriptTools.exportContract(outputName, "admin",                   admin);
+        ScriptTools.exportContract(outputName, "deployer",                deployer);
+        ScriptTools.exportContract(outputName, "transparentProxyFactory", address(transparentProxyFactory));
+        ScriptTools.exportContract(outputName, "proxyAdmin",              address(proxyAdmin));
+        ScriptTools.exportContract(outputName, "ratesFactory",            address(ratesFactory));
+        ScriptTools.exportContract(outputName, "configEngine",            address(configEngine));
     }
 
 }
