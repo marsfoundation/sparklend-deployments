@@ -77,75 +77,86 @@ abstract contract SparkDeployBaseTest is Test {
         else vm.createSelectFork(rpcUrl);
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config = ScriptTools.readInput(instanceId);
+        config            = ScriptTools.readInput("config");
         deployedContracts = ScriptTools.readOutput(instanceId);
 
-        admin = config.readAddress(".admin");
+        admin    = config.readAddress(".admin");
         deployer = deployedContracts.readAddress(".deployer");
 
         poolAddressesProviderRegistry = PoolAddressesProviderRegistry(deployedContracts.readAddress(".poolAddressesProviderRegistry"));
-        poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
-        protocolDataProvider = AaveProtocolDataProvider(deployedContracts.readAddress(".protocolDataProvider"));
-        poolConfigurator = PoolConfigurator(deployedContracts.readAddress(".poolConfigurator"));
-        poolConfiguratorImpl = PoolConfigurator(deployedContracts.readAddress(".poolConfiguratorImpl"));
-        pool = Pool(deployedContracts.readAddress(".pool"));
-        poolImpl = Pool(deployedContracts.readAddress(".poolImpl"));
+        poolAddressesProvider         = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
+        protocolDataProvider          = AaveProtocolDataProvider(deployedContracts.readAddress(".protocolDataProvider"));
+        poolConfigurator              = PoolConfigurator(deployedContracts.readAddress(".poolConfigurator"));
+        poolConfiguratorImpl          = PoolConfigurator(deployedContracts.readAddress(".poolConfiguratorImpl"));
+        pool                          = Pool(deployedContracts.readAddress(".pool"));
+        poolImpl                      = Pool(deployedContracts.readAddress(".poolImpl"));
+
         aclManager = ACLManager(deployedContracts.readAddress(".aclManager"));
         aaveOracle = AaveOracle(deployedContracts.readAddress(".aaveOracle"));
 
-        aTokenImpl = AToken(deployedContracts.readAddress(".aTokenImpl"));
+        aTokenImpl            = AToken(deployedContracts.readAddress(".aTokenImpl"));
         variableDebtTokenImpl = VariableDebtToken(deployedContracts.readAddress(".variableDebtTokenImpl"));
-        stableDebtTokenImpl = StableDebtToken(deployedContracts.readAddress(".stableDebtTokenImpl"));
+        stableDebtTokenImpl   = StableDebtToken(deployedContracts.readAddress(".stableDebtTokenImpl"));
 
         treasuryController = CollectorController(deployedContracts.readAddress(".treasuryController"));
-        treasury = Collector(deployedContracts.readAddress(".treasury"));
-        treasuryImpl = Collector(deployedContracts.readAddress(".treasuryImpl"));
+        treasury           = Collector(deployedContracts.readAddress(".treasury"));
+        treasuryImpl       = Collector(deployedContracts.readAddress(".treasuryImpl"));
 
         emissionManager = EmissionManager(deployedContracts.readAddress(".emissionManager"));
-        incentives = RewardsController(deployedContracts.readAddress(".incentives"));
-        incentivesImpl = RewardsController(deployedContracts.readAddress(".incentivesImpl"));
+        incentives      = RewardsController(deployedContracts.readAddress(".incentives"));
+        incentivesImpl  = RewardsController(deployedContracts.readAddress(".incentivesImpl"));
 
-        uiPoolDataProvider = UiPoolDataProviderV3(deployedContracts.readAddress(".uiPoolDataProvider"));
+        uiPoolDataProvider      = UiPoolDataProviderV3(deployedContracts.readAddress(".uiPoolDataProvider"));
         uiIncentiveDataProvider = UiIncentiveDataProviderV3(deployedContracts.readAddress(".uiIncentiveDataProvider"));
-        wethGateway = WrappedTokenGatewayV3(payable(deployedContracts.readAddress(".wethGateway")));
-        walletBalanceProvider = WalletBalanceProvider(payable(deployedContracts.readAddress(".walletBalanceProvider")));
+        wethGateway             = WrappedTokenGatewayV3(payable(deployedContracts.readAddress(".wethGateway")));
+        walletBalanceProvider   = WalletBalanceProvider(payable(deployedContracts.readAddress(".walletBalanceProvider")));
     }
 
     function test_spark_deploy_poolAddressesProviderRegistry() public {
-        assertEq(poolAddressesProviderRegistry.owner(), admin);
         address[] memory providersList = poolAddressesProviderRegistry.getAddressesProvidersList();
-        assertEq(providersList.length, 1);
-        assertEq(providersList[0], address(poolAddressesProvider));
+
+        assertEq(poolAddressesProviderRegistry.owner(), admin);
+        assertEq(providersList.length,                  1);
+        assertEq(providersList[0],                      address(poolAddressesProvider));
+
         assertEq(poolAddressesProviderRegistry.getAddressesProviderAddressById(1),  address(poolAddressesProvider));
+
         assertEq(poolAddressesProviderRegistry.getAddressesProviderIdByAddress(address(poolAddressesProvider)), 1);
     }
 
     function test_spark_deploy_poolAddressesProvider() public {
-        assertEq(poolAddressesProvider.owner(), admin);
-        assertEq(poolAddressesProvider.getMarketId(), "Spark Protocol");
-        assertEq(poolAddressesProvider.getPool(), address(pool));
-        assertEq(poolAddressesProvider.getPoolConfigurator(), address(poolConfigurator));
-        assertEq(poolAddressesProvider.getPriceOracle(), address(aaveOracle));
-        assertEq(poolAddressesProvider.getACLManager(), address(aclManager));
-        assertEq(poolAddressesProvider.getACLAdmin(), admin);
+        assertEq(poolAddressesProvider.owner(),                  admin);
+        assertEq(poolAddressesProvider.getMarketId(),            "Spark Protocol");
+        assertEq(poolAddressesProvider.getPool(),                address(pool));
+        assertEq(poolAddressesProvider.getPoolConfigurator(),    address(poolConfigurator));
+        assertEq(poolAddressesProvider.getPriceOracle(),         address(aaveOracle));
+        assertEq(poolAddressesProvider.getACLManager(),          address(aclManager));
+        assertEq(poolAddressesProvider.getACLAdmin(),            admin);
         assertEq(poolAddressesProvider.getPriceOracleSentinel(), address(0));
-        assertEq(poolAddressesProvider.getPoolDataProvider(), address(protocolDataProvider));
+        assertEq(poolAddressesProvider.getPoolDataProvider(),    address(protocolDataProvider));
     }
 
     function test_spark_deploy_aclManager() public {
         // NOTE: Also verify that no other address than the admin address has any role (verify with events)
         assertEq(address(aclManager.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
-        assertTrue(aclManager.hasRole(aclManager.DEFAULT_ADMIN_ROLE(), admin));
-        assertTrue(!aclManager.hasRole(aclManager.DEFAULT_ADMIN_ROLE(), deployer));
-        assertEq(aclManager.getRoleAdmin(aclManager.POOL_ADMIN_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
-        assertTrue(aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), admin));
+
+        bytes32 defaultAdmin = aclManager.DEFAULT_ADMIN_ROLE();
+
+        assertEq(aclManager.getRoleAdmin(aclManager.POOL_ADMIN_ROLE()),      defaultAdmin);
+        assertEq(aclManager.getRoleAdmin(aclManager.EMERGENCY_ADMIN_ROLE()), defaultAdmin);
+
+        assertTrue( aclManager.hasRole(defaultAdmin, admin));
+        assertTrue(!aclManager.hasRole(defaultAdmin, deployer));
+
+        assertTrue( aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), admin));
         assertTrue(!aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), deployer));
-        assertEq(aclManager.getRoleAdmin(aclManager.EMERGENCY_ADMIN_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
+
         if (block.chainid == 1) assertTrue(aclManager.hasRole(aclManager.EMERGENCY_ADMIN_ROLE(), admin));     // FIXME missing on GOERLI
-        assertEq(aclManager.getRoleAdmin(aclManager.RISK_ADMIN_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
-        assertEq(aclManager.getRoleAdmin(aclManager.FLASH_BORROWER_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
-        assertEq(aclManager.getRoleAdmin(aclManager.BRIDGE_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
-        assertEq(aclManager.getRoleAdmin(aclManager.ASSET_LISTING_ADMIN_ROLE()), aclManager.DEFAULT_ADMIN_ROLE());
+
+        assertEq(aclManager.getRoleAdmin(aclManager.RISK_ADMIN_ROLE()),          defaultAdmin);
+        assertEq(aclManager.getRoleAdmin(aclManager.FLASH_BORROWER_ROLE()),      defaultAdmin);
+        assertEq(aclManager.getRoleAdmin(aclManager.BRIDGE_ROLE()),              defaultAdmin);
+        assertEq(aclManager.getRoleAdmin(aclManager.ASSET_LISTING_ADMIN_ROLE()), defaultAdmin);
     }
 
     function test_spark_deploy_protocolDataProvider() public {
@@ -158,22 +169,25 @@ abstract contract SparkDeployBaseTest is Test {
     }
 
     function test_spark_deploy_pool() public {
-        assertEq(pool.POOL_REVISION(), 1);
         assertEq(address(pool.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+
+        assertEq(pool.POOL_REVISION(),                       1);
         assertEq(pool.MAX_STABLE_RATE_BORROW_SIZE_PERCENT(), 0.25e4);
-        assertEq(pool.BRIDGE_PROTOCOL_FEE(), 0);
-        assertEq(pool.FLASHLOAN_PREMIUM_TOTAL(), 0);
-        assertEq(pool.FLASHLOAN_PREMIUM_TO_PROTOCOL(), 0);
-        assertEq(pool.MAX_NUMBER_RESERVES(), 128);
+        assertEq(pool.BRIDGE_PROTOCOL_FEE(),                 0);
+        assertEq(pool.FLASHLOAN_PREMIUM_TOTAL(),             0);
+        assertEq(pool.FLASHLOAN_PREMIUM_TO_PROTOCOL(),       0);
+        assertEq(pool.MAX_NUMBER_RESERVES(),                 128);
+
         assertImplementation(address(poolAddressesProvider), address(pool), address(poolImpl));
+
         address[] memory reserves = pool.getReservesList();
         assertEq(reserves.length, initialReserveCount);
     }
 
     function test_spark_deploy_tokenImpls() public {
-        assertEq(address(aTokenImpl.POOL()), address(pool));
+        assertEq(address(aTokenImpl.POOL()),            address(pool));
         assertEq(address(variableDebtTokenImpl.POOL()), address(pool));
-        assertEq(address(stableDebtTokenImpl.POOL()), address(pool));
+        assertEq(address(stableDebtTokenImpl.POOL()),   address(pool));
     }
 
     function test_spark_deploy_treasury() public {
