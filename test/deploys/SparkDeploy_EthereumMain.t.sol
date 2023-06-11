@@ -7,7 +7,7 @@ import "../SparkDeployBase.t.sol";
 contract SparkDeploy_ExampleFork is SparkDeployBase {
 
     function setupFork() internal override {
-        vm.createSelectFork("https://rpc.tenderly.co/fork/a05f0dea-a373-4caf-8cd9-fde3cbb6fcf1");
+        vm.createSelectFork("https://rpc.tenderly.co/fork/a05f0dea-a373-4caf-8cd9-fde3cbb6fcf1", 17456647);
     }
 
     function getMarketId() internal override pure returns (string memory) {
