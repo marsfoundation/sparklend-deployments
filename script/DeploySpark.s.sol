@@ -47,7 +47,7 @@ import {DaiInterestRateStrategy} from "../src/DaiInterestRateStrategy.sol";
 
 struct ReserveConfig {
     // Needs to be in alphabetical order to parse correctly
-    bool borrow;
+    bool    borrow;
     uint256 borrowCap;
     uint256 decimals;
     uint256 eModeCategory;
@@ -59,7 +59,7 @@ struct ReserveConfig {
     uint256 liquidationProtocolFee;
     uint256 liquidationThreshold;
     uint256 ltv;
-    string name;
+    string  name;
     address oracle;
     uint256 oracleMockPrice;
     uint256 reserveFactor;
@@ -70,7 +70,7 @@ struct ReserveConfig {
 struct EModeConfig {
     // Needs to be in alphabetical order to parse correctly
     uint256 categoryId;
-    string label;
+    string  label;
     uint256 liquidationBonus;
     uint256 liquidationThreshold;
     uint256 ltv;
@@ -247,7 +247,7 @@ contract DeploySpark is Script {
 
             poolConfigurator.setReserveBorrowing(address(cfg.token), cfg.borrow);
             poolConfigurator.configureReserveAsCollateral({
-                asset: address(cfg.token), 
+                asset: address(cfg.token),
                 ltv: cfg.ltv,
                 liquidationThreshold: cfg.liquidationThreshold,
                 liquidationBonus: cfg.liquidationBonus

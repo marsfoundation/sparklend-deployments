@@ -1,0 +1,28 @@
+{
+  "name": "sparklend",
+  "version": "1.0.0",
+  "description": "This is the respository for Spark Lend deploy scripts and custom code. Primarily this repository acts as an orchestration toolkit for deploying and managing Spark Lend instances across many chains. Apart from the custom code below everything is combined from third party vendors.",
+  "main": "tenderly.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marsfoundation/sparklend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/marsfoundation/sparklend/issues"
+  },
+  "homepage": "https://github.com/marsfoundation/sparklend#readme",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "dotenv": "^16.1.4",
+    "ethers": "^5.7.2"
+  }
+}
