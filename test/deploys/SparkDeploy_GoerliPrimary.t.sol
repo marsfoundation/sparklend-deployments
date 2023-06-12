@@ -5,11 +5,11 @@ import "../SparkDeployBase.t.sol";
 
 // A forked mainnet on Tenderly to test
 contract SparkDeploy_GoerliPrimaryTest is SparkDeployBaseTest {
-
     constructor() {
-        rpcUrl = getChain("goerli").rpcUrl;
-        forkBlock = 8612863;
+        rpcUrl     = getChain("goerli").rpcUrl;
+        forkBlock  = 8612863;
         instanceId = "primary";
+
         initialReserveCount = 6;
     }
 
