@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "../SparkDeployBase.t.sol";
 
-// A forked mainnet on Tenderly to test
 contract SparkDeploy_EthereumPrimaryTest is SparkDeployBaseTest {
     constructor() {
         rpcUrl     = getChain("mainnet").rpcUrl;
