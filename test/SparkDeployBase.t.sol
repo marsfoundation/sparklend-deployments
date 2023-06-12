@@ -32,12 +32,18 @@ import {WrappedTokenGatewayV3} from "aave-v3-periphery/misc/WrappedTokenGatewayV
 import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvider.sol";
 
-abstract contract SparkDeployBase is Test {
+abstract contract SparkDeployBaseTest is Test {
 
     using stdJson for string;
 
+    // Configuration
+    // Override this in the inheriting contract
+    string  instanceId = "primary";
+    string  rpcUrl;
+    uint256 forkBlock;
+    uint256 initialReserveCount;
+
     string config;
-    string instanceId;
     string deployedContracts;
 
     address admin;
@@ -66,12 +72,9 @@ abstract contract SparkDeployBase is Test {
     WrappedTokenGatewayV3 wethGateway;
     WalletBalanceProvider walletBalanceProvider;
 
-    function setupFork() internal virtual;
-    function getInstanceId() internal virtual view returns (string memory);
-
     function setUp() public {
-        setupFork();
-        instanceId = getInstanceId();
+        if (forkBlock > 0) vm.createSelectFork(rpcUrl, forkBlock);
+        else vm.createSelectFork(rpcUrl);
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
         config = ScriptTools.readInput(instanceId);
@@ -164,7 +167,7 @@ abstract contract SparkDeployBase is Test {
         assertEq(pool.MAX_NUMBER_RESERVES(), 128);
         assertImplementation(address(poolAddressesProvider), address(pool), address(poolImpl));
         address[] memory reserves = pool.getReservesList();
-        assertEq(reserves.length, 0);
+        assertEq(reserves.length, initialReserveCount);
     }
 
     function test_spark_deploy_tokenImpls() public {
