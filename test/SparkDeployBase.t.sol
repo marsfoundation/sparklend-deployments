@@ -77,7 +77,7 @@ abstract contract SparkDeployBaseTest is Test {
         else vm.createSelectFork(rpcUrl);
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config            = ScriptTools.readInput("config");
+        config            = ScriptTools.readInput(instanceId);
         deployedContracts = ScriptTools.readOutput(instanceId);
 
         admin    = config.readAddress(".admin");
@@ -192,48 +192,59 @@ abstract contract SparkDeployBaseTest is Test {
 
     function test_spark_deploy_treasury() public {
         assertEq(address(treasuryController.owner()), admin);
-        assertEq(treasury.REVISION(), 1);
-        assertEq(treasury.getFundsAdmin(), address(treasuryController));
+        assertEq(treasury.REVISION(),                 1);
+        assertEq(treasury.getFundsAdmin(),            address(treasuryController));
+
         assertImplementation(admin, address(treasury), address(treasuryImpl));
     }
 
     function test_spark_deploy_incentives() public {
-        assertEq(address(emissionManager.owner()), admin);
+        assertEq(address(emissionManager.owner()),                admin);
         assertEq(address(emissionManager.getRewardsController()), address(incentives));
-        assertEq(incentives.REVISION(), 1);
+
+        assertEq(incentives.REVISION(),         1);
         assertEq(incentives.EMISSION_MANAGER(), address(emissionManager));
+
         assertImplementation(admin, address(incentives), address(incentivesImpl));
     }
 
     function test_spark_deploy_misc_contracts() public {
-        address nativeToken = config.readAddress(".nativeToken");
+        address nativeToken       = config.readAddress(".nativeToken");
         address nativeTokenOracle = config.readAddress(".nativeTokenOracle");
-        assertEq(address(uiPoolDataProvider.networkBaseTokenPriceInUsdProxyAggregator()), nativeTokenOracle);
+
+        assertEq(address(uiPoolDataProvider.networkBaseTokenPriceInUsdProxyAggregator()),        nativeTokenOracle);
         assertEq(address(uiPoolDataProvider.marketReferenceCurrencyPriceInUsdProxyAggregator()), nativeTokenOracle);
-        assertEq(wethGateway.owner(), admin);
+
+        assertEq(wethGateway.owner(),          admin);
         assertEq(wethGateway.getWETHAddress(), nativeToken);
     }
 
     function test_spark_deploy_oracles() public {
         assertEq(address(aaveOracle.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
-        assertEq(aaveOracle.BASE_CURRENCY(), address(0));
-        assertEq(aaveOracle.BASE_CURRENCY_UNIT(), 10 ** 8);
-        assertEq(aaveOracle.getFallbackOracle(), address(0));
+        assertEq(aaveOracle.BASE_CURRENCY(),               address(0));
+        assertEq(aaveOracle.BASE_CURRENCY_UNIT(),          10 ** 8);
+        assertEq(aaveOracle.getFallbackOracle(),           address(0));
     }
 
     function test_implementation_contracts_initialized() public {
         vm.expectRevert("Contract instance has already been initialized");
         poolConfiguratorImpl.initialize(poolAddressesProvider);
+
         vm.expectRevert("Contract instance has already been initialized");
         poolImpl.initialize(poolAddressesProvider);
+
         vm.expectRevert("Contract instance has already been initialized");
         treasuryImpl.initialize(address(0));
+
         vm.expectRevert("Contract instance has already been initialized");
         incentivesImpl.initialize(address(0));
+
         vm.expectRevert("Contract instance has already been initialized");
         aTokenImpl.initialize(pool, address(0), address(0), IAaveIncentivesController(address(0)), 0, "SPTOKEN_IMPL", "SPTOKEN_IMPL", "");
+
         vm.expectRevert("Contract instance has already been initialized");
         stableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "STABLE_DEBT_TOKEN_IMPL", "STABLE_DEBT_TOKEN_IMPL", "");
+
         vm.expectRevert("Contract instance has already been initialized");
         variableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "VARIABLE_DEBT_TOKEN_IMPL", "VARIABLE_DEBT_TOKEN_IMPL", "");
     }
