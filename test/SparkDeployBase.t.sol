@@ -38,9 +38,9 @@ abstract contract SparkDeployBaseTest is Test {
 
     // Configuration
     // Override this in the inheriting contract
-    string rpcUrl;
+    string  instanceId = "primary";
+    string  rpcUrl;
     uint256 forkBlock;
-    string instanceId = "primary";
     uint256 initialReserveCount;
 
     string config;
