@@ -5,11 +5,11 @@ import "../SparkDeployBase.t.sol";
 
 // A forked mainnet on Tenderly to test
 contract SparkDeploy_EthereumPrimaryTest is SparkDeployBaseTest {
-
     constructor() {
-        rpcUrl = getChain("mainnet").rpcUrl;
-        forkBlock = 16776533;
+        rpcUrl     = getChain("mainnet").rpcUrl;
+        forkBlock  = 16776533;
         instanceId = "primary";
+
         initialReserveCount = 6;
     }
 
