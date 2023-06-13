@@ -140,18 +140,20 @@ abstract contract SparkDeployBaseTest is Test {
         // NOTE: Also verify that no other address than the admin address has any role (verify with events)
         assertEq(address(aclManager.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
 
-        bytes32 defaultAdmin = aclManager.DEFAULT_ADMIN_ROLE();
+        bytes32 defaultAdmin   = aclManager.DEFAULT_ADMIN_ROLE();
+        bytes32 emergencyAdmin = aclManager.EMERGENCY_ADMIN_ROLE();
+        bytes32 poolAdmin      = aclManager.POOL_ADMIN_ROLE();
 
-        assertEq(aclManager.getRoleAdmin(aclManager.POOL_ADMIN_ROLE()),      defaultAdmin);
-        assertEq(aclManager.getRoleAdmin(aclManager.EMERGENCY_ADMIN_ROLE()), defaultAdmin);
+        assertEq(aclManager.getRoleAdmin(poolAdmin),      defaultAdmin);
+        assertEq(aclManager.getRoleAdmin(emergencyAdmin), defaultAdmin);
 
         assertTrue( aclManager.hasRole(defaultAdmin, admin));
         assertTrue(!aclManager.hasRole(defaultAdmin, deployer));
 
-        assertTrue( aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), admin));
-        assertTrue(!aclManager.hasRole(aclManager.POOL_ADMIN_ROLE(), deployer));
+        assertTrue( aclManager.hasRole(poolAdmin, admin));
+        assertTrue(!aclManager.hasRole(poolAdmin, deployer));
 
-        if (block.chainid == 1) assertTrue(aclManager.hasRole(aclManager.EMERGENCY_ADMIN_ROLE(), admin));     // FIXME missing on GOERLI
+        assertTrue(aclManager.hasRole(emergencyAdmin, admin));
 
         assertEq(aclManager.getRoleAdmin(aclManager.RISK_ADMIN_ROLE()),          defaultAdmin);
         assertEq(aclManager.getRoleAdmin(aclManager.FLASH_BORROWER_ROLE()),      defaultAdmin);

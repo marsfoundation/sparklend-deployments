@@ -50,7 +50,9 @@ contract DeploySpark is Script {
     PoolAddressesProvider poolAddressesProvider;
     AaveProtocolDataProvider protocolDataProvider;
     PoolConfigurator poolConfigurator;
+    PoolConfigurator poolConfiguratorImpl;
     Pool pool;
+    Pool poolImpl;
     ACLManager aclManager;
     AaveOracle aaveOracle;
 
@@ -69,8 +71,6 @@ contract DeploySpark is Script {
     UiIncentiveDataProviderV3 uiIncentiveDataProvider;
     WrappedTokenGatewayV3 wethGateway;
     WalletBalanceProvider walletBalanceProvider;
-
-    Pool poolImpl;
 
     InitializableAdminUpgradeabilityProxy incentivesProxy;
     RewardsController rewardsController;
@@ -95,12 +95,12 @@ contract DeploySpark is Script {
 
         poolAddressesProvider.setACLAdmin(deployer);
 
-        // 2. Deploy and data provider and pool configurator
+        // 2. Deploy data provider and pool configurator, initialize pool configurator
 
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
-        poolConfigurator     = new PoolConfigurator();
+        poolConfiguratorImpl = new PoolConfigurator();
 
-        poolConfigurator.initialize(poolAddressesProvider);
+        poolConfiguratorImpl.initialize(poolAddressesProvider);
 
         // 3. Deploy pool implementation and initialize
 
@@ -153,7 +153,7 @@ contract DeploySpark is Script {
 
         (treasury, treasuryImpl) = createCollector(admin);
 
-        // 11. Deploy initialize and configure rewards contracts
+        // 11. Deploy initialize and configure rewards contracts.
 
         incentivesProxy   = new InitializableAdminUpgradeabilityProxy();
         incentives        = RewardsController(address(incentivesProxy));
@@ -167,9 +167,12 @@ contract DeploySpark is Script {
             abi.encodeWithSignature("initialize(address)", address(emissionManager))
         );
         emissionManager.setRewardsController(address(incentives));
+
+        // 12. Update flash loan premium to zero.
+
         poolConfigurator.updateFlashloanPremiumTotal(0);    // Flash loans are free
 
-        // 12. Deploy data provider contracts.
+        // 13. Deploy data provider contracts.
 
         proxy                   = IEACAggregatorProxy(config.readAddress(".nativeTokenOracle"));
         uiPoolDataProvider      = new UiPoolDataProviderV3(proxy, proxy);
@@ -177,7 +180,7 @@ contract DeploySpark is Script {
         wethGateway             = new WrappedTokenGatewayV3(config.readAddress(".nativeToken"), admin, IPool(address(pool)));
         walletBalanceProvider   = new WalletBalanceProvider();
 
-        // 13. Set up oracle
+        // 14. Set up oracle.
 
         address[] memory assets;
         address[] memory oracles;
@@ -191,7 +194,7 @@ contract DeploySpark is Script {
         );
         poolAddressesProvider.setPriceOracle(address(aaveOracle));
 
-        // 14. Transfer all ownership from deployer to admin
+        // 15. Transfer all ownership from deployer to admin
 
         aclManager.addEmergencyAdmin(admin);
         aclManager.addPoolAdmin(admin);
@@ -221,8 +224,8 @@ contract DeploySpark is Script {
         ScriptTools.exportContract(instanceId, "poolAddressesProviderRegistry", address(registry));
 
         ScriptTools.exportContract(instanceId, "poolConfigurator",        address(poolConfigurator));
-        ScriptTools.exportContract(instanceId, "poolConfiguratorImpl",    address(poolConfigurator));
-        ScriptTools.exportContract(instanceId, "poolImpl",                address(pool));
+        ScriptTools.exportContract(instanceId, "poolConfiguratorImpl",    address(poolConfiguratorImpl));
+        ScriptTools.exportContract(instanceId, "poolImpl",                address(poolImpl));
         ScriptTools.exportContract(instanceId, "protocolDataProvider",    address(protocolDataProvider));
         ScriptTools.exportContract(instanceId, "stableDebtTokenImpl",     address(stableDebtTokenImpl));
         ScriptTools.exportContract(instanceId, "treasury",                address(treasury));
