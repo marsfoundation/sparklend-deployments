@@ -50,7 +50,9 @@ contract DeploySpark is Script {
     PoolAddressesProvider poolAddressesProvider;
     AaveProtocolDataProvider protocolDataProvider;
     PoolConfigurator poolConfigurator;
+    PoolConfigurator poolConfiguratorImpl;
     Pool pool;
+    Pool poolImpl;
     ACLManager aclManager;
     AaveOracle aaveOracle;
 
@@ -70,6 +72,10 @@ contract DeploySpark is Script {
     WrappedTokenGatewayV3 wethGateway;
     WalletBalanceProvider walletBalanceProvider;
 
+    InitializableAdminUpgradeabilityProxy incentivesProxy;
+    RewardsController rewardsController;
+    IEACAggregatorProxy proxy;
+
     function run() external {
         //vm.createSelectFork(vm.envString("ETH_RPC_URL"));     // Multi-chain not supported in Foundry yet (use CLI arg for now)
         instanceId = vm.envOr("INSTANCE_ID", string("primary"));
@@ -77,45 +83,83 @@ contract DeploySpark is Script {
 
         config = ScriptTools.loadConfig("config");
 
-        admin = config.readAddress(".admin");
+        admin    = config.readAddress(".admin");
         deployer = msg.sender;
 
         vm.startBroadcast();
-        registry = new PoolAddressesProviderRegistry(deployer);
+
+        // 1. Deploy and configure registry and addresses provider
+
+        registry              = new PoolAddressesProviderRegistry(deployer);
         poolAddressesProvider = new PoolAddressesProvider(config.readString(".marketId"), deployer);
+
         poolAddressesProvider.setACLAdmin(deployer);
+
+        // 2. Deploy data provider and pool configurator, initialize pool configurator
+
         protocolDataProvider = new AaveProtocolDataProvider(poolAddressesProvider);
-        PoolConfigurator _poolConfigurator = new PoolConfigurator();
-        _poolConfigurator.initialize(poolAddressesProvider);
-        Pool _pool = new Pool(poolAddressesProvider);
-        _pool.initialize(poolAddressesProvider);
+        poolConfiguratorImpl = new PoolConfigurator();
+
+        poolConfiguratorImpl.initialize(poolAddressesProvider);
+
+        // 3. Deploy pool implementation and initialize
+
+        poolImpl = new Pool(poolAddressesProvider);
+        poolImpl.initialize(poolAddressesProvider);
+
+        // 4. Deploy and configure ACL manager
+
         aclManager = new ACLManager(poolAddressesProvider);
         aclManager.addPoolAdmin(deployer);
+
+        // 5. Additional configuration for registry and pool address provider
+
         registry.registerAddressesProvider(address(poolAddressesProvider), 1);
 
         poolAddressesProvider.setPoolDataProvider(address(protocolDataProvider));
-        poolAddressesProvider.setPoolImpl(address(_pool));
+        poolAddressesProvider.setPoolImpl(address(poolImpl));
+
+        // 6. Get pool instance
+
         pool = Pool(poolAddressesProvider.getPool());
-        poolAddressesProvider.setPoolConfiguratorImpl(address(_poolConfigurator));
+
+        // 7. Set the Pool Configurator implementation and ACL manager and get the pool configurator instance
+
+        poolAddressesProvider.setPoolConfiguratorImpl(address(poolConfigurator));
         poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         poolAddressesProvider.setACLManager(address(aclManager));
 
+        // 8. Deploy and initialize aToken instance
+
         aTokenImpl = new AToken(pool);
         aTokenImpl.initialize(pool, address(0), address(0), IAaveIncentivesController(address(0)), 0, "SPTOKEN_IMPL", "SPTOKEN_IMPL", "");
+
+        // 9. Deploy and initialize stableDebtToken instance
+
         stableDebtTokenImpl = new StableDebtToken(pool);
         stableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "STABLE_DEBT_TOKEN_IMPL", "STABLE_DEBT_TOKEN_IMPL", "");
+
+        // 9. Deploy and initialize variableDebtToken instance
+
         variableDebtTokenImpl = new VariableDebtToken(pool);
         variableDebtTokenImpl.initialize(pool, address(0), IAaveIncentivesController(address(0)), 0, "VARIABLE_DEBT_TOKEN_IMPL", "VARIABLE_DEBT_TOKEN_IMPL", "");
 
+        // 10. Deploy Collector, CollectorController and treasury contracts.
+
         treasuryController = new CollectorController(admin);
-        collectorImpl = new Collector();
+        collectorImpl      = new Collector();
+
         collectorImpl.initialize(address(0));
+
         (treasury, treasuryImpl) = createCollector(admin);
 
-        InitializableAdminUpgradeabilityProxy incentivesProxy = new InitializableAdminUpgradeabilityProxy();
-        incentives = RewardsController(address(incentivesProxy));
-        emissionManager = new EmissionManager(deployer);
-        RewardsController rewardsController = new RewardsController(address(emissionManager));
+        // 11. Deploy initialize and configure rewards contracts.
+
+        incentivesProxy   = new InitializableAdminUpgradeabilityProxy();
+        incentives        = RewardsController(address(incentivesProxy));
+        emissionManager   = new EmissionManager(deployer);
+        rewardsController = new RewardsController(address(emissionManager));
+
         rewardsController.initialize(address(0));
         incentivesProxy.initialize(
             address(rewardsController),
@@ -123,15 +167,21 @@ contract DeploySpark is Script {
             abi.encodeWithSignature("initialize(address)", address(emissionManager))
         );
         emissionManager.setRewardsController(address(incentives));
+
+        // 12. Update flash loan premium to zero.
+
         poolConfigurator.updateFlashloanPremiumTotal(0);    // Flash loans are free
 
-        IEACAggregatorProxy proxy = IEACAggregatorProxy(config.readAddress(".nativeTokenOracle"));
-        uiPoolDataProvider = new UiPoolDataProviderV3(proxy, proxy);
-        uiIncentiveDataProvider = new UiIncentiveDataProviderV3();
-        wethGateway = new WrappedTokenGatewayV3(config.readAddress(".nativeToken"), admin, IPool(address(pool)));
-        walletBalanceProvider = new WalletBalanceProvider();
+        // 13. Deploy data provider contracts.
 
-        // Setup oracles
+        proxy                   = IEACAggregatorProxy(config.readAddress(".nativeTokenOracle"));
+        uiPoolDataProvider      = new UiPoolDataProviderV3(proxy, proxy);
+        uiIncentiveDataProvider = new UiIncentiveDataProviderV3();
+        wethGateway             = new WrappedTokenGatewayV3(config.readAddress(".nativeToken"), admin, IPool(address(pool)));
+        walletBalanceProvider   = new WalletBalanceProvider();
+
+        // 14. Set up oracle.
+
         address[] memory assets;
         address[] memory oracles;
         aaveOracle = new AaveOracle(
@@ -139,55 +189,60 @@ contract DeploySpark is Script {
             assets,
             oracles,
             address(0),
-            address(0),     // USD
+            address(0),  // USD
             1e8
         );
         poolAddressesProvider.setPriceOracle(address(aaveOracle));
 
-        // Change all ownership to admin
+        // 15. Transfer all ownership from deployer to admin
+
         aclManager.addEmergencyAdmin(admin);
         aclManager.addPoolAdmin(admin);
         aclManager.removePoolAdmin(deployer);
         aclManager.grantRole(aclManager.DEFAULT_ADMIN_ROLE(), admin);
         aclManager.revokeRole(aclManager.DEFAULT_ADMIN_ROLE(), deployer);
+
         poolAddressesProvider.setACLAdmin(admin);
         poolAddressesProvider.transferOwnership(admin);
+
         registry.transferOwnership(admin);
         emissionManager.transferOwnership(admin);
 
         vm.stopBroadcast();
 
-        ScriptTools.exportContract(instanceId, "admin", admin);
-        ScriptTools.exportContract(instanceId, "deployer", deployer);
-        ScriptTools.exportContract(instanceId, "poolAddressesProviderRegistry", address(registry));
-        ScriptTools.exportContract(instanceId, "poolAddressesProvider", address(poolAddressesProvider));
-        ScriptTools.exportContract(instanceId, "protocolDataProvider", address(protocolDataProvider));
-        ScriptTools.exportContract(instanceId, "poolConfigurator", address(poolConfigurator));
-        ScriptTools.exportContract(instanceId, "poolConfiguratorImpl", address(_poolConfigurator));
-        ScriptTools.exportContract(instanceId, "pool", address(pool));
-        ScriptTools.exportContract(instanceId, "poolImpl", address(_pool));
-        ScriptTools.exportContract(instanceId, "aclManager", address(aclManager));
-        ScriptTools.exportContract(instanceId, "aaveOracle", address(aaveOracle));
-        ScriptTools.exportContract(instanceId, "aTokenImpl", address(aTokenImpl));
-        ScriptTools.exportContract(instanceId, "stableDebtTokenImpl", address(stableDebtTokenImpl));
-        ScriptTools.exportContract(instanceId, "variableDebtTokenImpl", address(variableDebtTokenImpl));
-        ScriptTools.exportContract(instanceId, "treasury", address(treasury));
-        ScriptTools.exportContract(instanceId, "treasuryImpl", address(treasuryImpl));
-        ScriptTools.exportContract(instanceId, "treasuryController", address(treasuryController));
-        ScriptTools.exportContract(instanceId, "incentives", address(incentives));
-        ScriptTools.exportContract(instanceId, "incentivesImpl", address(rewardsController));
+        ScriptTools.exportContract(instanceId, "aTokenImpl",      address(aTokenImpl));
+        ScriptTools.exportContract(instanceId, "aaveOracle",      address(aaveOracle));
+        ScriptTools.exportContract(instanceId, "aclManager",      address(aclManager));
+        ScriptTools.exportContract(instanceId, "admin",           address(admin));
+        ScriptTools.exportContract(instanceId, "deployer",        address(deployer));
         ScriptTools.exportContract(instanceId, "emissionManager", address(emissionManager));
-        ScriptTools.exportContract(instanceId, "uiPoolDataProvider", address(uiPoolDataProvider));
+        ScriptTools.exportContract(instanceId, "incentives",      address(incentives));
+        ScriptTools.exportContract(instanceId, "incentivesImpl",  address(rewardsController));
+        ScriptTools.exportContract(instanceId, "pool",            address(pool));
+
+        ScriptTools.exportContract(instanceId, "poolAddressesProvider",         address(poolAddressesProvider));
+        ScriptTools.exportContract(instanceId, "poolAddressesProviderRegistry", address(registry));
+
+        ScriptTools.exportContract(instanceId, "poolConfigurator",        address(poolConfigurator));
+        ScriptTools.exportContract(instanceId, "poolConfiguratorImpl",    address(poolConfiguratorImpl));
+        ScriptTools.exportContract(instanceId, "poolImpl",                address(poolImpl));
+        ScriptTools.exportContract(instanceId, "protocolDataProvider",    address(protocolDataProvider));
+        ScriptTools.exportContract(instanceId, "stableDebtTokenImpl",     address(stableDebtTokenImpl));
+        ScriptTools.exportContract(instanceId, "treasury",                address(treasury));
+        ScriptTools.exportContract(instanceId, "treasuryController",      address(treasuryController));
+        ScriptTools.exportContract(instanceId, "treasuryImpl",            address(treasuryImpl));
         ScriptTools.exportContract(instanceId, "uiIncentiveDataProvider", address(uiIncentiveDataProvider));
-        ScriptTools.exportContract(instanceId, "wethGateway", address(wethGateway));
-        ScriptTools.exportContract(instanceId, "walletBalanceProvider", address(walletBalanceProvider));
+        ScriptTools.exportContract(instanceId, "uiPoolDataProvider",      address(uiPoolDataProvider));
+        ScriptTools.exportContract(instanceId, "variableDebtTokenImpl",   address(variableDebtTokenImpl));
+        ScriptTools.exportContract(instanceId, "walletBalanceProvider",   address(walletBalanceProvider));
+        ScriptTools.exportContract(instanceId, "wethGateway",             address(wethGateway));
     }
 
     function createCollector(address _admin) internal returns (Collector collector, address impl) {
-        InitializableAdminUpgradeabilityProxy proxy = new InitializableAdminUpgradeabilityProxy();
-        collector = Collector(address(proxy));
+        InitializableAdminUpgradeabilityProxy collectorProxy = new InitializableAdminUpgradeabilityProxy();
+        collector = Collector(address(collectorProxy));
         impl = address(collectorImpl);
-        proxy.initialize(
+        collectorProxy.initialize(
             address(collectorImpl),
             _admin,
             abi.encodeWithSignature("initialize(address)", address(treasuryController))
