@@ -81,7 +81,7 @@ contract DeploySpark is Script {
         instanceId = vm.envOr("INSTANCE_ID", string("primary"));
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config = ScriptTools.loadConfig("config");
+        config = ScriptTools.loadConfig(instanceId);
 
         admin    = config.readAddress(".admin");
         deployer = msg.sender;
@@ -125,7 +125,7 @@ contract DeploySpark is Script {
 
         // 7. Set the Pool Configurator implementation and ACL manager and get the pool configurator instance
 
-        poolAddressesProvider.setPoolConfiguratorImpl(address(poolConfigurator));
+        poolAddressesProvider.setPoolConfiguratorImpl(address(poolConfiguratorImpl));
         poolConfigurator = PoolConfigurator(poolAddressesProvider.getPoolConfigurator());
         poolAddressesProvider.setACLManager(address(aclManager));
 
