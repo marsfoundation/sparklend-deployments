@@ -25,9 +25,10 @@ contract DeployPoolImplementation is Script {
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
         
         deployedContracts = ScriptTools.readOutput(instanceId);
+        
+        poolAddressesProvider = IPoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
 
         vm.startBroadcast();
-        poolAddressesProvider = IPoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
         poolImpl = new Pool(poolAddressesProvider);
         poolImpl.initialize(poolAddressesProvider);
         vm.stopBroadcast();
