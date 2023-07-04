@@ -1,3 +1,10 @@
 {
-  "poolImpl": "0xFC54d179e05781939af5F4aF9AaD24966f4E1e04"
+  "poolImpl": "0xFC54d179e05781939af5F4aF9AaD24966f4E1e04",
+  "BorrowLogic": "0x2634a7554343350f3ff974eb76bcc378c6e05e19",
+  "BridgeLogic": "0xf9733fcae7ce0e5447be317e212aa7612c1450ec",
+  "EModeLogic": "0x21fc615cf9cbb3ced17ed622afdbbed3d909028d",
+  "FlashLoanLogic": "0xc9d8b33e77c4c62e051b6174d0cbb0c1f3ea067a",
+  "LiquidationLogic": "0xb88bcb50f5364fa6b712e7a16d6aa44b28a58f19",
+  "PoolLogic": "0x5490340ed948154b2cefb4e99f7a7c21f03afb18",
+  "SupplyLogic": "0xfc54d179e05781939af5f4af9aad24966f4e1e04"
 }
