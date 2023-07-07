@@ -3,8 +3,8 @@
     "BorrowLogic": "0x10c6526cc71dbabce29d5759e2e5f01ca21721a8",
     "BridgeLogic": "0x530a9e5153278e89377a5a2dd8a113c4ec8560f0",
     "EModeLogic": "0x99fa5c3b5ca245787c79c70f667a24176e189d08",
-    "FlashLoanLogic": "0x782569c705c0eb460040eedd30bf27ba06374efb",
-    "LiquidationLogic": "0xb13617f468a464b1103b628379e428ced07738a4",
-    "PoolLogic": "0xe87f0b8d49e8d74ddaa3f886a0e5c27280236fc3",
-    "SupplyLogic": "0x38c45a91f2b69b25e115238c8e82548fb20131be"
+    "FlashLoanLogic": "0xA67d62f75F8D11395eE120CA8390Ab3bF01f0b8A",
+    "LiquidationLogic": "0x0F9149c4d6018A5999AdA5b592E372845cfeC725",
+    "PoolLogic": "0x216738c7B1E83cC1A1FFcD3433226B0a3B174484",
+    "SupplyLogic": "0x1B94E2F3818E1D657bE2A62D37560514b52DB17F"
   }
