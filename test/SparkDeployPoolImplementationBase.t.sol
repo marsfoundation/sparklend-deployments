@@ -7,6 +7,7 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
 import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
+import {IERC20} from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 abstract contract SparkDeployPoolImplementationBaseTest is Test {
 
@@ -22,8 +23,12 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
     string deployedContracts;
     string upgradeContracts;
 
+    address admin;
+
     PoolAddressesProvider poolAddressesProvider;
+    Pool pool;
     Pool poolImpl;
+    IERC20 weth;
 
     function setUp() public {
         if (forkBlock > 0) vm.createSelectFork(rpcUrl, forkBlock);
@@ -34,8 +39,12 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
         deployedContracts = ScriptTools.readOutput(instanceId);
         upgradeContracts  = ScriptTools.readOutput(string(abi.encodePacked(instanceId, "-pool")));
 
+        admin = config.readAddress(".admin");
+
         poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
+        pool                  = Pool(deployedContracts.readAddress(".pool"));
         poolImpl              = Pool(upgradeContracts.readAddress(".poolImpl"));
+        weth                  = IERC20(deployedContracts.readAddress(".WETH_token"));
     }
 
     function test_poolImpl() public {
@@ -60,7 +69,7 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
         //_checkLibrary("FlashLoanLogic");
         //_checkLibrary("LiquidationLogic");
         //_checkLibrary("PoolLogic");
-        //_checkLibrary("SupplyLogic");
+        _checkLibrary("SupplyLogic");
     }
 
     function _checkLibrary(string memory libName) internal {
@@ -83,13 +92,13 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
 
         assertEq(actualCode.length, expectedCode.length, err);
 
-        keccak256(actualCode);
-        keccak256(expectedCode);
+        //vm.toString(expectedCode);
+        //vm.toString(actualCode);
 
-        // TODO - verify it is okay to ignore these last two words
+        uint256 metaDataLength = 64;    // 32 bytes hash + 2 bytes version ?? not clear why we need more
         uint256 l = actualCode.length;
-        uint256 ms = l - 64;
-        uint256 me = ms + 64;
+        uint256 ms = l - metaDataLength;
+        uint256 me = ms + metaDataLength;
         for (uint256 i = 0; i < actualCode.length; i++) {
             if (i >= ms && i < me) continue; // skip the metadata
             //assertEq(actualCode[i], expectedCode[i], err);
@@ -141,6 +150,16 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
             }
             // We'll return zero if the bytecode is shorter than two bytes.
         }
+    }
+
+    function test_upgrade() public {
+        deal(address(weth), address(this), 100 ether);
+        weth.approve(address(pool), 10000 ether);
+        pool.supply(address(weth), 1 ether, address(this), 0);
+
+        vm.prank(admin); poolAddressesProvider.setPoolImpl(address(poolImpl));
+
+        pool.supply(address(weth), 2 ether, address(this), 0);
     }
 
 }
