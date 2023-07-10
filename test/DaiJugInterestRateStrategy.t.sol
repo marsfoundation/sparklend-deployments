@@ -97,6 +97,7 @@ contract DaiJugInterestRateStrategyTest is DssTest {
     function test_constructor() public {
         assertEq(address(interestStrategy.vat()), address(vat));
         assertEq(address(interestStrategy.jug()), address(jug));
+        assertEq(interestStrategy.dsrIlk(), ILK_JUG);
         assertEq(interestStrategy.ilk(), ILK);
         assertEq(interestStrategy.baseRateConversion(), 1111111111111111111111111111);
         assertEq(interestStrategy.borrowSpread(), 50 * RBPS);
