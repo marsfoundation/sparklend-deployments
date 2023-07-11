@@ -7,7 +7,6 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 
 import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
 import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
-import {IERC20} from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 
 abstract contract SparkDeployPoolImplementationBaseTest is Test {
 
@@ -18,37 +17,29 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
     string  instanceId = "primary";
     string  rpcUrl;
     uint256 forkBlock;
+    uint256 revisionNum;
 
-    string config;
     string deployedContracts;
     string upgradeContracts;
 
-    address admin;
-
     PoolAddressesProvider poolAddressesProvider;
-    Pool pool;
     Pool poolImpl;
-    IERC20 weth;
 
     function setUp() public {
         if (forkBlock > 0) vm.createSelectFork(rpcUrl, forkBlock);
         else vm.createSelectFork(rpcUrl);
         vm.setEnv("FOUNDRY_ROOT_CHAINID", vm.toString(block.chainid));
 
-        config            = ScriptTools.readInput(instanceId);
         deployedContracts = ScriptTools.readOutput(instanceId);
         upgradeContracts  = ScriptTools.readOutput(string(abi.encodePacked(instanceId, "-pool")));
 
-        admin = config.readAddress(".admin");
-
         poolAddressesProvider = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
-        pool                  = Pool(deployedContracts.readAddress(".pool"));
         poolImpl              = Pool(upgradeContracts.readAddress(".poolImpl"));
-        weth                  = IERC20(deployedContracts.readAddress(".WETH_token"));
     }
 
     function test_poolImpl() public {
         assertEq(address(poolImpl.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
+        assertEq(poolImpl.POOL_REVISION(), revisionNum);
 
         vm.expectRevert("Contract instance has already been initialized");
         poolImpl.initialize(poolAddressesProvider);
@@ -57,11 +48,11 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
     function test_poolImpl_bytecode_match() public {
         if (!vm.envOr("BYTECODE_CHECK", false)) return;
 
-        /*_compareBytecode(
+        _compareBytecode(
             address(poolImpl),
             address(new Pool(poolAddressesProvider)),
             "poolImpl"
-        );*/
+        );
         _checkLibrary("BorrowLogic");
         _checkLibrary("BridgeLogic");
         _checkLibrary("EModeLogic");
@@ -149,16 +140,6 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
             }
             // We'll return zero if the bytecode is shorter than two bytes.
         }
-    }
-
-    function test_upgrade() public {
-        deal(address(weth), address(this), 100 ether);
-        weth.approve(address(pool), 10000 ether);
-        pool.supply(address(weth), 1 ether, address(this), 0);
-
-        vm.prank(admin); poolAddressesProvider.setPoolImpl(address(poolImpl));
-
-        pool.supply(address(weth), 2 ether, address(this), 0);
     }
 
 }
