@@ -11,6 +11,8 @@ Deploy Spark Lend (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC
 Deploy Config Engine (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
 Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please note you need to set the proper `POOL_REVISION` in `Pool.sol`)  
 
+Please note there may be some custom configs so please check the `Makefile`.
+
 ## Verifying Bytecode on Deploys
 
 ### To Install
@@ -21,7 +23,7 @@ Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please 
 
 ### To Run
 
-Run `./validate-deploy.sh path/to/broadcast.json` (Be sure to `forge build` with proper settings first)
+Run `./validate-deploy.sh path/to/broadcast.json --local` (Be sure to `forge build` with proper settings first)
 
 If you want to delete previously verified contracts then run `rm -rf /tmp/sourcify/repository/contracts/*`
 

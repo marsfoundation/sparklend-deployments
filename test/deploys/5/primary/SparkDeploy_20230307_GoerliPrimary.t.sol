@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "../../../SparkDeployBase.t.sol";
 
 contract SparkDeploy_20230307_GoerliPrimaryTest is SparkDeployBaseTest {
+    
     constructor() {
         rpcUrl     = getChain("goerli").rpcUrl;
         forkBlock  = 8612863;
