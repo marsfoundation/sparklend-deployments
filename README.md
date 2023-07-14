@@ -13,11 +13,15 @@ Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please 
 
 ## Verifying Bytecode on Deploys
 
+### To Install
+
 1. Install local instance of sourcify via https://docs.sourcify.dev/docs/run-locally/#running-the-server
 2. Default `.env.dev` is mostly fine, but update `NODE_URL_MAINNET` to be a valid rpc endpoint.
 3. Start the server `npm run server:start`.
 
-Run `./validate-deploy.sh path/to/broadcast.json`
+### To Run
+
+Run `./validate-deploy.sh path/to/broadcast.json` (Be sure to `forge build` with proper settings first)
 
 If you want to delete previously verified contracts then run `rm -rf /tmp/sourcify/repository/contracts/*`
 

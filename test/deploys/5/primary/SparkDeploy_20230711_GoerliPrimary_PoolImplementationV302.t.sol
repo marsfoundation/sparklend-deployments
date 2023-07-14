@@ -7,7 +7,7 @@ contract SparkDeploy_20230711_GoerliPrimary_PoolImplementationV302Test is SparkD
     
     constructor() {
         rpcUrl      = getChain("goerli").rpcUrl;
-        //forkBlock   = 9211177;
+        forkBlock   = 9342674;
         instanceId  = "primary";
         revisionNum = 2;
     }

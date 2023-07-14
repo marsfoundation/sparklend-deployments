@@ -7,7 +7,7 @@ contract SparkDeploy_20230711_EthereumPrimary_PoolImplementationV302Test is Spar
     
     constructor() {
         rpcUrl      = getChain("mainnet").rpcUrl;
-        //forkBlock   = 17570286;
+        forkBlock   = 17689592;
         instanceId  = "primary";
         revisionNum = 2;
     }
