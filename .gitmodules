@@ -5,6 +5,7 @@
 [submodule "lib/aave-v3-periphery"]
 	path = lib/aave-v3-periphery
 	url = https://github.com/aave/aave-v3-periphery
+	branch = v2.4.1
 [submodule "lib/V2-V3-migration-helpers"]
 	path = lib/V2-V3-migration-helpers
 	url = https://github.com/marsfoundation/V2-V3-migration-helpers
