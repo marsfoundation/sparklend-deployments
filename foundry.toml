@@ -9,6 +9,7 @@ remappings = [
     'solidity-utils/=lib/V2-V3-migration-helpers/lib/solidity-utils/src/'
 ]
 fs_permissions = [
+    { access = "read", path = "./out/"},
     { access = "read", path = "./script/input/"},
     { access = "read-write", path = "./script/output/"},
     { access = "write", path = "./reports" }

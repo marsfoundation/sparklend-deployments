@@ -1,11 +1,11 @@
 [submodule "lib/aave-v3-core"]
 	path = lib/aave-v3-core
 	url = https://github.com/aave/aave-v3-core
-	branch = v1.16.2
+	branch = v1.18.0
 [submodule "lib/aave-v3-periphery"]
 	path = lib/aave-v3-periphery
 	url = https://github.com/aave/aave-v3-periphery
-	branch = v3.0.1
+	branch = v2.4.1
 [submodule "lib/V2-V3-migration-helpers"]
 	path = lib/V2-V3-migration-helpers
 	url = https://github.com/marsfoundation/V2-V3-migration-helpers

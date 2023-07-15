@@ -9,6 +9,21 @@ Deploy Spark Lend: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`
 Deploy Config Engine: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
 Deploy Spark Lend (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
 Deploy Config Engine (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
+Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please note you need to set the proper `POOL_REVISION` in `Pool.sol`)  
+
+## Verifying Bytecode on Deploys
+
+### To Install
+
+1. Install local instance of sourcify via https://docs.sourcify.dev/docs/run-locally/#running-the-server
+2. Default `.env.dev` is mostly fine, but update `NODE_URL_MAINNET` to be a valid rpc endpoint.
+3. Start the server `npm run server:start`.
+
+### To Run
+
+Run `./validate-deploy.sh path/to/broadcast.json` (Be sure to `forge build` with proper settings first)
+
+If you want to delete previously verified contracts then run `rm -rf /tmp/sourcify/repository/contracts/*`
 
 ## Custom Code
 
