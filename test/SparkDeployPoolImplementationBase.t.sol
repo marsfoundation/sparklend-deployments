@@ -39,7 +39,7 @@ abstract contract SparkDeployPoolImplementationBaseTest is Test {
 
     function test_poolImpl() public {
         assertEq(address(poolImpl.ADDRESSES_PROVIDER()), address(poolAddressesProvider));
-        assertEq(poolImpl.POOL_REVISION(), revisionNum);
+        assertEq(poolImpl.POOL_REVISION(),               revisionNum);
 
         vm.expectRevert("Contract instance has already been initialized");
         poolImpl.initialize(poolAddressesProvider);
