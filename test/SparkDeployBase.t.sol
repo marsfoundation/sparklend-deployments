@@ -32,6 +32,9 @@ import {WrappedTokenGatewayV3} from "aave-v3-periphery/misc/WrappedTokenGatewayV
 import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvider.sol";
 
+// This is used sometimes for testnets so bring it into the compiler even though it's not used here
+import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
+
 abstract contract SparkDeployBaseTest is Test {
 
     using stdJson for string;

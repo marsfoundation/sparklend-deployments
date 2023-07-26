@@ -1,7 +1,7 @@
 {
     "admin": "0xAC2D2F6D4161A4b9fF14F64187c4252683DD5B09",
     "marketId": "Spark Protocol - Gnosis Chain Chiado Testnet - Primary",
-    "nativeToken": "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d",
-    "nativeTokenOracle": "0x678df3415fc31947dA4324eC63212874be5a82f8",
-    "daiToken": "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d"
+    "nativeToken": "0x18c8a7ec7897177E4529065a7E7B0878358B3BfF",
+    "nativeTokenOracle": "0xeD56689ee0d21a1Da68102e5EcBDe3fD1d606709",
+    "daiToken": "0x18c8a7ec7897177E4529065a7E7B0878358B3BfF"
 }
