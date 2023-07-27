@@ -1,0 +1,54 @@
+{
+    "transactions": [
+      {
+        "transactionType": "CREATE",
+        "contractName": "BorrowLogic",
+        "contractAddress": "0x5d834EAD0a80CF3b88c06FeeD6e8E0Fcae2daEE5"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "BridgeLogic",
+        "contractAddress": "0x57572C9e795F4B6A748EFBeAB7E0a1B9996A0A24"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "EModeLogic",
+        "contractAddress": "0xeAbd65827E91Ac3aE5471C11A329fbc675cA46d6"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "FlashLoanLogic",
+        "contractAddress": "0x0A62276bFBF1Ad8443f37Da8630d407408085c8b"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "LiquidationLogic",
+        "contractAddress": "0xe175De51F29d822b86e46A9A61246Ec90631210D"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "PoolLogic",
+        "contractAddress": "0xD5256981e08492AFc543aF2a779Af989E9f9F7e7"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "SupplyLogic",
+        "contractAddress": "0x39dF4b1329D41A9AE20e17BeFf39aAbd2f049128"
+      },
+      {
+        "transactionType": "CREATE",
+        "contractName": "Pool",
+        "contractAddress": "0xF1Cd4193bbc1aD4a23E833170f49d60f3D35a621"
+      }
+    ],
+    "libraries": [
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/BorrowLogic.sol:BorrowLogic:0x5d834EAD0a80CF3b88c06FeeD6e8E0Fcae2daEE5",
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/BridgeLogic.sol:BridgeLogic:0x57572C9e795F4B6A748EFBeAB7E0a1B9996A0A24",
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/EModeLogic.sol:EModeLogic:0xeAbd65827E91Ac3aE5471C11A329fbc675cA46d6",
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/FlashLoanLogic.sol:FlashLoanLogic:0x0A62276bFBF1Ad8443f37Da8630d407408085c8b",
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/LiquidationLogic.sol:LiquidationLogic:0xe175De51F29d822b86e46A9A61246Ec90631210D",
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/PoolLogic.sol:PoolLogic:0xD5256981e08492AFc543aF2a779Af989E9f9F7e7",
+      "lib/aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol:SupplyLogic:0x39dF4b1329D41A9AE20e17BeFf39aAbd2f049128"
+    ],
+    "chain": 1
+  }
