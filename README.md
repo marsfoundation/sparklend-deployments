@@ -21,6 +21,8 @@ Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please 
 
 ### Cross-Chain Governance Relayer
 
+You will need to deploy the L2 Executor on the L2 and the cross-chain forwarder on L1 (usually Ethereum).
+
 Deploy L2 Executor: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-executor`  
 Deploy Cross Chain Forwarder: `ETH_RPC_URL=<YOUR RPC ENDPOINT> FOUNDRY_SCRIPT_CONFIG=<FORWARDER CONFIG> make deploy-forwarder`  
 
