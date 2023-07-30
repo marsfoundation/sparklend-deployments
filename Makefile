@@ -4,3 +4,7 @@ deploy-pool :; forge script script/DeployPoolImplementation.s.sol:DeployPoolImpl
 
 # Special case for verifier url and we remove --slow
 deploy-gnosis :; ETHERSCAN_API_KEY=${GNOSISSCAN_API_KEY} forge script script/DeploySpark.s.sol:DeploySpark --rpc-url ${ETH_RPC_URL} --sender ${ETH_FROM} --broadcast --verify --verifier-url "https://api.gnosisscan.io/api"
+
+# Governance relays (L2 Executor and Forwarder)
+deploy-executor  :; forge script script/DeployL2Executor.s.sol:DeployL2Executor --rpc-url ${ETH_RPC_URL} --sender ${ETH_FROM} --broadcast --verify --slow
+deploy-forwarder :; forge script script/DeployCrossChainForwarder.s.sol:DeployCrossChainForwarder --rpc-url ${ETH_RPC_URL} --sender ${ETH_FROM} --broadcast --verify --slow

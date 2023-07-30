@@ -4,12 +4,25 @@ This is the repository for Spark Lend deploy scripts and custom code. Primarily 
 
 ## Usage
 
+### Testing
+
 Run tests: `make test`  
+
+### Deploy Spark Instance
+
 Deploy Spark Lend: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
 Deploy Config Engine: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
 Deploy Spark Lend (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
 Deploy Config Engine (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
+
+### Implementation Upgrades
+
 Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please note you need to set the proper `POOL_REVISION` in `Pool.sol`)  
+
+### Cross-Chain Governance Relayer
+
+Deploy L2 Executor: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-executor`  
+Deploy Cross Chain Forwarder: `ETH_RPC_URL=<YOUR RPC ENDPOINT> FOUNDRY_SCRIPT_CONFIG=<FORWARDER CONFIG> make deploy-forwarder`  
 
 Please note there may be some custom configs so please check the `Makefile`.
 
