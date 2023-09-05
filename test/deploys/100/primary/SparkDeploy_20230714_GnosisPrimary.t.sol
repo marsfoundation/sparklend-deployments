@@ -7,7 +7,7 @@ contract SparkDeploy_20230714_GnosisPrimaryTest is SparkDeployBaseTest {
     
     constructor() {
         rpcUrl     = getChain("gnosis_chain").rpcUrl;
-        forkBlock  = 28941997;
+        forkBlock  = 29817464;
         instanceId = "primary";
     }
 
