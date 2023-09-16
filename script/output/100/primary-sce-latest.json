@@ -1,0 +1,8 @@
+{
+  "admin": "0xc4218C1127cB24a0D6c1e7D25dc34e10f2625f5A",
+  "configEngine": "0x36eddc380C7f370e5f05Da5Bd7F970a27f063e39",
+  "deployer": "0xd1236a6A111879d9862f8374BA15344b6B233Fbd",
+  "proxyAdmin": "0xf76B8262dfd60fb7432C6b55E91f42b6da953647",
+  "ratesFactory": "0xe04ba71E46fCd7DBB9334D8FBa13d476f38EB0f8",
+  "transparentProxyFactory": "0x91277b74a9d1Cc30fA0ff4927C287fe55E307D78"
+}
