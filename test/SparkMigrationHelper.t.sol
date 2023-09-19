@@ -36,7 +36,7 @@ contract MigrationHelperTest is Test {
   mapping(address => uint256) private assetsIndex;
 
   function setUp() public {
-    vm.createSelectFork(vm.envString("ETH_RPC_URL"));
+    vm.createSelectFork(getChain("mainnet").rpcUrl);
 
     migrationHelper = new SparkMigrationHelper();
 
