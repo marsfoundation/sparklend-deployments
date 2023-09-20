@@ -28,6 +28,7 @@ As deployer:
 1. Copy the broadcast file generated from `broadcast/DeploySpark.s.sol/<CHAINID>/run-latest.json` into the newly created broadcast directory. Rename it to `primary-<DATE>.json`. This broadcast file will be used to validate the deploy by reviewers.
 1. Run `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine` to deploy an instance of the config engine.
 1. This will generate an output file in `script/output/<CHAINID>/primary-sce-<TIMESTAMP>.json`. Rename this to `primary-sce-latest.json`.
+1. Copy the broadcast file generated from `broadcast/DeploySparkConfigEngine.s.sol/<CHAINID>/run-latest.json` into the broadcast directory. Rename it to `primary-sce-<DATE>.json`.
 1. Copy the file `test/deploys/100/primary/SparkDeploy_20230714_GnosisPrimary.t.sol` to `test/deploys/<CHAINID>/primary/SparkDeploy_<DATE>_<CHAINNAME>Primary.t.sol`.
 1. Update the file as necessary. Tests should pass.
 1. Notify the reviewers that the deploy is ready for review.
@@ -37,7 +38,7 @@ As reviewer:
 1. Verify the deployer followed all steps above.
 1. Verify all contract addresses in the json files makes sense. IE `admin` is the L2 Executor. `pool` is the pool proxy, etc.
 1. Run `forge test`. This will ensure the deployment configuration was done correctly, and will check most of the permissions (not all - you need to check some manually below).
-1. Verify the bytecode of all deployed contracts. (see detailed instructions below on how to do this)
+1. Verify the bytecode of all deployed contracts for both the Spark Lend and Config Engine Deploys. (see detailed instructions below on how to do this)
 1. Manually verify no extra permissions have been added on the `ACLManager`. The automated checks will prove that `admin` has access and `deployer` doesn't, but the `deployer` may have added another address in an intermediate transaction. In the transactions tab for the `ACLManager` ensure that only the proper adds and removes that correspond to the deployer script are present with either the address `deployer` (which should be the deployer address) and the `admin`.
 
 ## Verifying Bytecode on Deploys
