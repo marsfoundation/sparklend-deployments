@@ -37,6 +37,7 @@ for row in $(echo "${json}" | jq -r '.libraries[]'); do
 done
 
 # Iterate over transactions and filter by transactionType = "CREATE"
+failures=0
 for row in $(echo "${json}" | jq -r -c '.transactions[] | select(.transactionType=="CREATE") | {contractAddress, contractName}'); do
   # Extract contractAddress and contractName
   contractAddress=$(echo "$row" | jq -r '.contractAddress')
@@ -44,7 +45,14 @@ for row in $(echo "${json}" | jq -r -c '.transactions[] | select(.transactionTyp
   # Run the verification command
   forge verify-contract ${contractAddress} ${contractName} ${libraries} --chain-id $chainid --watch --verifier $verifier --verifier-url $verifier_url
   if [ $? -ne 0 ]; then
-    echo "Contract verification failed for ${contractName} at ${contractAddress}"
-    exit 1
+    failures=$((failures+1))
   fi
 done
+
+if [ $failures -gt 0 ]; then
+  echo "Failed to verify $failures contracts"
+  exit 1
+else
+  echo "Successfully verified all contracts"
+  exit 0
+fi
