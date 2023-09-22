@@ -32,6 +32,9 @@ import {WrappedTokenGatewayV3} from "aave-v3-periphery/misc/WrappedTokenGatewayV
 import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
 import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvider.sol";
 
+// This is used sometimes for testnets so bring it into the compiler even though it's not used here
+import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
+
 abstract contract SparkDeployBaseTest is Test {
 
     using stdJson for string;
@@ -48,6 +51,8 @@ abstract contract SparkDeployBaseTest is Test {
 
     address admin;
     address deployer;
+
+    string marketId;
 
     PoolAddressesProviderRegistry poolAddressesProviderRegistry;
     PoolAddressesProvider poolAddressesProvider;
@@ -82,6 +87,8 @@ abstract contract SparkDeployBaseTest is Test {
 
         admin    = config.readAddress(".admin");
         deployer = deployedContracts.readAddress(".deployer");
+
+        marketId = config.readString(".marketId");
 
         poolAddressesProviderRegistry = PoolAddressesProviderRegistry(deployedContracts.readAddress(".poolAddressesProviderRegistry"));
         poolAddressesProvider         = PoolAddressesProvider(deployedContracts.readAddress(".poolAddressesProvider"));
@@ -126,7 +133,7 @@ abstract contract SparkDeployBaseTest is Test {
 
     function test_spark_deploy_poolAddressesProvider() public {
         assertEq(poolAddressesProvider.owner(),                  admin);
-        assertEq(poolAddressesProvider.getMarketId(),            "Spark Protocol");
+        assertEq(poolAddressesProvider.getMarketId(),            marketId);
         assertEq(poolAddressesProvider.getPool(),                address(pool));
         assertEq(poolAddressesProvider.getPoolConfigurator(),    address(poolConfigurator));
         assertEq(poolAddressesProvider.getPriceOracle(),         address(aaveOracle));
