@@ -47,7 +47,7 @@ contract RateTargetKinkInterestRateStrategy is IDefaultInterestRateStrategy {
   uint256 internal immutable _baseVariableBorrowRate;
 
   // Slope spread of the variable interest curve when usage ratio > 0 and <= OPTIMAL_USAGE_RATIO. Expressed in ray
-  uint256 internal immutable _variableRateSlope1Spread;
+  int256 internal immutable _variableRateSlope1Spread;
 
   // Slope of the variable interest curve when usage ratio > OPTIMAL_USAGE_RATIO. Expressed in ray
   uint256 internal immutable _variableRateSlope2;
@@ -70,7 +70,7 @@ contract RateTargetKinkInterestRateStrategy is IDefaultInterestRateStrategy {
    * @param rateSource The address of the rate source contract
    * @param optimalUsageRatio The optimal usage ratio
    * @param baseVariableBorrowRate The base variable borrow rate
-   * @param variableRateSlope1Spread The variable rate slope spread below optimal usage ratio
+   * @param variableRateSlope1Spread The spread between the rate source and the desired target kink rate (please note this discounts the base variable borrow rate)
    * @param variableRateSlope2 The variable rate slope above optimal usage ratio
    * @param stableRateSlope1 The stable rate slope below optimal usage ratio
    * @param stableRateSlope2 The stable rate slope above optimal usage ratio
@@ -83,7 +83,7 @@ contract RateTargetKinkInterestRateStrategy is IDefaultInterestRateStrategy {
     address rateSource,
     uint256 optimalUsageRatio,
     uint256 baseVariableBorrowRate,
-    uint256 variableRateSlope1Spread,
+    int256  variableRateSlope1Spread,
     uint256 variableRateSlope2,
     uint256 stableRateSlope1,
     uint256 stableRateSlope2,
@@ -113,13 +113,13 @@ contract RateTargetKinkInterestRateStrategy is IDefaultInterestRateStrategy {
 
   /// @inheritdoc IDefaultInterestRateStrategy
   function getVariableRateSlope1() public view returns (uint256) {
-    uint256 apr = RATE_SOURCE.getAPR();
-    if (_variableRateSlope1Spread > apr) {
+    // We assume all rates are below max int. This is a reasonable assumption because
+    // otherwise the rates will be so high that the protocol will stop working
+    int256 rate = int256(RATE_SOURCE.getAPR()) + _variableRateSlope1Spread - int256(_baseVariableBorrowRate);
+    if (rate < 0) {
       return 0;
     } else {
-      unchecked {
-        return apr - _variableRateSlope1Spread;
-      }
+      return uint256(rate);
     }
   }
 

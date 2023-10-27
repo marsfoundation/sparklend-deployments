@@ -15,6 +15,7 @@ contract RateTargetKinkInterestRateStrategyTest is Test {
     RateSourceMock rateSource;
 
     RateTargetKinkInterestRateStrategy interestStrategy;
+    RateTargetKinkInterestRateStrategy interestStrategyPositiveSpread;
 
     function setUp() public {
         rateSource = new RateSourceMock(0.05e27);
@@ -24,7 +25,21 @@ contract RateTargetKinkInterestRateStrategyTest is Test {
             rateSource: address(rateSource),
             optimalUsageRatio: 0,
             baseVariableBorrowRate: 0.01e27,
-            variableRateSlope1Spread: 0.015e27,
+            variableRateSlope1Spread: -0.005e27,
+            variableRateSlope2: 0.55e27,
+            stableRateSlope1: 0,
+            stableRateSlope2: 0,
+            baseStableRateOffset: 0,
+            stableRateExcessOffset: 0,
+            optimalStableToTotalDebtRatio: 0
+        });
+
+        interestStrategyPositiveSpread = new RateTargetKinkInterestRateStrategy({
+            provider: IPoolAddressesProvider(address(123)),
+            rateSource: address(rateSource),
+            optimalUsageRatio: 0,
+            baseVariableBorrowRate: 0.01e27,
+            variableRateSlope1Spread: 0.005e27,
             variableRateSlope2: 0.55e27,
             stableRateSlope1: 0,
             stableRateSlope2: 0,
@@ -50,9 +65,13 @@ contract RateTargetKinkInterestRateStrategyTest is Test {
         assertEq(interestStrategy.getBaseStableBorrowRate(), 0.035e27);
         assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
         assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.595e27);
+
+        assertEq(interestStrategyPositiveSpread.getVariableRateSlope1(), 0.045e27);
+        assertEq(interestStrategyPositiveSpread.getVariableRateSlope2(), 0.55e27);
+        assertEq(interestStrategyPositiveSpread.getMaxVariableBorrowRate(), 0.605e27);
     }
 
-    function test_rateSource_change() public {
+    function test_rateSource_change_kink_above_base() public {
         assertEq(interestStrategy.getVariableRateSlope1(), 0.035e27);
         assertEq(interestStrategy.getVariableRateSlope2(), 0.55e27);
         assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
@@ -64,6 +83,34 @@ contract RateTargetKinkInterestRateStrategyTest is Test {
         assertEq(interestStrategy.getVariableRateSlope2(), 0.55e27);
         assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
         assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.615e27);
+    }
+
+    function test_rateSource_change_kink_below_base() public {
+        assertEq(interestStrategy.getVariableRateSlope1(), 0.035e27);
+        assertEq(interestStrategy.getVariableRateSlope2(), 0.55e27);
+        assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.595e27);
+
+        rateSource.setRate(0.012e27);   // 1.2% - 0.5% = 0.7% < 1.0%
+
+        assertEq(interestStrategy.getVariableRateSlope1(), 0);
+        assertEq(interestStrategy.getVariableRateSlope2(), 0.55e27);
+        assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.56e27);
+    }
+
+    function test_rateSource_change_rate_below_base() public {
+        assertEq(interestStrategy.getVariableRateSlope1(), 0.035e27);
+        assertEq(interestStrategy.getVariableRateSlope2(), 0.55e27);
+        assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.595e27);
+
+        rateSource.setRate(0);
+
+        assertEq(interestStrategy.getVariableRateSlope1(), 0);
+        assertEq(interestStrategy.getVariableRateSlope2(), 0.55e27);
+        assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.01e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.56e27);
     }
 
 }
