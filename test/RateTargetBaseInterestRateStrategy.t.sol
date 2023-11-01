@@ -36,34 +36,35 @@ contract RateTargetBaseInterestRateStrategyTest is Test {
 
     function test_constructor() public {
         assertEq(address(interestStrategy.ADDRESSES_PROVIDER()), address(123));
-        assertEq(address(interestStrategy.RATE_SOURCE()), address(rateSource));
-        assertEq(interestStrategy.OPTIMAL_USAGE_RATIO(), 0);
-        assertEq(interestStrategy.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(), 0);
-        assertEq(interestStrategy.MAX_EXCESS_USAGE_RATIO(), 1e27);
+        assertEq(address(interestStrategy.RATE_SOURCE()),        address(rateSource));
+
+        assertEq(interestStrategy.OPTIMAL_USAGE_RATIO(),                   0);
+        assertEq(interestStrategy.OPTIMAL_STABLE_TO_TOTAL_DEBT_RATIO(),    0);
+        assertEq(interestStrategy.MAX_EXCESS_USAGE_RATIO(),                1e27);
         assertEq(interestStrategy.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), 1e27);
-        assertEq(interestStrategy.MAX_EXCESS_STABLE_TO_TOTAL_DEBT_RATIO(), 1e27);
-        assertEq(interestStrategy.getVariableRateSlope1(), 0.01e27);
-        assertEq(interestStrategy.getVariableRateSlope2(), 0.45e27);
-        assertEq(interestStrategy.getStableRateSlope1(), 0);
-        assertEq(interestStrategy.getStableRateSlope2(), 0);
+
+        assertEq(interestStrategy.getVariableRateSlope1(),     0.01e27);
+        assertEq(interestStrategy.getVariableRateSlope2(),     0.45e27);
+        assertEq(interestStrategy.getStableRateSlope1(),       0);
+        assertEq(interestStrategy.getStableRateSlope2(),       0);
         assertEq(interestStrategy.getStableRateExcessOffset(), 0);
-        assertEq(interestStrategy.getBaseStableBorrowRate(), 0.01e27);
+        assertEq(interestStrategy.getBaseStableBorrowRate(),   0.01e27);
         assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.055e27);
-        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.515e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(),  0.515e27);
     }
 
     function test_rateSource_change() public {
-        assertEq(interestStrategy.getVariableRateSlope1(), 0.01e27);
-        assertEq(interestStrategy.getVariableRateSlope2(), 0.45e27);
+        assertEq(interestStrategy.getVariableRateSlope1(),     0.01e27);
+        assertEq(interestStrategy.getVariableRateSlope2(),     0.45e27);
         assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.055e27);
-        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.515e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(),  0.515e27);
 
         rateSource.setRate(0.07e27);
 
-        assertEq(interestStrategy.getVariableRateSlope1(), 0.01e27);
-        assertEq(interestStrategy.getVariableRateSlope2(), 0.45e27);
+        assertEq(interestStrategy.getVariableRateSlope1(),     0.01e27);
+        assertEq(interestStrategy.getVariableRateSlope2(),     0.45e27);
         assertEq(interestStrategy.getBaseVariableBorrowRate(), 0.075e27);
-        assertEq(interestStrategy.getMaxVariableBorrowRate(), 0.535e27);
+        assertEq(interestStrategy.getMaxVariableBorrowRate(),  0.535e27);
     }
 
 }
