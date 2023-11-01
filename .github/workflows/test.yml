@@ -44,5 +44,5 @@ jobs:
           BASE_RPC_URL: ${{secrets.BASE_RPC_URL}}
           GOERLI_RPC_URL: ${{secrets.GOERLI_RPC_URL}}
         run: |
-          forge test -vvv
+          forge test -vvvv
         id: test
