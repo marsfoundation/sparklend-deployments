@@ -4,12 +4,12 @@ This is the repository for Spark Lend deploy scripts and custom code. Primarily 
 
 ## Usage
 
-Run tests: `make test`
-Deploy Spark Lend: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`
-Deploy Config Engine: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`
-Deploy Spark Lend (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`
-Deploy Config Engine (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`
-Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please note you need to set the proper `POOL_REVISION` in `Pool.sol`)
+Run tests: `make test`  
+Deploy Spark Lend: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
+Deploy Config Engine: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
+Deploy Spark Lend (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy`  
+Deploy Config Engine (Custom Instance): `INSTANCE_ID=<Custom Instance Name> ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-engine`  
+Deploy Pool Upgrade: `ETH_RPC_URL=<YOUR RPC ENDPOINT> make deploy-pool` (Please note you need to set the proper `POOL_REVISION` in `Pool.sol`)  
 
 Please note there may be some custom configs so please check the `Makefile`.
 
@@ -66,10 +66,6 @@ You can read more about this [here](https://forum.makerdao.com/t/mip116-d3m-to-s
 ### SavingsDaiOracle
 
 This is the oracle for sDAI which will take the input of a standard DAI price feed and convert it via the `pot.chi` factor.
-
-### SparkMigrationHelper
-
-Fork of the AaveMigrationHelper which has some extra features like converting from USDC to DAI automatically.
 
 ## Plug and Play License
 
