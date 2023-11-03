@@ -63,10 +63,6 @@ A special interest rate strategy is used for the DAI market which anchors to the
 
 You can read more about this [here](https://forum.makerdao.com/t/mip116-d3m-to-spark-lend/19732#mip116c3-debt-ceiling-fee-structure-10).
 
-### RateTargetBaseInterestRateStrategy + RateTargetKinkInterestRateStrategy
-
-Custom IRMs to automate base or kink values to track some non-hardcoded value. The base version can be used to set a floor on the DAI market that is the DSR for example. The kink version can be used to target some APR + spread which is useful for USDC/USDT/ETH markets to track the safe yield of the asset.
-
 ### SavingsDaiOracle
 
 This is the oracle for sDAI which will take the input of a standard DAI price feed and convert it via the `pot.chi` factor.
