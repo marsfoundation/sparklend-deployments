@@ -87,13 +87,26 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
 
-        skip(DURATION / 2);  // 50% of rewards distrubuted
+        uint256 skipAmount = DURATION / 2;  // 50% of rewards distrubuted
+        skip(skipAmount);
 
         // 7-siblings wallet should get about half of the rewards at this time
         // 79k ETH deposit out of 157k total supplied
         vm.prank(whale);
         incentives.claimAllRewards(assets, claimAddress);
-        assertEq(IERC20(WSTETH).balanceOf(claimAddress), 5.028734135612479150 ether);
+        uint256 whaleReward1 = 5.028734135612479150 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
+        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward1);
+
+        skip(DURATION - skipAmount);
+
+        // 7-siblings wallet should get about 50% of the total rewards ~10 wstETH
+        vm.prank(whale);
+        incentives.claimAllRewards(assets, claimAddress);
+        uint256 whaleReward2 = 10.057468271224958300 ether;
+        assertEq(whaleReward2, whaleReward1 * 2);
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
+        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
     }
 
     function _getAToken(address reserve) internal view returns (address atoken) {
