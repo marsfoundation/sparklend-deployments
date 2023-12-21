@@ -20,13 +20,14 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     IEmissionManager   emissionManager  = IEmissionManager(  0xf09e48dd4CA8e76F63a57ADd428bB06fee7932a4);
     IRewardsController incentives       = IRewardsController(0x4370D3b6C9588E02ce9D22e684387859c7Ff5b34);
 
-    address admin = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;  // SubDAO Proxy
+    address admin    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;  // SubDAO Proxy
+    address operator = 0x8076807464DaC94Ac8Aa1f7aF31b58F73bD88A27;  // Operator multi-sig
 
     address WETH   = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address WSTETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
 
-    uint256 REWARD_AMOUNT = 1000 ether;
-    uint256 DURATION      = 365 days;
+    uint256 REWARD_AMOUNT = 20 ether;
+    uint256 DURATION      = 30 days;
 
     PullRewardsTransferStrategy transferStrategy;
 
@@ -38,15 +39,16 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         transferStrategy = new PullRewardsTransferStrategy(
             address(incentives),
             admin,
-            admin
+            operator
         );
 
-        deal(WSTETH, admin, REWARD_AMOUNT);
+        deal(WSTETH, operator, REWARD_AMOUNT);
 
-        vm.startPrank(admin);
+        vm.prank(operator);
         IERC20(WSTETH).approve(address(transferStrategy), REWARD_AMOUNT);
-        emissionManager.setEmissionAdmin(WSTETH, admin);
-        vm.stopPrank();
+
+        vm.prank(admin);
+        emissionManager.setEmissionAdmin(WSTETH, operator);
     }
 
     function _setupDistribution() internal {
@@ -62,7 +64,7 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
             rewardOracle:      IEACAggregatorProxy(aaveOracle.getSourceOfAsset(WSTETH))
         });
 
-        vm.prank(admin);
+        vm.prank(operator);
         emissionManager.configureAssets(configs);
     }
 
@@ -85,13 +87,13 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
 
-        skip(DURATION / 2);
+        skip(DURATION / 2);  // 50% of rewards distrubuted
 
-        // 7-siblings wallet should get about half the rewards at this time
+        // 7-siblings wallet should get about half of the rewards at this time
         // 79k ETH deposit out of 157k total supplied
         vm.prank(whale);
         incentives.claimAllRewards(assets, claimAddress);
-        assertEq(IERC20(WSTETH).balanceOf(claimAddress), 251.436706780621137548 ether);
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), 5.028734135612479150 ether);
     }
 
     function _getAToken(address reserve) internal view returns (address atoken) {
