@@ -21,7 +21,7 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     IRewardsController incentives       = IRewardsController(0x4370D3b6C9588E02ce9D22e684387859c7Ff5b34);
 
     address admin    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;  // SubDAO Proxy
-    address operator = 0x8076807464DaC94Ac8Aa1f7aF31b58F73bD88A27;  // Operator multi-sig
+    address operator = 0x8076807464DaC94Ac8Aa1f7aF31b58F73bD88A27;  // Operator multi-sig (also custodies the rewards)
 
     address WETH   = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address WSTETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0;
@@ -87,7 +87,7 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
 
-        uint256 skipAmount = DURATION / 2;  // 50% of rewards distrubuted
+        uint256 skipAmount = DURATION / 2;  // 50% of rewards distributed
         skip(skipAmount);
 
         // 7-siblings wallet should get about half of the rewards at this time
@@ -109,8 +109,8 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
     }
 
-    function _getAToken(address reserve) internal view returns (address atoken) {
-        (atoken,,) = poolDataProvider.getReserveTokensAddresses(reserve);
+    function _getAToken(address reserve) internal view returns (address aToken) {
+        (aToken,,) = poolDataProvider.getReserveTokensAddresses(reserve);
     }
 
 }
