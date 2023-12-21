@@ -137,6 +137,14 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         assertEq(whaleReward2, whaleReward1 * 2);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
         assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
+
+        skip(DURATION);  // Skip twice the rewards period
+
+        // 7-siblings should receive no more rewards
+        vm.prank(whale);
+        incentives.claimAllRewards(assets, claimAddress);
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
+        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
     }
 
     function _getAToken(address reserve) internal view returns (address aToken) {
