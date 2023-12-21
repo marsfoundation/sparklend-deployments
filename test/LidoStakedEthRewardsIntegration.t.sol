@@ -32,7 +32,8 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
     PullRewardsTransferStrategy transferStrategy;
 
-    address whale = 0xf8dE75c7B95edB6f1E639751318f117663021Cf0;  // 7-siblings wallet
+    address whale1 = 0xf8dE75c7B95edB6f1E639751318f117663021Cf0;  // 7-siblings wallet
+    address whale2 = 0xAA1582084c4f588eF9BE86F5eA1a919F86A3eE57;  // Another whale
 
     function setUp() public {
         vm.createSelectFork(getChain("mainnet").rpcUrl, 18_707_715);  // Dec 3rd, 2023
@@ -107,13 +108,13 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         address[] memory assets = new address[](1);
         assets[0] = _getAToken(WETH);
 
-        vm.prank(whale);
+        vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
 
         _setupDistribution();
 
-        vm.prank(whale);
+        vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
 
@@ -122,7 +123,7 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
         // 7-siblings wallet should get about half of the rewards at this time
         // 79k ETH deposit out of 157k total supplied
-        vm.prank(whale);
+        vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
         uint256 whaleReward1 = 5.028734135612479150 ether;
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
@@ -131,7 +132,7 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         skip(DURATION - skipAmount);
 
         // 7-siblings wallet should get about 50% of the total rewards ~10 wstETH
-        vm.prank(whale);
+        vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
         uint256 whaleReward2 = 10.057468271224958300 ether;
         assertEq(whaleReward2, whaleReward1 * 2);
@@ -141,10 +142,49 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         skip(DURATION);  // Skip twice the rewards period
 
         // 7-siblings should receive no more rewards
-        vm.prank(whale);
+        vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
         assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
+    }
+
+    function test_multiple_users_claim() public {
+        address claimAddress1 = makeAddr("claimAddress1");
+        address claimAddress2 = makeAddr("claimAddress2");
+        address[] memory assets = new address[](1);
+        assets[0] = _getAToken(WETH);
+
+        _setupDistribution();
+
+        uint256 skipAmount = DURATION / 3;  // 33% of rewards distributed
+        skip(skipAmount);
+
+        vm.prank(whale1);
+        incentives.claimAllRewards(assets, claimAddress1);
+        uint256 whale1Reward1 = 3.352489423741600545 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress1), whale1Reward1);
+        assertEq(IERC20(WSTETH).balanceOf(operator),      REWARD_AMOUNT - whale1Reward1);
+
+        vm.prank(whale2);
+        incentives.claimAllRewards(assets, claimAddress2);
+        uint256 whale2Reward1 = 0.423580642569205639 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress2), whale2Reward1);
+        assertEq(IERC20(WSTETH).balanceOf(operator),      REWARD_AMOUNT - whale1Reward1 - whale2Reward1);
+
+        skip(DURATION);  // Skip past the end of the rewards period
+
+        vm.prank(whale1);
+        incentives.claimAllRewards(assets, claimAddress1);
+        uint256 whale1Reward2 = 10.057468271224879968 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress1), whale1Reward2);
+        assertEq(IERC20(WSTETH).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward1);
+
+        vm.prank(whale2);
+        incentives.claimAllRewards(assets, claimAddress2);
+        uint256 whale2Reward2 = 1.270741927707626814 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress2), whale2Reward2);
+        assertEq(IERC20(WSTETH).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward2);
+        assertEq(IERC20(WSTETH).balanceOf(operator),      8.671789801067493218 ether);
     }
 
     function _getAToken(address reserve) internal view returns (address aToken) {
