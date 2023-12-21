@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import { IAaveOracle }       from "aave-v3-core/contracts/interfaces/IAaveOracle.sol";
-import { IERC20 }            from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
-import { IPoolDataProvider } from "aave-v3-core/contracts/interfaces/IPoolDataProvider.sol";
+import { IAaveOracle }         from "aave-v3-core/contracts/interfaces/IAaveOracle.sol";
+import { IERC20 }              from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
+import { IPoolDataProvider }   from "aave-v3-core/contracts/interfaces/IPoolDataProvider.sol";
+import { IScaledBalanceToken } from "aave-v3-core/contracts/interfaces/IScaledBalanceToken.sol";
 
 import { IEACAggregatorProxy }         from "aave-v3-periphery/misc/interfaces/IEACAggregatorProxy.sol";
 import { IEmissionManager }            from "aave-v3-periphery/rewards/interfaces/IEmissionManager.sol";
@@ -69,7 +70,36 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     }
 
     function test_setup_distribution() public {
+        address wethAToken = _getAToken(WETH);
+
+        (
+            uint256 index,
+            uint256 emissionPerSecond,
+            uint256 lastUpdateTimestamp,
+            uint256 distributionEnd
+        ) = incentives.getRewardsData(wethAToken, WSTETH);
+        assertEq(index,                                  0);
+        assertEq(emissionPerSecond,                      0);
+        assertEq(lastUpdateTimestamp,                    0);
+        assertEq(distributionEnd,                        0);
+        assertEq(incentives.getTransferStrategy(WSTETH), address(0));
+        assertEq(incentives.getRewardOracle(WSTETH),     address(0));
+
+
         _setupDistribution();
+
+        (
+            index,
+            emissionPerSecond,
+            lastUpdateTimestamp,
+            distributionEnd
+        ) = incentives.getRewardsData(wethAToken, WSTETH);
+        assertEq(index,                                  0);
+        assertEq(emissionPerSecond,                      REWARD_AMOUNT / DURATION);
+        assertEq(lastUpdateTimestamp,                    block.timestamp);
+        assertEq(distributionEnd,                        block.timestamp + DURATION);
+        assertEq(incentives.getTransferStrategy(WSTETH), address(transferStrategy));
+        assertEq(incentives.getRewardOracle(WSTETH),     address(aaveOracle.getSourceOfAsset(WSTETH)));
     }
 
     function test_user_claim() public {
