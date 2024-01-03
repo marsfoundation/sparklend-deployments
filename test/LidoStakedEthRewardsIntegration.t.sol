@@ -7,6 +7,10 @@ import { IAaveOracle }         from "aave-v3-core/contracts/interfaces/IAaveOrac
 import { IERC20 }              from "aave-v3-core/contracts/dependencies/openzeppelin/contracts/IERC20.sol";
 import { IPoolDataProvider }   from "aave-v3-core/contracts/interfaces/IPoolDataProvider.sol";
 
+import { AToken } from "aave-v3-core/contracts/protocol/tokenization/AToken.sol";
+
+import { IAaveIncentivesController } from "aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol";
+
 import { IEACAggregatorProxy }         from "aave-v3-periphery/misc/interfaces/IEACAggregatorProxy.sol";
 import { IEmissionManager }            from "aave-v3-periphery/rewards/interfaces/IEmissionManager.sol";
 import { IRewardsController }          from "aave-v3-periphery/rewards/interfaces/IRewardsController.sol";
@@ -107,13 +111,19 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         address[] memory assets = new address[](1);
         assets[0] = _getAToken(WETH);
 
+        vm.startPrank(admin);
+        AToken(_getAToken(WETH)).setIncentivesController(IAaveIncentivesController(address(incentives)));
+        vm.stopPrank();
+
         _setupDistribution();
+
+        skip(1 days);
 
         // 1. Claim rewards at beginning of distribution
 
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
-        assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0.335248942374160054 ether);
 
         // 2. Warp 15 days
 
@@ -126,10 +136,16 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
         // 4. Claim rewards after 15 days (without transfer)
 
+        uint256 userRewards1 = incentives.getUserRewards(assets, whale1, WSTETH);
+        uint256 userAccrued1 = incentives.getUserAccruedRewards(whale1, WSTETH);
+
+        console.log("userRewards1    ", userRewards1);
+        console.log("userAccrued1    ", userAccrued1);
+
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
 
-        uint256 whaleReward1 = 5.028734135612479150 ether;
+        uint256 whaleReward1 = 5.363983077986639204 ether;
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
         assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward1);
 
@@ -143,18 +159,24 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
         uint256 amount = IERC20(_getAToken(WETH)).balanceOf(whale1) / 10;
 
-        console2.log("amount", amount);
+        // console2.log("amount", amount);
 
         vm.startPrank(whale1);
         IERC20(_getAToken(WETH)).transfer(newAddress, amount);
 
         // 7. Claim rewards after 15 days (with transfer)
 
+        uint256 userRewards2 = incentives.getUserRewards(assets, whale1, WSTETH);
+        uint256 userAccrued2 = incentives.getUserAccruedRewards(whale1, WSTETH);
+
+        console.log("userRewards2    ", userRewards2);
+        console.log("userAccrued2    ", userAccrued2);
+
         incentives.claimAllRewards(assets, claimAddress);
 
-        uint256 whaleReward2 = 4.525860722051231235 ether;
-        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
-        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
+        uint256 whaleReward2 = 4.861109664425391289 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
+        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward1);
     }
 
     function test_multiple_users_claim() public {

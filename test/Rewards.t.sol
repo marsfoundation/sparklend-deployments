@@ -106,6 +106,12 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
         // 4. Claim rewards after 15 days (without transfer)
 
+        uint256 userRewards1 = incentives.getUserRewards(assets, whale1, REWARDS_TOKEN);
+        uint256 userAccrued1 = incentives.getUserAccruedRewards(whale1, REWARDS_TOKEN);
+
+        console.log("userRewards1    ", userRewards1);
+        console.log("userAccrued1    ", userAccrued1);
+
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
 
@@ -128,6 +134,12 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         IERC20(STAKING_TOKEN).transfer(newAddress, amount);
 
         // 7. Claim rewards after 15 days (with transfer)
+
+        // uint256 userRewards2 = incentives.getUserRewards(assets, whale1, REWARDS_TOKEN);
+        // uint256 userAccrued2 = incentives.getUserAccruedRewards(whale1, REWARDS_TOKEN);
+
+        console.log("userRewards2    ", incentives.getUserRewards(assets, whale1, REWARDS_TOKEN));
+        console.log("userAccrued2    ", incentives.getUserAccruedRewards(whale1, REWARDS_TOKEN));
 
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
