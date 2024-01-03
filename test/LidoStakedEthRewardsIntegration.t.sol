@@ -208,11 +208,10 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
         vm.prank(whale2);
         incentives.claimAllRewards(assets, claimAddress2);
-        uint256 whale2Reward2      = 1.270741927707626814 ether;
-        uint256 finalEscrowBalance = 8.671789801067493218 ether;
+        uint256 whale2Reward2 = 1.270741927707626814 ether;
         assertEq(IERC20(WSTETH).balanceOf(claimAddress2), whale2Reward2);
         assertEq(IERC20(WSTETH).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward2);
-        assertEq(IERC20(WSTETH).balanceOf(operator),      finalEscrowBalance);
+        assertEq(IERC20(WSTETH).balanceOf(operator),      8.671789801067493218 ether);
     }
 
     function _getAToken(address reserve) internal view returns (address aToken) {
