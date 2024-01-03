@@ -102,23 +102,42 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         assertEq(incentives.getRewardOracle(WSTETH),     address(aaveOracle.getSourceOfAsset(WSTETH)));
     }
 
-    function test_user_claim() public {
+    function test_user_claim_normal() public {
         address claimAddress = makeAddr("claimAddress");
         address[] memory assets = new address[](1);
         assets[0] = _getAToken(WETH);
 
-        vm.prank(whale1);
-        incentives.claimAllRewards(assets, claimAddress);
-        assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
-
         _setupDistribution();
 
+        // 1. Claim rewards at beginning of distribution
+
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
         assertEq(IERC20(WSTETH).balanceOf(claimAddress), 0);
+
+        // 2. Warp 15 days
 
         uint256 skipAmount = DURATION / 2;  // 50% of rewards distributed
         skip(skipAmount);
+
+        // 3. Snapshot state
+
+        uint256 snapshot = vm.snapshot();
+
+        // 4. Claim rewards after 15 days (without transfer)
+
+        vm.prank(whale1);
+        incentives.claimAllRewards(assets, claimAddress);
+
+        uint256 whaleReward1 = 5.028734135612479150 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
+        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward1);
+
+        // 5. Revert to reset state to before claim
+
+        vm.revertTo(snapshot);
+
+        // 6. Transfer 10% of staked tokens to new address
 
         address newAddress = makeAddr("newAddress");
 
@@ -129,38 +148,13 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
         vm.startPrank(whale1);
         IERC20(_getAToken(WETH)).transfer(newAddress, amount);
 
+        // 7. Claim rewards after 15 days (with transfer)
+
         incentives.claimAllRewards(assets, claimAddress);
 
-        uint256 whaleReward1 = 5.028734135612479150 ether;
-        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
-        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward1);
-
-
-        // // whale1 wallet should get about half of the rewards at this time
-        // // 79k ETH deposit out of 157k total supplied
-        // vm.prank(whale1);
-        // incentives.claimAllRewards(assets, claimAddress);
-        // uint256 whaleReward1 = 5.028734135612479150 ether;
-        // assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward1);
-        // assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward1);
-
-        // skip(DURATION - skipAmount);
-
-        // // whale1 wallet should get about 50% of the total rewards ~10 wstETH
-        // vm.prank(whale1);
-        // incentives.claimAllRewards(assets, claimAddress);
-        // uint256 whaleReward2 = 10.057468271224958300 ether;
-        // assertEq(whaleReward2, whaleReward1 * 2);
-        // assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
-        // assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
-
-        // skip(DURATION);  // Skip twice the rewards period
-
-        // // whale1 should receive no more rewards
-        // vm.prank(whale1);
-        // incentives.claimAllRewards(assets, claimAddress);
-        // assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
-        // assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
+        uint256 whaleReward2 = 4.525860722051231235 ether;
+        assertEq(IERC20(WSTETH).balanceOf(claimAddress), whaleReward2);
+        assertEq(IERC20(WSTETH).balanceOf(operator),     REWARD_AMOUNT - whaleReward2);
     }
 
     function test_multiple_users_claim() public {

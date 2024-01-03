@@ -120,12 +120,14 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
 
         uint256 amount = IERC20(STAKING_TOKEN).balanceOf(whale1) / 10;
 
-        console2.log("amount", amount);
+        // console2.log("amount", amount);
 
         // 6. Transfer 10% of staked tokens to new address
 
         vm.prank(whale1);
         IERC20(STAKING_TOKEN).transfer(newAddress, amount);
+
+        // 7. Claim rewards after 15 days (with transfer)
 
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
