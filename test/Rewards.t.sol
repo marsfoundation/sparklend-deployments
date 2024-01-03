@@ -23,108 +23,117 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     address admin    = 0x3300f198988e4C9C63F75dF86De36421f06af8c4;  // SubDAO Proxy
     address operator = 0x8076807464DaC94Ac8Aa1f7aF31b58F73bD88A27;  // Operator multi-sig (also custodies the rewards)
 
-    address STADER     = 0x1d734A02eF1e1f5886e66b0673b71Af5B53ffA94;  // Reward token
-    address APOLMATICX = 0x80cA0d8C38d2e2BcbaB66aA1648Bd1C7160500FE;  // aToken
+    address REWARDS_TOKEN = 0xC3C7d422809852031b44ab29EEC9F1EfF2A58756;  // Reward token
+    address STAKING_TOKEN = 0xEA1132120ddcDDA2F119e99Fa7A27a0d036F7Ac9;  // aToken
 
     uint256 REWARD_AMOUNT = 20 ether;
     uint256 DURATION      = 30 days;
 
     PullRewardsTransferStrategy transferStrategy;
 
-    address whale1 = 0x522DFfc539c264A8f7E0B91102E899b33f4DAbc3;
-    address whale2 = 0x679cDA4FC31b4C03B967d3D7D929be69f54917b3;
+    address whale1 = 0x7B503004695502299EfB5CfD62C34cC093e0255f;
+    address whale2 = 0xD5BB24152217BEA7A617525DDFA64ea3B41B9c0a;
 
     function setUp() public {
-        vm.createSelectFork(getChain("polygon").rpcUrl, 51889872);  // Jan 3, 2024
-
-        // transferStrategy = new PullRewardsTransferStrategy(
-        //     address(incentives),
-        //     admin,
-        //     operator
-        // );
-
-        // deal(APOLMATICX, operator, REWARD_AMOUNT);
-
-        // vm.prank(operator);
-        // IERC20(APOLMATICX).approve(address(transferStrategy), REWARD_AMOUNT);
-
-        // vm.prank(admin);
-        // emissionManager.setEmissionAdmin(APOLMATICX, operator);
+        vm.createSelectFork(getChain("polygon").rpcUrl, 42000000);  // Mar 5, 2023
     }
 
-    // function _setupDistribution() internal {
-    //     RewardsDataTypes.RewardsConfigInput[] memory configs = new RewardsDataTypes.RewardsConfigInput[](1);
-
-    //     configs[0] = RewardsDataTypes.RewardsConfigInput({
-    //         emissionPerSecond: uint88(REWARD_AMOUNT / DURATION),
-    //         totalSupply:       0,  // Set by the rewards controller
-    //         distributionEnd:   uint32(block.timestamp + DURATION),
-    //         asset:             _getAToken(MATICX),  // Rewards on MATICX supplies
-    //         reward:            APOLMATICX,
-    //         transferStrategy:  transferStrategy,
-    //         rewardOracle:      IEACAggregatorProxy(aaveOracle.getSourceOfAsset(APOLMATICX))
-    //     });
-
-    //     vm.prank(operator);
-    //     emissionManager.configureAssets(configs);
-    // }
-
     function test_setup_distribution_matic() public {
+        console.log("block.timestamp    ", block.timestamp);
         (
             uint256 index,
             uint256 emissionPerSecond,
             uint256 lastUpdateTimestamp,
             uint256 distributionEnd
-        ) = incentives.getRewardsData(APOLMATICX, STADER);
-        assertEq(index,                                  0);
-        assertEq(emissionPerSecond,                      0);
-        assertEq(lastUpdateTimestamp,                    0);
-        assertEq(distributionEnd,                        0);
-        assertEq(incentives.getTransferStrategy(APOLMATICX), address(0));
-        assertEq(incentives.getRewardOracle(APOLMATICX),     address(0));
-
-
-        // _setupDistribution();
-
-        // (
-        //     index,
-        //     emissionPerSecond,
-        //     lastUpdateTimestamp,
-        //     distributionEnd
-        // ) = incentives.getRewardsData(wethAToken, APOLMATICX);
-        // assertEq(index,                                  0);
-        // assertEq(emissionPerSecond,                      REWARD_AMOUNT / DURATION);
-        // assertEq(lastUpdateTimestamp,                    block.timestamp);
-        // assertEq(distributionEnd,                        block.timestamp + DURATION);
-        // assertEq(incentives.getTransferStrategy(APOLMATICX), address(transferStrategy));
-        // assertEq(incentives.getRewardOracle(APOLMATICX),     address(aaveOracle.getSourceOfAsset(APOLMATICX)));
+        ) = incentives.getRewardsData(STAKING_TOKEN, REWARDS_TOKEN);
+        assertEq(index,               0.000574002579753002e18);
+        assertEq(emissionPerSecond,   0.003100198412698414e18);
+        assertEq(lastUpdateTimestamp, 1682555211);
+        assertEq(distributionEnd,     1684584000);
     }
 
     function test_user_claim_matic() public {
         address claimAddress = makeAddr("claimAddress");
         address[] memory assets = new address[](1);
-        assets[0] = APOLMATICX;
+        assets[0] = STAKING_TOKEN;
+
+        console.log("block.timestamp    ", block.timestamp);
+
+        (
+            uint256 index,
+            uint256 emissionPerSecond,
+            uint256 lastUpdateTimestamp,
+            uint256 distributionEnd
+        ) = incentives.getRewardsData(STAKING_TOKEN, REWARDS_TOKEN);
+
+        console.log("index              ", index);
+        console.log("emissionPerSecond  ", emissionPerSecond);
+        console.log("lastUpdateTimestamp", lastUpdateTimestamp);
+        console.log("distributionEnd    ", distributionEnd);
+
+        assertEq(IERC20(REWARDS_TOKEN).balanceOf(claimAddress), 0);
+
+        // 1. Claim rewards at beginning of distribution
 
         vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
-        assertEq(IERC20(STADER).balanceOf(claimAddress), 178.046664373153971754 ether);
+        assertEq(IERC20(REWARDS_TOKEN).balanceOf(claimAddress), 9.172189908011223608 ether);
+
+        // 2. Warp 15 days
 
         uint256 skipAmount = DURATION / 2;  // 50% of rewards distributed
         skip(skipAmount);
 
+        // 3. Snapshot state
+
+        uint256 snapshot = vm.snapshot();
+
+        (
+            index,
+            emissionPerSecond,
+            lastUpdateTimestamp,
+            distributionEnd
+        ) = incentives.getRewardsData(STAKING_TOKEN, REWARDS_TOKEN);
+
+        console.log("---");
+
+        console.log("index              ", index);
+        console.log("emissionPerSecond  ", emissionPerSecond);
+        console.log("lastUpdateTimestamp", lastUpdateTimestamp);
+        console.log("distributionEnd    ", distributionEnd);
+
+        console.log("block.timestamp    ", block.timestamp);
+
+        // 4. Claim rewards after 15 days (without transfer)
+
+        vm.prank(whale1);
         incentives.claimAllRewards(assets, claimAddress);
 
-        assertEq(IERC20(STADER).balanceOf(claimAddress), 178.046664373153971754 ether);
-        assertEq(IERC20(STADER).balanceOf(operator),     0);
+        assertEq(IERC20(REWARDS_TOKEN).balanceOf(claimAddress), 430.384717473587677676 ether);
+        assertEq(IERC20(REWARDS_TOKEN).balanceOf(operator),     0);
 
-        // address newAddress = makeAddr("newAddress");
+        // 5. Revert to reset state to before claim
 
-        // uint256 amount = IERC20(APOLMATICX).balanceOf(whale1) / 10;
+        vm.revertTo(snapshot);
 
-        // console2.log("amount", amount);
+        address newAddress = makeAddr("newAddress");
 
-        // vm.startPrank(whale1);
-        // IERC20(APOLMATICX).transfer(newAddress, amount);
+        uint256 amount = IERC20(STAKING_TOKEN).balanceOf(whale1) / 10;
+
+        console2.log("amount", amount);
+
+        // 6. Transfer 10% of staked tokens to new address
+
+        vm.prank(whale1);
+        IERC20(STAKING_TOKEN).transfer(newAddress, amount);
+
+        vm.prank(whale1);
+        incentives.claimAllRewards(assets, claimAddress);
+
+        console.log("block.timestamp    ", block.timestamp);
+
+        assertEq(IERC20(REWARDS_TOKEN).balanceOf(claimAddress), 430.384717473587677676 ether);
+        assertEq(IERC20(REWARDS_TOKEN).balanceOf(operator),     0);
     }
 
     // function test_multiple_users_claim() public {
@@ -141,14 +150,14 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     //     vm.prank(whale1);
     //     incentives.claimAllRewards(assets, claimAddress1);
     //     uint256 whale1Reward1 = 3.352489423741600545 ether;
-    //     assertEq(IERC20(APOLMATICX).balanceOf(claimAddress1), whale1Reward1);
-    //     assertEq(IERC20(APOLMATICX).balanceOf(operator),      REWARD_AMOUNT - whale1Reward1);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(claimAddress1), whale1Reward1);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(operator),      REWARD_AMOUNT - whale1Reward1);
 
     //     vm.prank(whale2);
     //     incentives.claimAllRewards(assets, claimAddress2);
     //     uint256 whale2Reward1 = 0.423580642569205639 ether;
-    //     assertEq(IERC20(APOLMATICX).balanceOf(claimAddress2), whale2Reward1);
-    //     assertEq(IERC20(APOLMATICX).balanceOf(operator),      REWARD_AMOUNT - whale1Reward1 - whale2Reward1);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(claimAddress2), whale2Reward1);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(operator),      REWARD_AMOUNT - whale1Reward1 - whale2Reward1);
 
     //     skip(DURATION);  // Skip past the end of the rewards period
 
@@ -161,8 +170,8 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     //     vm.prank(whale1);
     //     incentives.claimAllRewards(assets, claimAddress1);
     //     uint256 whale1Reward2 = 10.057468271224879968 ether;
-    //     assertEq(IERC20(APOLMATICX).balanceOf(claimAddress1), whale1Reward2);
-    //     assertEq(IERC20(APOLMATICX).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward1);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(claimAddress1), whale1Reward2);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward1);
 
     //     vm.startPrank(whale1);
     //     IERC20(_getAToken(MATICX)).transfer(whale2, amount);
@@ -174,9 +183,9 @@ contract LidoStakedEthRewardsIntegrationTest is Test {
     //     incentives.claimAllRewards(assets, claimAddress2);
     //     uint256 whale2Reward2      = 1.270741927707626814 ether;
     //     uint256 finalEscrowBalance = 8.671789801067493218 ether;
-    //     assertEq(IERC20(APOLMATICX).balanceOf(claimAddress2), whale2Reward2);
-    //     assertEq(IERC20(APOLMATICX).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward2);
-    //     assertEq(IERC20(APOLMATICX).balanceOf(operator),      finalEscrowBalance);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(claimAddress2), whale2Reward2);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(operator),      REWARD_AMOUNT - whale1Reward2 - whale2Reward2);
+    //     assertEq(IERC20(STAKING_TOKEN).balanceOf(operator),      finalEscrowBalance);
     // }
 
     // function _getAToken(address reserve) internal view returns (address aToken) {
