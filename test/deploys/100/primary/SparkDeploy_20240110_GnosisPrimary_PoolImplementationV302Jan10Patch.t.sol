@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../../../SparkDeployPoolImplementationBase.t.sol";
 
-contract SparkDeploy_20230711_EthereumPrimary_PoolImplementationV302Test is SparkDeployPoolImplementationBaseTest {
+contract SparkDeploy_20240110_GnosisPrimary_PoolImplementationV302Jan10PatchTest is SparkDeployPoolImplementationBaseTest {
     
     constructor() {
-        rpcUrl      = getChain("mainnet").rpcUrl;
-        forkBlock   = 17689592;
+        rpcUrl      = getChain("gnosis_chain").rpcUrl;
+        forkBlock   = 31885915;
         instanceId  = "primary";
         revisionNum = 2;
     }
