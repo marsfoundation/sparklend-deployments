@@ -15,7 +15,7 @@ interface JugLike {
 }
 
 /**
- * @title DaiInterestRateStrategy
+ * @title DaiJugInterestRateStrategy
  * @notice Flat interest rate curve which is a spread on the Stability Fee Base Rate unless Maker needs liquidity.
  * @dev The interest rate strategy is intended to be used by Spark Lend pool that is supplied by a D3M implementation. Further, is implemented for DAI so that a D3M implementation for the Spark Lend protocol should be able to unwind as fast as possible in case of debt limit changes downwards by incentivizing borrowers and lenders to move DAI into the protocol. Hence, it operates in two modes. Namely, it distinguishes the unhealthy scenario, where the D3M supplied too much (the Spark Lend D3M ink's debt exceeds the debt limit), from the healthy one, where the D3M is healthy.
  * 
