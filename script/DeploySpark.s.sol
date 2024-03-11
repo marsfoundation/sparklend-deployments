@@ -110,7 +110,6 @@ contract DeploySpark is Script {
         // 4. Deploy and configure ACL manager
 
         aclManager = new ACLManager(poolAddressesProvider);
-        aclManager.addPoolAdmin(deployer);
 
         // 5. Additional configuration for registry and pool address provider
 
@@ -198,7 +197,6 @@ contract DeploySpark is Script {
 
         aclManager.addEmergencyAdmin(admin);
         aclManager.addPoolAdmin(admin);
-        aclManager.removePoolAdmin(deployer);
         aclManager.grantRole(aclManager.DEFAULT_ADMIN_ROLE(), admin);
         aclManager.revokeRole(aclManager.DEFAULT_ADMIN_ROLE(), deployer);
 
