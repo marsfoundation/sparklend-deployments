@@ -5,21 +5,21 @@ import "forge-std/Test.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {InitializableAdminUpgradeabilityProxy} from 'aave-v3-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
+import {InitializableAdminUpgradeabilityProxy} from 'sparklend-v1-core/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol';
 
-import {PoolAddressesProviderRegistry} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol";
-import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
-import {AaveProtocolDataProvider} from "aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol";
-import {PoolConfigurator} from "aave-v3-core/contracts/protocol/pool/PoolConfigurator.sol";
-import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
-import {ACLManager} from "aave-v3-core/contracts/protocol/configuration/ACLManager.sol";
-import {AaveOracle} from 'aave-v3-core/contracts/misc/AaveOracle.sol';
+import {PoolAddressesProviderRegistry} from "sparklend-v1-core/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol";
+import {PoolAddressesProvider} from "sparklend-v1-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
+import {AaveProtocolDataProvider} from "sparklend-v1-core/contracts/misc/AaveProtocolDataProvider.sol";
+import {PoolConfigurator} from "sparklend-v1-core/contracts/protocol/pool/PoolConfigurator.sol";
+import {Pool} from "sparklend-v1-core/contracts/protocol/pool/Pool.sol";
+import {ACLManager} from "sparklend-v1-core/contracts/protocol/configuration/ACLManager.sol";
+import {AaveOracle} from 'sparklend-v1-core/contracts/misc/AaveOracle.sol';
 
-import {AToken} from "aave-v3-core/contracts/protocol/tokenization/AToken.sol";
-import {StableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/StableDebtToken.sol";
-import {VariableDebtToken} from "aave-v3-core/contracts/protocol/tokenization/VariableDebtToken.sol";
+import {AToken} from "sparklend-v1-core/contracts/protocol/tokenization/AToken.sol";
+import {StableDebtToken} from "sparklend-v1-core/contracts/protocol/tokenization/StableDebtToken.sol";
+import {VariableDebtToken} from "sparklend-v1-core/contracts/protocol/tokenization/VariableDebtToken.sol";
 
-import {IAaveIncentivesController} from "aave-v3-core/contracts/interfaces/IAaveIncentivesController.sol";
+import {IAaveIncentivesController} from "sparklend-v1-core/contracts/interfaces/IAaveIncentivesController.sol";
 
 import {Collector} from "aave-v3-periphery/treasury/Collector.sol";
 import {CollectorController} from "aave-v3-periphery/treasury/CollectorController.sol";
@@ -29,11 +29,11 @@ import {EmissionManager} from "aave-v3-periphery/rewards/EmissionManager.sol";
 import {UiPoolDataProviderV3} from "aave-v3-periphery/misc/UiPoolDataProviderV3.sol";
 import {UiIncentiveDataProviderV3} from "aave-v3-periphery/misc/UiIncentiveDataProviderV3.sol";
 import {WrappedTokenGatewayV3} from "aave-v3-periphery/misc/WrappedTokenGatewayV3.sol";
-import {IPool} from "aave-v3-core/contracts/interfaces/IPool.sol";
+import {IPool} from "sparklend-v1-core/contracts/interfaces/IPool.sol";
 import {WalletBalanceProvider} from "aave-v3-periphery/misc/WalletBalanceProvider.sol";
 
 // This is used sometimes for testnets so bring it into the compiler even though it's not used here
-import {MockAggregator} from "aave-v3-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
+import {MockAggregator} from "sparklend-v1-core/contracts/mocks/oracle/CLAggregators/MockAggregator.sol";
 
 abstract contract SparkDeployBaseTest is Test {
 
