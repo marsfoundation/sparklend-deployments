@@ -20,6 +20,6 @@ optimizer_runs = 100000
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}", chain = 1 }
-gnosis_chain = { key = "${GNOSIS_VERIFY_API_KEY}", chain = 100, url = "https://api.gnosisscan.io/api" }
+gnosis_chain = { key = "${GNOSISSCAN_API_KEY}", chain = 100, url = "https://api.gnosisscan.io/api" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
