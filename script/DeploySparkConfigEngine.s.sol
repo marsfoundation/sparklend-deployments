@@ -8,7 +8,7 @@ import {ScriptTools} from "dss-test/ScriptTools.sol";
 import {AaveV3ConfigEngine}    from 'aave-helpers/v3-config-engine/AaveV3ConfigEngine.sol';
 import {V3RateStrategyFactory} from 'aave-helpers/v3-config-engine/V3RateStrategyFactory.sol';
 
-// Note: we need to link to aave-v3-core instead of sparklend-v1-core because of conflicts with the helper library
+// Note: We need to link to aave-v3-core instead of sparklend-v1-core because of conflicts with the helper library
 import {IAaveOracle}                  from 'aave-v3-core/contracts/interfaces/IAaveOracle.sol';
 import {IDefaultInterestRateStrategy} from 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategy.sol';
 import {IPoolAddressesProvider}       from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';

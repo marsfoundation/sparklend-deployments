@@ -7,7 +7,7 @@ contract SparkDeploy_20240408_GnosisPrimary_PoolImplementationTest is SparkDeplo
     
     constructor() {
         rpcUrl      = getChain("gnosis_chain").rpcUrl;
-        forkBlock   = 33350836;
+        forkBlock   = 33350836;  // April 9, 2024
         instanceId  = "primary";
         revisionNum = 3;
     }

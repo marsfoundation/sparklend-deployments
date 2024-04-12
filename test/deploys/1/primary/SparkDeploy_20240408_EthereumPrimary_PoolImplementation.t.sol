@@ -7,7 +7,7 @@ contract SparkDeploy_20240408_EthereumPrimary_PoolImplementationTest is SparkDep
     
     constructor() {
         rpcUrl      = getChain("mainnet").rpcUrl;
-        forkBlock   = 19609506;
+        forkBlock   = 19609506;  // April 8, 2024
         instanceId  = "primary";
         revisionNum = 4;
     }
