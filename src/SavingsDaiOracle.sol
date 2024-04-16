@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.10;
 
-import {AggregatorInterface} from 'aave-v3-core/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {SafeCast} from 'aave-v3-core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
+import {AggregatorInterface} from 'sparklend-v1-core/contracts/dependencies/chainlink/AggregatorInterface.sol';
+import {SafeCast} from 'sparklend-v1-core/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
 
 interface PotLike {
     function chi() external view returns (uint256);

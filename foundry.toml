@@ -3,7 +3,7 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 remappings = [
-    '@aave/core-v3/=lib/aave-v3-core/',
+    '@aave/core-v3/=lib/sparklend-v1-core/',
     'aave-helpers/=lib/aave-helpers/src/',
     '@uniswap/v3-core/=lib/v3-core/',
     'solidity-utils/=lib/V2-V3-migration-helpers/lib/solidity-utils/src/'
@@ -17,5 +17,9 @@ fs_permissions = [
 solc_version = '0.8.10'
 optimizer = true
 optimizer_runs = 100000
+
+[etherscan]
+mainnet = { key = "${ETHERSCAN_API_KEY}", chain = 1 }
+gnosis_chain = { key = "${GNOSISSCAN_API_KEY}", chain = 100, url = "https://api.gnosisscan.io/api" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

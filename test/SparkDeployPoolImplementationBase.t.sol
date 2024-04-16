@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {PoolAddressesProvider} from "aave-v3-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
-import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
+import {PoolAddressesProvider} from "sparklend-v1-core/contracts/protocol/configuration/PoolAddressesProvider.sol";
+import {Pool} from "sparklend-v1-core/contracts/protocol/pool/Pool.sol";
 
 abstract contract SparkDeployPoolImplementationBaseTest is Test {
 

@@ -5,8 +5,8 @@ import "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {ScriptTools} from "dss-test/ScriptTools.sol";
 
-import {IPoolAddressesProvider} from "aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol";
-import {Pool} from "aave-v3-core/contracts/protocol/pool/Pool.sol";
+import {IPoolAddressesProvider} from "sparklend-v1-core/contracts/interfaces/IPoolAddressesProvider.sol";
+import {Pool} from "sparklend-v1-core/contracts/protocol/pool/Pool.sol";
 
 contract DeployPoolImplementation is Script {
 
